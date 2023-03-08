@@ -8,3 +8,13 @@ tests/
 *.iml
 dev/perf/screenshot*
 .DS_store
+
+yarn-error.log
+package-lock.json
+AsyncStorage
+build/*.css.map
+build/*.js.map
+dist/statoscope-report.html
+dist/build-stats.json
+public/build-stats.json
+public/statoscope-report.html
