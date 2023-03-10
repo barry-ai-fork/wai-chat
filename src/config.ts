@@ -1,5 +1,8 @@
 import type { ApiLimitType } from './global/types';
 
+export const BASE_API = 'http://localhost:1235';
+export const SESSION_TOKEN = 'user_token';
+
 export const APP_NAME = process.env.APP_NAME || 'Telegram WebZ';
 export const APP_VERSION = process.env.APP_VERSION!;
 export const RELEASE_DATETIME = process.env.RELEASE_DATETIME;
@@ -23,6 +26,7 @@ export const PAGE_TITLE = process.env.APP_TITLE!;
 export const INACTIVE_MARKER = '[Inactive]';
 
 export const DEBUG_PAYMENT_SMART_GLOCAL = false;
+
 
 export const SESSION_USER_KEY = 'user_auth';
 export const LEGACY_SESSION_KEY = 'GramJs:sessionId';

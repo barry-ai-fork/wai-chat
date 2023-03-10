@@ -1,0 +1,20 @@
+name = "chat"
+main = "src/worker/index.ts"
+compatibility_date = "2022-05-03"
+node_compat = true
+
+[site]
+bucket = "dist"
+
+[[kv_namespaces]]
+binding = "DATABASE"
+id = "54657f7b0ceb4e958590eb925e5f95ec"
+
+[vars]
+IS_PROD = true
+# 24H
+TOKEN_EXPIRE_TIME_SEC = 86400000
+JWT_SECRET = "JWT_SECRET_PROD"
+GITHUB_CLIENT_ID = "aa302bb00086df7a2b05"
+GITHUB_CLIENT_SECRET = "cc00919e27f0ef940383f5ce5e04a570c4905c64"
+FRONTEND_AUTH_CALLBACK_URL = "https://chat.ptp-ai.workers.dev/"

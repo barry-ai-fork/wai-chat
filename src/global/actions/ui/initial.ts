@@ -174,6 +174,20 @@ addActionHandler('clearAuthError', (global): ActionReturnType => {
   };
 });
 
+addActionHandler('updateGlobal', (global,action,payload): ActionReturnType => {
+  return {
+    ...global,
+    ...payload,
+  };
+});
+
+addActionHandler('showAuthError', (global,action,payload): ActionReturnType => {
+  return {
+    ...global,
+    authError:payload
+  };
+});
+
 addActionHandler('disableHistoryAnimations', (global, actions, payload): ActionReturnType => {
   const { tabId = getCurrentTabId() } = payload || {};
 

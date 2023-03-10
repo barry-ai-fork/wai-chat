@@ -3,7 +3,6 @@ node_modules
 .env
 src/lib/gramjs/build/
 build-contest/
-tests/
 .idea
 *.iml
 dev/perf/screenshot*
@@ -18,3 +17,6 @@ dist/statoscope-report.html
 dist/build-stats.json
 public/build-stats.json
 public/statoscope-report.html
+
+wrangler.toml
+wrangler.prod.toml

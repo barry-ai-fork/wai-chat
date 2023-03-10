@@ -200,3 +200,50 @@
 #sign-in-password {
   word-break: normal !important;
 }
+
+.oauth-btn{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.auth-tips{
+  color: var(--color-text);
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  .auth-tips-action{
+    display: inline-flex;
+    margin-left: 8px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+}
+.auth-or-line{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  height: 44px;
+  .auth-or{
+    text-align: center;
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    background: var(--color-background);
+    padding-left: 12px;
+    padding-right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+  }
+  .auth-line{
+    z-index: 1;
+    opacity: 0.3;
+    position: absolute;
+    width: 100%;
+    top:22px;
+    height: 1px;
+    background: var(--color-borders);
+  }
+}

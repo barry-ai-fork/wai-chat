@@ -1,0 +1,29 @@
+name = "chat"
+main = "src/worker/index.ts"
+compatibility_date = "2022-05-03"
+node_compat = true
+
+[dev]
+port = 1235
+
+[site]
+bucket = "src/worker/public"
+
+[[kv_namespaces]]
+binding = "DATABASE"
+preview_id = "54657f7b0ceb4e958590eb925e5f95ec"
+id = "54657f7b0ceb4e958590eb925e5f95ec"
+
+[vars]
+IS_PROD = false
+# 24H
+TOKEN_EXPIRE_TIME_SEC = 86400000
+JWT_SECRET = "JWT_SECRET"
+GITHUB_CLIENT_ID = "7e6b4fce18069f4665e5"
+GITHUB_CLIENT_SECRET = "d35fdb74e83c0eefe0a0df93b2d1fbf8369cd7e8"
+
+GOOGLE_REDIRECT_PROD_URL="http://localhost:1235/auth/google/callback"
+GOOGLE_CLIENT_ID = "904431235968-ej4pktfc7rdpkpicli29v6q3tooldu5c.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET = "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"
+
+FRONTEND_AUTH_CALLBACK_URL = "http://localhost:1234/"

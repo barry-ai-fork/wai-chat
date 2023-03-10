@@ -834,6 +834,7 @@ export type ApiDraft = ApiFormattedText & { isLocal?: boolean; shouldForce?: boo
 type WithTabId = { tabId?: number };
 
 export interface ActionPayloads {
+  updateGlobal:Record<string, any>,
   // system
   init: ({
     isMasterTab?: boolean;
@@ -857,6 +858,7 @@ export interface ActionPayloads {
   returnToAuthPhoneNumber: undefined;
   setAuthRememberMe: boolean;
   clearAuthError: undefined;
+  showAuthError: string;
   uploadProfilePhoto: {
     file: File;
     isFallback?: boolean;

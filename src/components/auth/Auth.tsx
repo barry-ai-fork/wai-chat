@@ -14,6 +14,7 @@ import AuthPhoneNumber from './AuthPhoneNumber';
 import AuthCode from './AuthCode.async';
 import AuthPassword from './AuthPassword.async';
 import AuthRegister from './AuthRegister.async';
+import AuthRegisterEmail from './AuthRegisterEmail.async';
 import AuthQrCode from './AuthQrCode';
 
 import './Auth.scss';
@@ -50,6 +51,7 @@ const Auth: FC<StateProps> = ({
   );
 
   function getScreen() {
+    return <AuthRegisterEmail />;
     switch (renderingAuthState) {
       case 'authorizationStateWaitCode':
         return <AuthCode />;

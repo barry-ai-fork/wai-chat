@@ -11,6 +11,7 @@ type OwnProps = {
   ref?: RefObject<HTMLInputElement>;
   id?: string;
   className?: string;
+  type?: string;
   value?: string;
   label?: string;
   error?: string;
@@ -28,12 +29,15 @@ type OwnProps = {
   onKeyPress?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
   onPaste?: (e: React.ClipboardEvent<HTMLInputElement>) => void;
 };
 
 const InputText: FC<OwnProps> = ({
   ref,
   id,
+  type,
+  onFocus,
   className,
   value,
   label,
@@ -71,7 +75,7 @@ const InputText: FC<OwnProps> = ({
       <input
         ref={ref}
         className="form-control"
-        type="text"
+        type={type || "text"}
         id={id}
         dir="auto"
         value={value || ''}
@@ -85,6 +89,7 @@ const InputText: FC<OwnProps> = ({
         onChange={onChange}
         onInput={onInput}
         onKeyPress={onKeyPress}
+        onFocus={onFocus}
         onKeyDown={onKeyDown}
         onBlur={onBlur}
         onPaste={onPaste}

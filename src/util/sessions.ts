@@ -3,7 +3,7 @@ import * as idb from 'idb-keyval';
 import type { ApiSessionData } from '../api/types';
 
 import {
-  DEBUG, GLOBAL_STATE_CACHE_KEY, LEGACY_SESSION_KEY, SESSION_USER_KEY,
+  DEBUG, GLOBAL_STATE_CACHE_KEY, LEGACY_SESSION_KEY, SESSION_TOKEN, SESSION_USER_KEY,
 } from '../config';
 import * as cacheApi from './cacheApi';
 
@@ -18,18 +18,30 @@ export function hasStoredSession(withLegacy = false) {
     return true;
   }
 
-  const userAuthJson = localStorage.getItem(SESSION_USER_KEY);
-  if (!userAuthJson) {
-    return false;
-  }
-
+  const userAuthJson = localStorage.getItem(SESSION_TOKEN);
+    if (!userAuthJson) {
+      return false;
+    }
   try {
     const userAuth = JSON.parse(userAuthJson);
-    return Boolean(userAuth && userAuth.id && userAuth.dcID);
+    return Boolean(userAuth && userAuth.user.user_id);
   } catch (err) {
-    // Do nothing.
     return false;
   }
+  //
+  // const userAuthJson = localStorage.getItem(SESSION_USER_KEY);
+  //
+  // if (!userAuthJson) {
+  //   return false;
+  // }
+  //
+  // try {
+  //   const userAuth = JSON.parse(userAuthJson);
+  //   return Boolean(userAuth && userAuth.id && userAuth.dcID);
+  // } catch (err) {
+  //   // Do nothing.
+  //   return false;
+  // }
 }
 
 export function storeSession(sessionData: ApiSessionData, currentUserId?: string) {
@@ -64,7 +76,6 @@ export function loadStoredSession(): ApiSessionData | undefined {
   if (!hasStoredSession()) {
     return undefined;
   }
-
   const userAuth = JSON.parse(localStorage.getItem(SESSION_USER_KEY)!);
   if (!userAuth) {
     return undefined;

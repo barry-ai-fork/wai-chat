@@ -169,6 +169,7 @@ module.exports = (_env, { mode = 'production' }) => {
         APP_VERSION: appVersion,
         APP_TITLE,
         RELEASE_DATETIME: Date.now(),
+        BASE_API: undefined,
         TELEGRAM_T_API_ID: undefined,
         TELEGRAM_T_API_HASH: undefined,
         // eslint-disable-next-line no-null/no-null

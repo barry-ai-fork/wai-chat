@@ -98,7 +98,7 @@ const PasswordForm: FC<OwnProps> = ({
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
+    debugger
     if (isLoading) {
       return;
     }
@@ -128,6 +128,13 @@ const PasswordForm: FC<OwnProps> = ({
       >
         {shouldDisablePasswordManager && renderFakeInput()}
         <input
+          onKeyDown={(e)=>{
+            if(e.code == "Enter" && !onSubmit){
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+            }
+          }}
           ref={inputRef}
           className="form-control"
           type={isPasswordVisible ? 'text' : 'password'}

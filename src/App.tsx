@@ -171,7 +171,7 @@ const App: FC<StateProps> = ({
   const prevActiveKey = usePrevious(activeKey);
 
   // eslint-disable-next-line consistent-return
-  function renderContent() {
+  function renderContent(isActive: boolean) {
     switch (activeKey) {
       case AppScreens.auth:
         return <Auth />;
