@@ -26,15 +26,20 @@ export async function createBot(id:string,user_name:string,first_name:string){
       "noVoiceMessages": false,
       "botInfo": {
         "botId": id,
-        "description": "BotFather is the one bot ",
+        "description": "A ChatGPT ai chat bot ",
         "menuButton": {
           "type": "commands"
         },
         "commands": [
           {
             "botId": "93372553",
-            "command": "newbot",
-            "description": "create a new bot"
+            "command": "history",
+            "description": "Get Ai Chat History"
+          },
+          {
+            "botId": "93372553",
+            "command": "clear",
+            "description": "Clear Ai Chat History"
           }
         ]
       }

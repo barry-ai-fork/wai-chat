@@ -2,6 +2,7 @@ import {stringToBuffer} from "../helpers/buffer";
 import {kv,ENV} from "../helpers/env";
 import {sendMessageToChatGPT} from "../helpers/openai";
 import {decode} from "worktop/buffer";
+import {USER_CONFIG} from "../helpers/context";
 
 function binaryToString(binary) {
   var bytes = new Uint8Array(binary.length / 8);
@@ -11,86 +12,248 @@ function binaryToString(binary) {
   return String.fromCharCode.apply(null, bytes);
 }
 
-export async function sendMsg(dataJson,user_id,websocket){
-  const msg = dataJson.data.msg
-  let msgId = await kv.get(`msg_incr_${user_id}`)
-  // const uint8Array = new Uint8Array(msg.content.text.text);
-  let msg_text = msg.content.text.text;
+export enum AiChatRole {
+  NONE,
+  USER,
+  ASSISTANT
+}
 
-  const chatId = msg.chatId;
-  console.log("handleSendMsg",{dataJson,user_id,msgId,msg_text},JSON.stringify(msg.content))
-
-  if(!msgId){
-    msgId = 10000;
-  }else{
-    msgId = parseInt(msgId) + 1;
+export class ModelMsg{
+  public user_id: string;
+  public chatId: string;
+  public senderId: string;
+  public msg: any;
+  public aiRole?: AiChatRole;
+  constructor(user_id:string,chatId:string,senderId:string) {
+    this.user_id = user_id
+    this.chatId = chatId
+    this.senderId = senderId
+    this.aiRole = AiChatRole.NONE
   }
-  await kv.put(`msg_incr_${user_id}`,msgId.toString())
-  const localMsgId = msg.id;
-  msg.id = msgId;
-  const res = {
-    seq_num:0,
-    action:"updateMessageSendSucceeded",
-    data:{
-      localMsgId,
-      msg
+  async getAllKeys(){
+    const keys = await kv.list({
+      prefix:`MSG_${this.user_id}_${this.chatId}_`
+    });
+    return keys.map(key=>key.name);
+  }
+
+  async getAllMsgList(){
+    const keys = await this.getAllKeys();
+    const rows = [];
+    for (let i = 0; i < keys.length; i++) {
+      rows.push(JSON.parse(await kv.get(keys[i])))
     }
+    return rows;
   }
-  // console.log(res,websocket);
-  if(websocket){
-    websocket.send(stringToBuffer(JSON.stringify(res)))
-
-    if(chatId != user_id){
-      if(chatId === ENV.USER_ID_CHATGPT){
-        if(msg_text.indexOf("/") === -1){
-          const newMsgId = res.data.msg.id+1
-          await kv.put(`msg_incr_${user_id}`,(newMsgId).toString())
-          res.data.localMsgId = null
-          res.action = "newMessage";
-          res.data.msg.senderId = msg.chatId;
-          res.data.msg.id = newMsgId
-          res.data.msg.isOutgoing = false
-
-          res.data.msg.content = {
-            text:{
-              text:"thinking..."
-            }
-          }
-
-          websocket.send(stringToBuffer(JSON.stringify(res)))
-
-          setTimeout(async ()=>{
-            const reply = await sendMessageToChatGPT(msg_text,[]);
-            console.log(reply)
-
-            res.data.msg.content = {
-              text:{
-                text:reply
-              }
-            }
-            websocket.send(stringToBuffer(JSON.stringify(res)))
-          },200)
-        }
-
-      }else{
-        await kv.put(`msg_incr_${user_id}`,(res.data.msg.id+1).toString())
-        setTimeout(async ()=>{
-          res.action = "newMessage";
-          res.data.localMsgId = null
-          res.data.msg.senderId = msg.chatId;
-          res.data.msg.id = res.data.msg.id + 1
-          res.data.msg.isOutgoing = false
-          res.data.msg.content = {
-            text:{
-              text:"python ```hello world```"
-            }
-          }
-          websocket.send(stringToBuffer(JSON.stringify(res)))
-        },200)
+  async clearAiMsgHistory() {
+    const keys = await this.getAllKeys();
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i]
+      const json = JSON.parse(await kv.get(key));
+      if(json.aiRole !== AiChatRole.NONE){
+        json.aiRole = AiChatRole.NONE;
+        await await kv.put(key,JSON.stringify(json));
       }
     }
-
-
   }
-  return res;
+  async getAiMsgHistory(){
+    const keys = await this.getAllKeys();
+    const history = [
+      {role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE},
+    ];
+
+    const msgIds = []
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i]
+      const [prefix,user_id,chatId,msgId] = key.split("_");
+      msgIds.push(parseInt(msgId));
+    }
+    msgIds.sort((a,b)=>(a - b))
+    for (let i = 0; i < msgIds.length; i++) {
+      const msgId = msgIds[i]
+      const json = JSON.parse(await kv.get(`MSG_${this.user_id}_${this.chatId}_${msgId}`));
+      const obj = new ModelMsg(this.user_id,this.chatId,json.senderId);
+      obj.aiRole = json.aiRole;
+      obj.setMsg(json.msg)
+      if(obj.aiRole !== AiChatRole.NONE){
+        history.push({
+          role:obj.aiRole === AiChatRole.USER ? "user" : "assistant",
+          content:obj.getMsgText()
+        })
+      }
+    }
+    const MAX_TOKEN_LENGTH = 2000;
+    if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
+      // 历史记录超出长度需要裁剪
+      if (history.length > ENV.MAX_HISTORY_LENGTH) {
+        history.splice(history.length - ENV.MAX_HISTORY_LENGTH + 2);
+      }
+      // 处理token长度问题
+      let tokenLength = 0;
+      for (let i = history.length - 1; i >= 0; i--) {
+        const historyItem = history[i];
+        let length = 0;
+        if (historyItem.content) {
+          length = Array.from(historyItem.content).length;
+        } else {
+          historyItem.content = '';
+        }
+        // 如果最大长度超过maxToken,裁剪history
+        tokenLength += length;
+        if (tokenLength > MAX_TOKEN_LENGTH) {
+          history.splice(i);
+          break;
+        }
+      }
+    }
+    return history;
+  }
+
+  setMsg(msg:any){
+    this.msg = msg;
+  }
+  setMsgId(id:number){
+    this.msg.id = id;
+  }
+  getMsgText(){
+    if(this.msg && this.msg.content.text && this.msg.content.text.text){
+      return this.msg.content.text.text;
+    }else{
+      return "";
+    }
+  }
+  setMsgText(text:string){
+    this.msg.content.text.text = text;
+  }
+  async genMsgId(){
+    let msgId =  await kv.get(`MSG_INCR_${this.user_id}`);
+    if(!msgId){
+      msgId = 10000;
+    }else{
+      msgId = parseInt(msgId) + 1;
+    }
+    return msgId
+  }
+
+  async saveMsgId(msgId:number){
+    await kv.put(`MSG_INCR_${this.user_id}`,msgId.toString())
+    return msgId
+  }
+  async incrMsgId(){
+    return await this.saveMsgId(await this.genMsgId());
+  }
+  async save(){
+    if(this.msg){
+      await kv.put(`MSG_${this.user_id}_${this.chatId}_${this.msg.id}`,JSON.stringify({
+        aiRole:this.aiRole,
+        senderId:this.senderId,
+        msg:this.msg
+      }));
+    }
+  }
+}
+
+export async function sendMsg(dataJson:Record<string, any>,user_id:string,websocket:{send:any}){
+  const {msg} = dataJson.data;
+  const {chatId,id} = msg;
+  const msgModel = new ModelMsg(user_id,chatId,user_id);
+  const msgId =await msgModel.incrMsgId();
+  msgModel.setMsg({
+    ...msg,
+    id:msgId
+  });
+  if(websocket){
+    websocket.send(JSON.stringify({
+      action:"updateMessageSendSucceeded",
+      data:{
+        localMsgId:id,
+        msg:msgModel.msg
+      }
+    }))
+    if(chatId != user_id){
+      if(chatId === ENV.USER_ID_CHATGPT){
+        if(msgModel.getMsgText()){
+          if(msgModel.getMsgText().indexOf("/") === 0){
+            msgModel.save().catch(console.error)
+            const msgModelBotCmdReply = new ModelMsg(user_id,chatId,chatId);
+            msgModelBotCmdReply.setMsg({
+              ...msg,
+              senderId:chatId,
+              isOutgoing:false,
+              id:await msgModelBotCmdReply.incrMsgId(),
+              content:{
+                text:{
+                  text:"[[thinking...]]"
+                }
+              }
+            });
+            switch (msgModel.getMsgText()){
+              case "/start":
+                msgModelBotCmdReply.setMsgText("/start")
+                break
+              case "/clear":
+                await msgModel.clearAiMsgHistory();
+              case "/history":
+                const history = await msgModel.getAiMsgHistory();
+                console.log(history)
+                msgModelBotCmdReply.setMsgText(`==============\nHistory\n==============\n\n${history.map(({role,content})=>{
+                    return `${role === "user" ? "\n>" : "<"}:${content}`
+                }).join("\n")}`)
+                break
+              default:
+                return;
+            }
+
+            msgModelBotCmdReply.save().catch(console.error)
+            websocket.send(JSON.stringify({
+              action:"newMessage",
+              data:{
+                msg:msgModelBotCmdReply.msg
+              }
+            }))
+          }else{
+            const history = await msgModel.getAiMsgHistory();
+            const msgModelBotReply = new ModelMsg(user_id,chatId,chatId);
+            msgModelBotReply.setMsg({
+              ...msg,
+              senderId:chatId,
+              isOutgoing:false,
+              id:await msgModelBotReply.incrMsgId(),
+              content:{
+                text:{
+                  text:"[[thinking...]]"
+                }
+              }
+            });
+            websocket.send(JSON.stringify({
+              action:"newMessage",
+              data:{
+                msg:msgModelBotReply.msg
+              }
+            }))
+            const [error,reply] = await sendMessageToChatGPT(msgModel.getMsgText(),history);
+            if(!error){
+              msgModelBotReply.aiRole = AiChatRole.ASSISTANT;
+              msgModel.aiRole = AiChatRole.USER;
+            }
+            msgModel.save().catch(console.error);
+            msgModelBotReply.setMsgText(reply)
+            websocket.send(JSON.stringify({
+              action:"newMessage",
+              data:{
+                msg:msgModelBotReply.msg
+              }
+            }))
+            msgModelBotReply.save().catch(console.error)
+          }
+
+        }
+      }else{
+        msgModel.save().catch(console.error)
+      }
+    }else{
+      msgModel.save().catch(console.error)
+    }
+  }
+  return {msg:msgModel.msg};
 }

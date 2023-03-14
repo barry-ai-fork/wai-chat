@@ -17,7 +17,10 @@ export const ENV = {
   Access_Control_Allow_Origin : "*",
   // OpenAI API Key
   OPENAI_API_KEY: "",
-
+  // 为了避免4096字符限制，将消息删减
+  AUTO_TRIM_HISTORY: false,
+  // 最大历史记录长度
+  MAX_HISTORY_LENGTH: 20,
 };
 
 export let kv:CloudFlareKv | LocalFile;
@@ -50,5 +53,4 @@ export function initEnv(env:Record<string, any>) {
   }
   kv = new CloudFlareKv();
   kv.init(env.DATABASE)
-
 }

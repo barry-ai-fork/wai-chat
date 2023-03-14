@@ -1,6 +1,6 @@
 export default class CloudFlareKv{
   private db: any;
-  async init(db:any){
+  init(db:any){
     this.db = db;
   }
   async put(key:string,value:any){
@@ -16,6 +16,18 @@ export default class CloudFlareKv{
   }
 
   async list(options:{prefix?:string}){
-    return this.db.delete(options)
+    const rows = [];
+    let cur = null;
+    do {
+      const {keys, cursor} = await this.db.list({
+        prefix: options.prefix,
+        cursor: cur,
+      });
+      rows.push(...keys);
+      cur = cursor;
+    } while (cur);
+
+    return rows;
   }
+
 }
