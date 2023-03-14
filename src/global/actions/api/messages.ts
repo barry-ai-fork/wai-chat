@@ -947,11 +947,11 @@ async function loadViewportMessages<T extends GlobalState>(
 
   global = getGlobal();
   let flag = false;
-  if(global.messages.byChatId[chatId].threadsById["-1"].lastViewportIds == undefined){
+  if(!global.messages.byChatId[chatId].threadsById || global.messages.byChatId[chatId].threadsById["-1"].lastViewportIds == undefined){
     global = safeReplaceViewportIds(global, chatId, threadId, [], tabId);
     flag = true;
   }
-  if(global.messages.byChatId[chatId].threadsById["-1"].listedIds == undefined){
+  if(!global.messages.byChatId[chatId].threadsById || global.messages.byChatId[chatId].threadsById["-1"].listedIds == undefined){
     global = updateListedIds(global, chatId, threadId, [])
     flag = true;
   }
