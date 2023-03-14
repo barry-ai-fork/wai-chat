@@ -394,46 +394,46 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
         >
           {menuItems}
         </DropdownMenu>
-        {/* <SearchInput */}
-        {/*   inputId="telegram-search-input" */}
-        {/*   parentContainerClassName="LeftSearch" */}
-        {/*   className={buildClassName( */}
-        {/*     (globalSearchChatId || searchDate) ? 'with-picker-item' : undefined, */}
-        {/*     shouldHideSearch && 'SearchInput--hidden', */}
-        {/*   )} */}
-        {/*   value={isClosingSearch ? undefined : (contactsFilter || searchQuery)} */}
-        {/*   focused={isSearchFocused} */}
-        {/*   isLoading={isLoading || connectionStatusPosition === 'minimized'} */}
-        {/*   spinnerColor={connectionStatusPosition === 'minimized' ? 'yellow' : undefined} */}
-        {/*   spinnerBackgroundColor={connectionStatusPosition === 'minimized' && theme === 'light' ? 'light' : undefined} */}
-        {/*   placeholder={searchInputPlaceholder} */}
-        {/*   autoComplete="off" */}
-        {/*   canClose={Boolean(globalSearchChatId || searchDate)} */}
-        {/*   onChange={onSearchQuery} */}
-        {/*   onReset={onReset} */}
-        {/*   onFocus={handleSearchFocus} */}
-        {/*   onSpinnerClick={connectionStatusPosition === 'minimized' ? toggleConnectionStatus : undefined} */}
-        {/* > */}
-        {/*   {selectedSearchDate && ( */}
-        {/*     <PickerSelectedItem */}
-        {/*       icon="calendar" */}
-        {/*       title={selectedSearchDate} */}
-        {/*       canClose */}
-        {/*       isMinimized={Boolean(globalSearchChatId)} */}
-        {/*       className="search-date" */}
-        {/*       onClick={setGlobalSearchDate} */}
-        {/*       clickArg={clearedDateSearchParam} */}
-        {/*     /> */}
-        {/*   )} */}
-        {/*   {globalSearchChatId && ( */}
-        {/*     <PickerSelectedItem */}
-        {/*       chatOrUserId={globalSearchChatId} */}
-        {/*       onClick={setGlobalSearchChatId} */}
-        {/*       canClose */}
-        {/*       clickArg={clearedChatSearchParam} */}
-        {/*     /> */}
-        {/*   )} */}
-        {/* </SearchInput> */}
+        <SearchInput
+          inputId="telegram-search-input"
+          parentContainerClassName="LeftSearch"
+          className={buildClassName(
+            (globalSearchChatId || searchDate) ? 'with-picker-item' : undefined,
+            shouldHideSearch && 'SearchInput--hidden',
+          )}
+          value={isClosingSearch ? undefined : (contactsFilter || searchQuery)}
+          focused={isSearchFocused}
+          isLoading={isLoading || connectionStatusPosition === 'minimized'}
+          spinnerColor={connectionStatusPosition === 'minimized' ? 'yellow' : undefined}
+          spinnerBackgroundColor={connectionStatusPosition === 'minimized' && theme === 'light' ? 'light' : undefined}
+          placeholder={searchInputPlaceholder}
+          autoComplete="off"
+          canClose={Boolean(globalSearchChatId || searchDate)}
+          onChange={onSearchQuery}
+          onReset={onReset}
+          onFocus={handleSearchFocus}
+          onSpinnerClick={connectionStatusPosition === 'minimized' ? toggleConnectionStatus : undefined}
+        >
+          {selectedSearchDate && (
+            <PickerSelectedItem
+              icon="calendar"
+              title={selectedSearchDate}
+              canClose
+              isMinimized={Boolean(globalSearchChatId)}
+              className="search-date"
+              onClick={setGlobalSearchDate}
+              clickArg={clearedDateSearchParam}
+            />
+          )}
+          {globalSearchChatId && (
+            <PickerSelectedItem
+              chatOrUserId={globalSearchChatId}
+              onClick={setGlobalSearchChatId}
+              canClose
+              clickArg={clearedChatSearchParam}
+            />
+          )}
+        </SearchInput>
         {isCurrentUserPremium && <StatusButton />}
         {hasPasscode && (
           <Button

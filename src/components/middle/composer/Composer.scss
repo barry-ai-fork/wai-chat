@@ -591,6 +591,7 @@
     top: calc((3.5rem - var(--composer-text-size, 1rem) * 1.3125) / 2);
 
     @media (max-width: 600px) {
+      padding-left: 0.75rem;
       top: calc((2.875rem - var(--composer-text-size, 1rem) * 1.3125) / 2);
     }
   }
@@ -600,9 +601,9 @@
       padding-left: 0;
       padding-right: 0;
 
-      @media (min-width: 600px) {
+      //@media (min-width: 600px) {
         padding-left: 0.75rem;
-      }
+      //}
     }
   }
 
