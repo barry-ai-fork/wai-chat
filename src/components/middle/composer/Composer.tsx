@@ -788,7 +788,6 @@ const Composer: FC<OwnProps & StateProps> = ({
         )];
       }
     }
-
     const { text, entities } = parseMessageInput(getHtml());
 
     if (currentAttachments.length) {

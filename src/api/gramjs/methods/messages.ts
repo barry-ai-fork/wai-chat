@@ -68,6 +68,7 @@ import { interpolateArray } from '../../../util/waveform';
 import { requestChatUpdate } from './chats';
 import { getEmojiOnlyCountForMessage } from '../../../global/helpers/getEmojiOnlyCountForMessage';
 import { getServerTimeOffset } from '../../../util/serverTime';
+import MsgConn from "../../../lib/client/msgConn";
 
 const FAST_SEND_TIMEOUT = 1000;
 const INPUT_WAVEFORM_LENGTH = 63;
@@ -265,25 +266,27 @@ export function sendMessage(
     scheduledAt,
     sendAs,
   );
-
   onUpdate({
     '@type': localMessage.isScheduled ? 'newScheduledMessage' : 'newMessage',
     id: localMessage.id,
     chatId: chat.id,
-    message: localMessage,
+    message: {
+      ...localMessage,
+      sendingState: 'messageSendingStatePending',
+    },
   });
 
   // This is expected to arrive after `updateMessageSendSucceeded` which replaces the local ID,
   // so in most cases this will be simply ignored
   const timeout = setTimeout(() => {
-    onUpdate({
-      '@type': localMessage.isScheduled ? 'updateScheduledMessage' : 'updateMessage',
-      id: localMessage.id,
-      chatId: chat.id,
-      message: {
-        sendingState: 'messageSendingStatePending',
-      },
-    });
+    // onUpdate({
+    //   '@type': localMessage.isScheduled ? 'updateScheduledMessage' : 'updateMessage',
+    //   id: localMessage.id,
+    //   chatId: chat.id,
+    //   message: {
+    //     sendingState: 'messageSendingStatePending',
+    //   },
+    // });
   }, FAST_SEND_TIMEOUT);
 
   const randomId = generateRandomBigInt();
@@ -333,28 +336,13 @@ export function sendMessage(
         vcard: '',
       });
     }
-
     await prevQueue;
-
-    const RequestClass = media ? GramJs.messages.SendMedia : GramJs.messages.SendMessage;
-
     try {
-      await invokeRequest(new RequestClass({
-        clearDraft: true,
-        message: text || '',
-        entities: entities ? entities.map(buildMtpMessageEntity) : undefined,
-        peer: buildInputPeer(chat.id, chat.accessHash),
-        randomId,
-        ...(isSilent && { silent: isSilent }),
-        ...(scheduledAt && { scheduleDate: scheduledAt }),
-        ...(replyingTo && { replyToMsgId: replyingTo }),
-        ...(replyingToTopId && { topMsgId: replyingToTopId }),
-        ...(media && { media }),
-        ...(noWebPage && { noWebpage: noWebPage }),
-        ...(sendAs && { sendAs: buildInputPeer(sendAs.id, sendAs.accessHash) }),
-        ...(shouldUpdateStickerSetsOrder && { updateStickersetsOrder: shouldUpdateStickerSetsOrder }),
-      }), true, true);
+      if(onProgress){
+        await onProgress(1,localMessage)
+      }
     } catch (error: any) {
+      debugger
       onUpdate({
         '@type': 'updateMessageSendFailed',
         chatId: chat.id,

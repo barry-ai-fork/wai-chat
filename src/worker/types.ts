@@ -28,6 +28,6 @@ export type AuthResponse = {
     name?: string,
     avatar?: string,
   },
-  password_empty: boolean
+  password_empty?: boolean
 };
 

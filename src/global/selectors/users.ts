@@ -17,7 +17,7 @@ export function selectIsUserBlocked<T extends GlobalState>(global: T, userId: st
 }
 
 export function selectIsCurrentUserPremium<T extends GlobalState>(global: T) {
-  if (!global.currentUserId) return false;
+  if (!global.currentUserId || !global.users.byId[global.currentUserId]) return false;
 
   return Boolean(global.users.byId[global.currentUserId].isPremium);
 }

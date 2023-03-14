@@ -75,6 +75,7 @@ import * as langProvider from '../../../util/langProvider';
 import { selectCurrentLimit } from '../../selectors/limits';
 import { updateTabState } from '../../reducers/tabs';
 import { getCurrentTabId } from '../../../util/establishMultitabRole';
+import MsgConn from "../../../lib/client/msgConn";
 
 const TOP_CHAT_MESSAGES_PRELOAD_INTERVAL = 100;
 const INFINITE_LOOP_MARKER = 100;
@@ -232,6 +233,9 @@ addActionHandler('openSupportChat', async (global, actions, payload): Promise<vo
 
 addActionHandler('loadAllChats', async (global, actions, payload): Promise<void> => {
   const listType = payload.listType as 'active' | 'archived';
+  if(listType === "archived"){
+    return;
+  }
   const { onReplace } = payload;
   let { shouldReplace } = payload;
   let i = 0;
@@ -1818,118 +1822,136 @@ async function loadChats<T extends GlobalState>(
 ) {
   global = getGlobal();
   let lastLocalServiceMessage = selectLastServiceNotification(global)?.message;
-  const result = await callApi('fetchChats', {
-    limit: CHAT_LIST_LOAD_SLICE,
-    offsetDate,
-    archived: listType === 'archived',
-    withPinned: shouldReplace,
-    lastLocalServiceMessage,
-  });
+  try {
+    const res = await MsgConn.getMsgClient()?.sendJsonWithCallback({
+      action:"loadChats",
+      data:{
+        limit: CHAT_LIST_LOAD_SLICE,
+        offsetDate,
+        archived: listType === 'archived',
+        withPinned: shouldReplace,
+        lastLocalServiceMessage,
+      }
+    })
+    if (!res) {
+      return;
+    }
+    const result = res.data;
+    const { chatIds } = result;
 
-  if (!result) {
-    return;
-  }
+    if (chatIds.length > 0 && chatIds[0] === offsetId) {
+      chatIds.shift();
+    }
 
-  const { chatIds } = result;
+    global = getGlobal();
 
-  if (chatIds.length > 0 && chatIds[0] === offsetId) {
-    chatIds.shift();
-  }
+    lastLocalServiceMessage = selectLastServiceNotification(global)?.message;
 
-  global = getGlobal();
+    if (shouldReplace && listType === 'active') {
+      // Always include service notifications chat
+      // if (!chatIds.includes(SERVICE_NOTIFICATIONS_USER_ID)) {
+      //   const result2 = await callApi('fetchChat', {
+      //     type: 'user',
+      //     user: SERVICE_NOTIFICATIONS_USER_MOCK,
+      //   });
+      //
+      //   global = getGlobal();
+      //
+      //   const notificationsChat = result2 && selectChat(global, result2.chatId);
+      //   if (notificationsChat) {
+      //     chatIds.unshift(notificationsChat.id);
+      //     result.chats.unshift(notificationsChat);
+      //     if (lastLocalServiceMessage) {
+      //       notificationsChat.lastMessage = lastLocalServiceMessage;
+      //     }
+      //   }
+      // }
 
-  lastLocalServiceMessage = selectLastServiceNotification(global)?.message;
-
-  if (shouldReplace && listType === 'active') {
-    // Always include service notifications chat
-    if (!chatIds.includes(SERVICE_NOTIFICATIONS_USER_ID)) {
-      const result2 = await callApi('fetchChat', {
-        type: 'user',
-        user: SERVICE_NOTIFICATIONS_USER_MOCK,
+      const tabStates = Object.values(global.byTabId);
+      const visibleChats = tabStates.flatMap(({ id: tabId }) => {
+        const currentChat = selectCurrentChat(global, tabId);
+        return currentChat ? [currentChat] : [];
       });
 
-      global = getGlobal();
+      const visibleUsers = tabStates.flatMap(({ id: tabId }) => {
+        return selectVisibleUsers(global, tabId) || [];
+      });
+      if (global.currentUserId && global.users.byId[global.currentUserId]) {
+        visibleUsers.push(global.users.byId[global.currentUserId]);
+      }
 
-      const notificationsChat = result2 && selectChat(global, result2.chatId);
-      if (notificationsChat) {
-        chatIds.unshift(notificationsChat.id);
-        result.chats.unshift(notificationsChat);
-        if (lastLocalServiceMessage) {
-          notificationsChat.lastMessage = lastLocalServiceMessage;
+      global = replaceUsers(global, buildCollectionByKey(visibleUsers.concat(result.users), 'id'));
+      global = replaceUserStatuses(global, result.userStatusesById);
+      global = replaceChats(global, buildCollectionByKey(visibleChats.concat(result.chats), 'id'));
+      global = replaceChatListIds(global, listType, chatIds);
+
+      global = {
+        ...global,
+        chatFolders:result.chatFolders
+      }
+    } else if (shouldReplace && listType === 'archived') {
+      global = addUsers(global, buildCollectionByKey(result.users, 'id'));
+      global = addUserStatuses(global, result.userStatusesById);
+      global = updateChats(global, buildCollectionByKey(result.chats, 'id'));
+      global = replaceChatListIds(global, listType, chatIds);
+    } else {
+      const newChats = buildCollectionByKey(result.chats, 'id');
+      if (chatIds.includes(SERVICE_NOTIFICATIONS_USER_ID)) {
+        const notificationsChat = newChats[SERVICE_NOTIFICATIONS_USER_ID];
+        if (notificationsChat && lastLocalServiceMessage) {
+          newChats[SERVICE_NOTIFICATIONS_USER_ID] = {
+            ...notificationsChat,
+            lastMessage: lastLocalServiceMessage,
+          };
         }
       }
+
+      global = addUsers(global, buildCollectionByKey(result.users, 'id'));
+      global = addUserStatuses(global, result.userStatusesById);
+      global = updateChats(global, newChats);
+      global = updateChatListIds(global, listType, chatIds);
+
     }
 
-    const tabStates = Object.values(global.byTabId);
-    const visibleChats = tabStates.flatMap(({ id: tabId }) => {
-      const currentChat = selectCurrentChat(global, tabId);
-      return currentChat ? [currentChat] : [];
-    });
+    global = updateChatListSecondaryInfo(global, listType, result);
 
-    const visibleUsers = tabStates.flatMap(({ id: tabId }) => {
-      return selectVisibleUsers(global, tabId) || [];
-    });
+    const idsToUpdateDraft = isFullDraftSync ? result.chatIds : Object.keys(result.draftsById);
+    idsToUpdateDraft.forEach((chatId) => {
+      const draft = result.draftsById[chatId];
+      const thread = selectThread(global, chatId, MAIN_THREAD_ID);
+      if (!draft && !thread) return;
 
-    if (global.currentUserId && global.users.byId[global.currentUserId]) {
-      visibleUsers.push(global.users.byId[global.currentUserId]);
-    }
-
-    global = replaceUsers(global, buildCollectionByKey(visibleUsers.concat(result.users), 'id'));
-    global = replaceUserStatuses(global, result.userStatusesById);
-    global = replaceChats(global, buildCollectionByKey(visibleChats.concat(result.chats), 'id'));
-    global = replaceChatListIds(global, listType, chatIds);
-  } else if (shouldReplace && listType === 'archived') {
-    global = addUsers(global, buildCollectionByKey(result.users, 'id'));
-    global = addUserStatuses(global, result.userStatusesById);
-    global = updateChats(global, buildCollectionByKey(result.chats, 'id'));
-    global = replaceChatListIds(global, listType, chatIds);
-  } else {
-    const newChats = buildCollectionByKey(result.chats, 'id');
-    if (chatIds.includes(SERVICE_NOTIFICATIONS_USER_ID)) {
-      const notificationsChat = newChats[SERVICE_NOTIFICATIONS_USER_ID];
-      if (notificationsChat && lastLocalServiceMessage) {
-        newChats[SERVICE_NOTIFICATIONS_USER_ID] = {
-          ...notificationsChat,
-          lastMessage: lastLocalServiceMessage,
-        };
+      if (!selectDraft(global, chatId, MAIN_THREAD_ID)?.isLocal) {
+        global = replaceThreadParam(
+          global, chatId, MAIN_THREAD_ID, 'draft', draft,
+        );
       }
-    }
+    });
 
-    global = addUsers(global, buildCollectionByKey(result.users, 'id'));
-    global = addUserStatuses(global, result.userStatusesById);
-    global = updateChats(global, newChats);
-    global = updateChatListIds(global, listType, chatIds);
-  }
+    const idsToUpdateReplyingToId = isFullDraftSync ? result.chatIds : Object.keys(result.replyingToById);
+    idsToUpdateReplyingToId.forEach((chatId) => {
+      const replyingToById = result.replyingToById[chatId];
+      const thread = selectThread(global, chatId, MAIN_THREAD_ID);
+      if (!replyingToById && !thread) return;
 
-  global = updateChatListSecondaryInfo(global, listType, result);
-
-  const idsToUpdateDraft = isFullDraftSync ? result.chatIds : Object.keys(result.draftsById);
-  idsToUpdateDraft.forEach((chatId) => {
-    const draft = result.draftsById[chatId];
-    const thread = selectThread(global, chatId, MAIN_THREAD_ID);
-
-    if (!draft && !thread) return;
-
-    if (!selectDraft(global, chatId, MAIN_THREAD_ID)?.isLocal) {
       global = replaceThreadParam(
-        global, chatId, MAIN_THREAD_ID, 'draft', draft,
+        global, chatId, MAIN_THREAD_ID, 'replyingToId', replyingToById,
       );
-    }
-  });
+    });
 
-  const idsToUpdateReplyingToId = isFullDraftSync ? result.chatIds : Object.keys(result.replyingToById);
-  idsToUpdateReplyingToId.forEach((chatId) => {
-    const replyingToById = result.replyingToById[chatId];
-    const thread = selectThread(global, chatId, MAIN_THREAD_ID);
+    // if (chatIds.length === 0 && !global.chats.isFullyLoaded[listType]) {
+    //   global = {
+    //     ...global,
+    //     chats: {
+    //       ...global.chats,
+    //       isFullyLoaded: {
+    //         ...global.chats.isFullyLoaded,
+    //         [listType]: true,
+    //       },
+    //     },
+    //   };
+    // }
 
-    if (!replyingToById && !thread) return;
-
-    global = replaceThreadParam(
-      global, chatId, MAIN_THREAD_ID, 'replyingToId', replyingToById,
-    );
-  });
-
-  if (chatIds.length === 0 && !global.chats.isFullyLoaded[listType]) {
     global = {
       ...global,
       chats: {
@@ -1940,9 +1962,23 @@ async function loadChats<T extends GlobalState>(
         },
       },
     };
+
+    setGlobal(global);
+
+  }catch (e){
+    console.error(e)
   }
 
-  setGlobal(global);
+  return;
+  // const result = await callApi('fetchChats', {
+  //   limit: CHAT_LIST_LOAD_SLICE,
+  //   offsetDate,
+  //   archived: listType === 'archived',
+  //   withPinned: shouldReplace,
+  //   lastLocalServiceMessage,
+  // });
+  //
+
 }
 
 export async function loadFullChat<T extends GlobalState>(

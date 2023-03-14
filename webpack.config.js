@@ -23,7 +23,7 @@ const {
 
 dotenv.config();
 
-const DEFAULT_APP_TITLE = `Telegram${APP_ENV !== 'production' ? ' Beta' : ''}`;
+const DEFAULT_APP_TITLE = `AiChat${APP_ENV !== 'production' ? ' Beta' : ''}`;
 
 const {
   BASE_URL = 'https://web.telegram.org/z/',
@@ -170,10 +170,13 @@ module.exports = (_env, { mode = 'production' }) => {
         APP_TITLE,
         RELEASE_DATETIME: Date.now(),
         BASE_API: undefined,
-        TELEGRAM_T_API_ID: undefined,
-        TELEGRAM_T_API_HASH: undefined,
+        WS_URL: undefined,
+        // TELEGRAM_T_API_ID: undefined,
+        // TELEGRAM_T_API_HASH: undefined,
         // eslint-disable-next-line no-null/no-null
         TEST_SESSION: null,
+        TEST_USERNAME: undefined,
+        TEST_PWD: undefined,
       }),
       new DefinePlugin({
         APP_REVISION: DefinePlugin.runtimeValue(() => {

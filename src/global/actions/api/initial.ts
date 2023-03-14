@@ -1,39 +1,121 @@
-import {
-  addActionHandler, getGlobal, setGlobal,
-} from '../../index';
+import {addActionHandler, getGlobal, setGlobal,} from '../../index';
 
-import { initApi, callApi, callApiLocal } from '../../../api/gramjs';
+import {callApi, callApiLocal, initApi} from '../../../api/gramjs';
 
 import {
-  LANG_CACHE_NAME,
   CUSTOM_BG_CACHE_NAME,
+  IS_TEST,
+  LANG_CACHE_NAME,
+  LOCK_SCREEN_ANIMATION_DURATION_MS,
   MEDIA_CACHE_NAME,
   MEDIA_CACHE_NAME_AVATARS,
-  MEDIA_PROGRESSIVE_CACHE_NAME,
-  IS_TEST,
-  LOCK_SCREEN_ANIMATION_DURATION_MS,
+  MEDIA_PROGRESSIVE_CACHE_NAME, SESSION_TOKEN,
 } from '../../../config';
-import {
-  IS_MOV_SUPPORTED, IS_WEBM_SUPPORTED, MAX_BUFFER_SIZE, PLATFORM_ENV,
-} from '../../../util/environment';
-import { unsubscribe } from '../../../util/notifications';
+import {IS_MOV_SUPPORTED, IS_WEBM_SUPPORTED, MAX_BUFFER_SIZE, PLATFORM_ENV,} from '../../../util/environment';
+import {unsubscribe} from '../../../util/notifications';
 import * as cacheApi from '../../../util/cacheApi';
-import { updateAppBadge } from '../../../util/appBadge';
+import {updateAppBadge} from '../../../util/appBadge';
 import {
-  storeSession,
-  loadStoredSession,
+  clearLegacySessions,
   clearStoredSession,
   importLegacySession,
-  clearLegacySessions,
+  loadStoredSession,
+  storeSession,
 } from '../../../util/sessions';
-import { forceWebsync } from '../../../util/websync';
-import { addUsers, clearGlobalForLockScreen, updatePasscodeSettings } from '../../reducers';
-import { clearEncryptedSession, encryptSession, forgetPasscode } from '../../../util/passcode';
-import { serializeGlobal } from '../../cache';
-import { parseInitialLocationHash } from '../../../util/routing';
-import type { ActionReturnType } from '../../types';
-import { getCurrentTabId } from '../../../util/establishMultitabRole';
-import { buildCollectionByKey } from '../../../util/iteratees';
+import {forceWebsync} from '../../../util/websync';
+import {addUsers, clearGlobalForLockScreen, updatePasscodeSettings} from '../../reducers';
+import {clearEncryptedSession, encryptSession, forgetPasscode} from '../../../util/passcode';
+import {serializeGlobal} from '../../cache';
+import {parseInitialLocationHash} from '../../../util/routing';
+import type {ActionReturnType} from '../../types';
+import {getCurrentTabId} from '../../../util/establishMultitabRole';
+import {buildCollectionByKey} from '../../../util/iteratees';
+import MsgConn, {MsgClientState, MsgConnNotify, MsgConnNotifyAction} from "../../../lib/client/msgConn";
+import parseMessageInput from "../../../util/parseMessageInput";
+
+
+
+addActionHandler('updateGlobal', (global,action,payload): ActionReturnType => {
+  return {
+    ...global,
+    ...payload,
+  };
+});
+
+
+addActionHandler('updateMsg', (global,actions,payload): ActionReturnType => {
+  console.log("[updateMsg]",payload.data);
+  switch (payload.action){
+    case "login":
+      if(payload.err){
+        return {
+          ...global,
+          authState:"authorizationStateWaitRegistration",
+          connectionState:"connectionStateReady",
+          currentUserId:undefined,
+          users:{
+            ...global.users,
+            byId:{
+
+            }
+          }
+        }
+      }else{
+        return {
+          ...global,
+          connectionState:"connectionStateReady",
+          currentUserId:payload.data.currentUserId,
+          users:{
+            ...global.users,
+            byId:{
+              ...global.users.byId,
+              [payload.data.currentUserId]:payload.data.currentUser
+            }
+          }
+        }
+      }
+
+    case "newMessage":
+    case "updateMessageSendSucceeded":
+      handleRecvMsg(global,actions,payload.data)
+      break
+    default:
+      const {action,...data} = payload;
+      actions.apiUpdate({
+        '@type': action,
+        ...data
+      });
+      break
+  }
+
+});
+
+const handleRecvMsg = (global,actions,data)=>{
+  let {msg,localMsgId} = data;
+  const {chatId,content} = msg;
+  if(!content.text.entities){
+    const { text, entities } = parseMessageInput(content.text.text);
+    msg = {
+      ...msg,
+      content:{
+        text:{
+          text,
+          entities
+        }
+      }
+    }
+  }
+
+  actions.apiUpdate({
+    '@type': 'updateMessageSendSucceeded',
+    localId: localMsgId,
+    chatId: chatId,
+    message: {
+      sendingState:undefined,
+      ...msg
+    },
+  });
+}
 
 addActionHandler('initApi', async (global, actions): Promise<void> => {
   if (!IS_TEST) {
@@ -55,6 +137,23 @@ addActionHandler('initApi', async (global, actions): Promise<void> => {
     dcId: initialLocationHash?.tgWebAuthDcId ? Number(initialLocationHash?.tgWebAuthDcId) : undefined,
     mockScenario: initialLocationHash?.mockScenario,
   });
+
+  const msgConn = new MsgConn(1001);
+  msgConn.setMsgHandler(async (accountId,notifys:MsgConnNotify[])=>{
+    if(notifys && notifys.length > 0){
+      for (let i = 0; i < notifys.length; i++) {
+        const notify = notifys[i];
+        switch (notify.action){
+          case MsgConnNotifyAction.onData:
+            const payload = notify.payload;
+            actions.updateMsg(payload);
+            break;
+        }
+      }
+    }
+  })
+  await msgConn.connect();
+  await msgConn.waitForMsgServerState(MsgClientState.connected);
 });
 
 addActionHandler('setAuthPhoneNumber', (global, actions, payload): ActionReturnType => {
@@ -153,22 +252,28 @@ addActionHandler('saveSession', (global, actions, payload): ActionReturnType => 
 });
 
 addActionHandler('signOut', async (global, actions, payload): Promise<void> => {
-  if ('hangUp' in actions) actions.hangUp({ tabId: getCurrentTabId() });
-  if ('leaveGroupCall' in actions) actions.leaveGroupCall({ tabId: getCurrentTabId() });
-
-  try {
-    await unsubscribe();
-    await callApi('destroy');
-    await forceWebsync(false);
-  } catch (err) {
-    // Do nothing
-  }
-
-  actions.reset();
-
-  if (payload?.forceInitApi) {
-    actions.initApi();
-  }
+  // if ('hangUp' in actions) actions.hangUp({ tabId: getCurrentTabId() });
+  // if ('leaveGroupCall' in actions) actions.leaveGroupCall({ tabId: getCurrentTabId() });
+  //
+  // try {
+  //   await unsubscribe();
+  //   await callApi('destroy');
+  //   await forceWebsync(false);
+  // } catch (err) {
+  //   // Do nothing
+  // }
+  //
+  // actions.reset();
+  //
+  // if (payload?.forceInitApi) {
+  //   actions.initApi();
+  // }
+  window.localStorage.removeItem(SESSION_TOKEN);
+  setGlobal({
+    ...global,
+    currentUserId:"",
+    authState:"authorizationStateWaitRegistration",
+  })
 });
 
 addActionHandler('reset', (global, actions): ActionReturnType => {

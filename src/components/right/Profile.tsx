@@ -482,7 +482,7 @@ const Profile: FC<OwnProps & StateProps> = ({
           >
             {renderContent()}
           </Transition>
-          <TabList big activeTab={renderingActiveTab} tabs={tabs} onSwitchTab={setActiveTab} />
+          {/* <TabList big activeTab={renderingActiveTab} tabs={tabs} onSwitchTab={setActiveTab} /> */}
         </div>
       )}
 

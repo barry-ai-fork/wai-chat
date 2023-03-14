@@ -26,6 +26,7 @@ const PLURAL_OPTIONS = ['value', 'zeroValue', 'oneValue', 'twoValue', 'fewValue'
 const PLURAL_RULES = {
   /* eslint-disable max-len */
   en: (n: number) => (n !== 1 ? 6 : 2),
+  "zh-rCn": (n: number) => (n !== 1 ? 6 : 2),
   ar: (n: number) => (n === 0 ? 1 : n === 1 ? 2 : n === 2 ? 3 : n % 100 >= 3 && n % 100 <= 10 ? 4 : n % 100 >= 11 ? 5 : 6),
   be: (n: number) => {
     const s = String(n).split('.'); const t0 = Number(s[0]) === n; const n10 = t0 && Number(s[0].slice(-1)); const n100 = t0 && Number(s[0].slice(-2));
@@ -208,7 +209,23 @@ async function importFallbackLangPack() {
 }
 
 async function fetchRemote(langCode: string): Promise<ApiLangPack | undefined> {
-  const remote = await callApi('fetchLangPack', { sourceLangPacks: LANG_PACKS, langCode });
+  let remote;
+  if(['en','zh-rCN'].includes(langCode)){
+    remote = {
+      langPack:null
+    }
+    switch (langCode){
+      case "zh-rCN":
+        remote.langPack = (await import('./LangPack-zh-rCN')).default;
+        break;
+      default:
+      case "en":
+        remote.langPack = (await import('./LangPack-en')).default;
+        break;
+    }
+  }else{
+    remote = await callApi('fetchLangPack', { sourceLangPacks: LANG_PACKS, langCode });
+  }
   if (remote) {
     await cacheApi.save(LANG_CACHE_NAME, langCode, remote.langPack);
     return remote.langPack;

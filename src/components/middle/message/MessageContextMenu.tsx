@@ -314,104 +314,104 @@ const MessageContextMenu: FC<OwnProps> = ({
         style={menuStyle}
         ref={scrollableRef}
       >
-        {canSendNow && <MenuItem icon="send-outline" onClick={onSend}>{lang('MessageScheduleSend')}</MenuItem>}
-        {canReschedule && (
-          <MenuItem icon="schedule" onClick={onReschedule}>{lang('MessageScheduleEditTime')}</MenuItem>
-        )}
-        {canReply && <MenuItem icon="reply" onClick={onReply}>{lang('Reply')}</MenuItem>}
-        {!noReplies && Boolean(repliesThreadInfo?.messagesCount) && (
-          <MenuItem icon="replies" onClick={onOpenThread}>
-            {lang('Conversation.ContextViewReplies', repliesThreadInfo!.messagesCount, 'i')}
-          </MenuItem>
-        )}
-        {canEdit && <MenuItem icon="edit" onClick={onEdit}>{lang('Edit')}</MenuItem>}
-        {canFaveSticker && (
-          <MenuItem icon="favorite" onClick={onFaveSticker}>{lang('AddToFavorites')}</MenuItem>
-        )}
-        {canUnfaveSticker && (
-          <MenuItem icon="favorite" onClick={onUnfaveSticker}>{lang('Stickers.RemoveFromFavorites')}</MenuItem>
-        )}
-        {canTranslate && <MenuItem icon="language" onClick={onTranslate}>{lang('TranslateMessage')}</MenuItem>}
-        {canShowOriginal && <MenuItem icon="language" onClick={onShowOriginal}>{lang('ShowOriginalButton')}</MenuItem>}
-        {canSelectLanguage && (
-          <MenuItem icon="web" onClick={onSelectLanguage}>{lang('lng_settings_change_lang')}</MenuItem>
-        )}
+        {/* {canSendNow && <MenuItem icon="send-outline" onClick={onSend}>{lang('MessageScheduleSend')}</MenuItem>} */}
+        {/* {canReschedule && ( */}
+        {/*   <MenuItem icon="schedule" onClick={onReschedule}>{lang('MessageScheduleEditTime')}</MenuItem> */}
+        {/* )} */}
+        {/* {canReply && <MenuItem icon="reply" onClick={onReply}>{lang('Reply')}</MenuItem>} */}
+        {/* {!noReplies && Boolean(repliesThreadInfo?.messagesCount) && ( */}
+        {/*   <MenuItem icon="replies" onClick={onOpenThread}> */}
+        {/*     {lang('Conversation.ContextViewReplies', repliesThreadInfo!.messagesCount, 'i')} */}
+        {/*   </MenuItem> */}
+        {/* )} */}
+        {/* {canEdit && <MenuItem icon="edit" onClick={onEdit}>{lang('Edit')}</MenuItem>} */}
+        {/* {canFaveSticker && ( */}
+        {/*   <MenuItem icon="favorite" onClick={onFaveSticker}>{lang('AddToFavorites')}</MenuItem> */}
+        {/* )} */}
+        {/* {canUnfaveSticker && ( */}
+        {/*   <MenuItem icon="favorite" onClick={onUnfaveSticker}>{lang('Stickers.RemoveFromFavorites')}</MenuItem> */}
+        {/* )} */}
+        {/* {canTranslate && <MenuItem icon="language" onClick={onTranslate}>{lang('TranslateMessage')}</MenuItem>} */}
+        {/* {canShowOriginal && <MenuItem icon="language" onClick={onShowOriginal}>{lang('ShowOriginalButton')}</MenuItem>} */}
+        {/* {canSelectLanguage && ( */}
+        {/*   <MenuItem icon="web" onClick={onSelectLanguage}>{lang('lng_settings_change_lang')}</MenuItem> */}
+        {/* )} */}
         {canCopy && copyOptions.map((option) => (
           <MenuItem key={option.label} icon={option.icon} onClick={option.handler}>{lang(option.label)}</MenuItem>
         ))}
-        {canPin && <MenuItem icon="pin" onClick={onPin}>{lang('DialogPin')}</MenuItem>}
-        {canUnpin && <MenuItem icon="unpin" onClick={onUnpin}>{lang('DialogUnpin')}</MenuItem>}
-        {canSaveGif && <MenuItem icon="gifs" onClick={onSaveGif}>{lang('lng_context_save_gif')}</MenuItem>}
-        {canRevote && <MenuItem icon="revote" onClick={onCancelVote}>{lang('lng_polls_retract')}</MenuItem>}
-        {canClosePoll && <MenuItem icon="stop" onClick={onClosePoll}>{lang('lng_polls_stop')}</MenuItem>}
-        {canDownload && (
-          <MenuItem icon="download" onClick={onDownload}>
-            {isDownloading ? lang('lng_context_cancel_download') : lang('lng_media_download')}
-          </MenuItem>
-        )}
-        {canForward && <MenuItem icon="forward" onClick={onForward}>{lang('Forward')}</MenuItem>}
-        {canSelect && <MenuItem icon="select" onClick={onSelect}>{lang('Common.Select')}</MenuItem>}
-        {canReport && <MenuItem icon="flag" onClick={onReport}>{lang('lng_context_report_msg')}</MenuItem>}
-        {(canShowSeenBy || canShowReactionsCount) && !isSponsoredMessage && (
-          <MenuItem
-            className="MessageContextMenu--seen-by"
-            icon={canShowReactionsCount ? 'heart-outline' : 'group'}
-            onClick={canShowReactionsCount ? onShowReactors : onShowSeenBy}
-            disabled={!canShowReactionsCount && !message.seenByUserIds?.length}
-          >
-            <span className="MessageContextMenu--seen-by-label">
-              {canShowReactionsCount && message.reactors?.count ? (
-                canShowSeenBy && message.seenByUserIds?.length
-                  ? lang(
-                    'Chat.OutgoingContextMixedReactionCount',
-                    [message.reactors.count, message.seenByUserIds.length],
-                  )
-                  : lang('Chat.ContextReactionCount', message.reactors.count, 'i')
-              ) : (
-                message.seenByUserIds?.length === 1 && seenByRecentUsers
-                  ? renderText(getUserFullName(seenByRecentUsers[0])!)
-                  : (message.seenByUserIds?.length
-                    ? lang('Conversation.ContextMenuSeen', message.seenByUserIds.length, 'i')
-                    : lang('Conversation.ContextMenuNoViews')
-                  )
-              )}
-            </span>
-            <div className="avatars">
-              {seenByRecentUsers?.map((user) => (
-                <Avatar
-                  size="micro"
-                  user={user}
-                />
-              ))}
-            </div>
-          </MenuItem>
-        )}
-        {canDelete && <MenuItem destructive icon="delete" onClick={onDelete}>{lang('Delete')}</MenuItem>}
-        {hasCustomEmoji && (
-          <>
-            <MenuSeparator />
-            {!customEmojiSets && (
-              <>
-                <Skeleton inline className="menu-loading-row" />
-                <Skeleton inline className="menu-loading-row" />
-              </>
-            )}
-            {customEmojiSets && customEmojiSets.length === 1 && (
-              <MenuItem withWrap onClick={handleOpenCustomEmojiSets} className="menu-custom-emoji-sets">
-                {renderText(lang('MessageContainsEmojiPack', customEmojiSets[0].title), ['simple_markdown', 'emoji'])}
-              </MenuItem>
-            )}
-            {customEmojiSets && customEmojiSets.length > 1 && (
-              <MenuItem withWrap onClick={handleOpenCustomEmojiSets} className="menu-custom-emoji-sets">
-                {renderText(lang('MessageContainsEmojiPacks', customEmojiSets.length), ['simple_markdown'])}
-              </MenuItem>
-            )}
-          </>
-        )}
-        {isSponsoredMessage && <MenuItem icon="help" onClick={onAboutAds}>{lang('SponsoredMessageInfo')}</MenuItem>}
-        {isSponsoredMessage && onSponsoredHide && (
-          <MenuItem icon="stop" onClick={onSponsoredHide}>{lang('HideAd')}</MenuItem>
-        )}
+        {/* {canPin && <MenuItem icon="pin" onClick={onPin}>{lang('DialogPin')}</MenuItem>} */}
+        {/* {canUnpin && <MenuItem icon="unpin" onClick={onUnpin}>{lang('DialogUnpin')}</MenuItem>} */}
+        {/* {canSaveGif && <MenuItem icon="gifs" onClick={onSaveGif}>{lang('lng_context_save_gif')}</MenuItem>} */}
+        {/* {canRevote && <MenuItem icon="revote" onClick={onCancelVote}>{lang('lng_polls_retract')}</MenuItem>} */}
+        {/* {canClosePoll && <MenuItem icon="stop" onClick={onClosePoll}>{lang('lng_polls_stop')}</MenuItem>} */}
+        {/* {canDownload && ( */}
+        {/*   <MenuItem icon="download" onClick={onDownload}> */}
+        {/*     {isDownloading ? lang('lng_context_cancel_download') : lang('lng_media_download')} */}
+        {/*   </MenuItem> */}
+        {/* )} */}
+        {/* {canForward && <MenuItem icon="forward" onClick={onForward}>{lang('Forward')}</MenuItem>} */}
+        {/* {canSelect && <MenuItem icon="select" onClick={onSelect}>{lang('Common.Select')}</MenuItem>} */}
+        {/* {canReport && <MenuItem icon="flag" onClick={onReport}>{lang('lng_context_report_msg')}</MenuItem>} */}
+        {/* {(canShowSeenBy || canShowReactionsCount) && !isSponsoredMessage && ( */}
+        {/*   <MenuItem */}
+        {/*     className="MessageContextMenu--seen-by" */}
+        {/*     icon={canShowReactionsCount ? 'heart-outline' : 'group'} */}
+        {/*     onClick={canShowReactionsCount ? onShowReactors : onShowSeenBy} */}
+        {/*     disabled={!canShowReactionsCount && !message.seenByUserIds?.length} */}
+        {/*   > */}
+        {/*     <span className="MessageContextMenu--seen-by-label"> */}
+        {/*       {canShowReactionsCount && message.reactors?.count ? ( */}
+        {/*         canShowSeenBy && message.seenByUserIds?.length */}
+        {/*           ? lang( */}
+        {/*             'Chat.OutgoingContextMixedReactionCount', */}
+        {/*             [message.reactors.count, message.seenByUserIds.length], */}
+        {/*           ) */}
+        {/*           : lang('Chat.ContextReactionCount', message.reactors.count, 'i') */}
+        {/*       ) : ( */}
+        {/*         message.seenByUserIds?.length === 1 && seenByRecentUsers */}
+        {/*           ? renderText(getUserFullName(seenByRecentUsers[0])!) */}
+        {/*           : (message.seenByUserIds?.length */}
+        {/*             ? lang('Conversation.ContextMenuSeen', message.seenByUserIds.length, 'i') */}
+        {/*             : lang('Conversation.ContextMenuNoViews') */}
+        {/*           ) */}
+        {/*       )} */}
+        {/*     </span> */}
+        {/*     <div className="avatars"> */}
+        {/*       {seenByRecentUsers?.map((user) => ( */}
+        {/*         <Avatar */}
+        {/*           size="micro" */}
+        {/*           user={user} */}
+        {/*         /> */}
+        {/*       ))} */}
+        {/*     </div> */}
+        {/*   </MenuItem> */}
+        {/* )} */}
+        {/* {canDelete && <MenuItem destructive icon="delete" onClick={onDelete}>{lang('Delete')}</MenuItem>} */}
+        {/* {hasCustomEmoji && ( */}
+        {/*   <> */}
+        {/*     <MenuSeparator /> */}
+        {/*     {!customEmojiSets && ( */}
+        {/*       <> */}
+        {/*         <Skeleton inline className="menu-loading-row" /> */}
+        {/*         <Skeleton inline className="menu-loading-row" /> */}
+        {/*       </> */}
+        {/*     )} */}
+        {/*     {customEmojiSets && customEmojiSets.length === 1 && ( */}
+        {/*       <MenuItem withWrap onClick={handleOpenCustomEmojiSets} className="menu-custom-emoji-sets"> */}
+        {/*         {renderText(lang('MessageContainsEmojiPack', customEmojiSets[0].title), ['simple_markdown', 'emoji'])} */}
+        {/*       </MenuItem> */}
+        {/*     )} */}
+        {/*     {customEmojiSets && customEmojiSets.length > 1 && ( */}
+        {/*       <MenuItem withWrap onClick={handleOpenCustomEmojiSets} className="menu-custom-emoji-sets"> */}
+        {/*         {renderText(lang('MessageContainsEmojiPacks', customEmojiSets.length), ['simple_markdown'])} */}
+        {/*       </MenuItem> */}
+        {/*     )} */}
+        {/*   </> */}
+        {/* )} */}
+        {/* {isSponsoredMessage && <MenuItem icon="help" onClick={onAboutAds}>{lang('SponsoredMessageInfo')}</MenuItem>} */}
+        {/* {isSponsoredMessage && onSponsoredHide && ( */}
+        {/*   <MenuItem icon="stop" onClick={onSponsoredHide}>{lang('HideAd')}</MenuItem> */}
+        {/* )} */}
       </div>
     </Menu>
   );

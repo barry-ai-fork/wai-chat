@@ -279,7 +279,6 @@ const MessageList: FC<OwnProps & StateProps> = ({
     if (type !== 'thread') {
       return undefined;
     }
-
     return debounce(() => loadViewportMessages({ direction: LoadMoreDirection.Around }), 1000, true, false);
     // eslint-disable-next-line react-hooks-static-deps/exhaustive-deps
   }, [loadViewportMessages, messageIds]);
@@ -547,7 +546,6 @@ const MessageList: FC<OwnProps & StateProps> = ({
     isScrolled && 'scrolled',
     !isReady && 'is-animating',
   );
-
   return (
     <div
       ref={containerRef}
@@ -658,6 +656,7 @@ export default memo(withGlobal<OwnProps>(
     }
 
     const messageIds = selectCurrentMessageIds(global, chatId, threadId, type);
+
     const messagesById = type === 'scheduled'
       ? selectChatScheduledMessages(global, chatId)
       : selectChatMessages(global, chatId);
@@ -672,6 +671,7 @@ export default memo(withGlobal<OwnProps>(
     }
 
     const { isRestricted, restrictionReason, lastMessage } = chat;
+    console.log("===>>",{global,chatId,messageIds,lastMessage})
     const focusingId = selectFocusedMessageId(global, chatId);
 
     const withLastMessageWhenPreloading = (

@@ -1857,4 +1857,16 @@ export default {
     key: 'FoldersAllChatsDesc',
     value: 'All unarchived chats',
   },
+  lng_info_bot_title: {
+    key: 'lng_info_bot_title',
+    value: 'Bot Info',
+  },
+  lng_info_user_title: {
+    key: 'lng_info_user_title',
+    value: 'User Info',
+  },
+  lng_context_copy_text:{
+    key: 'lng_context_copy_text',
+    value: 'Copy Text',
+  }
 } as ApiLangPack;

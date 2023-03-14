@@ -1,7 +1,6 @@
 import {github,google} from "../thirdParty/worker-auth-providers";
 import {ResponseJson} from "../helpers/network";
 import * as queryString from "query-string";
-import { HS256 } from 'worktop/jwt';
 import { SHA1 } from 'worktop/crypto';
 
 import * as utils from 'worktop/utils';
@@ -9,31 +8,11 @@ import { reply } from 'worktop/response';
 import {generateRandomString} from "../helpers/buffer";
 import {AuthForm, AuthResponse, AuthTokenForm, AuthUser} from "../types";
 
-//@ts-ignore
-const DATABASE = global.DATABASE;
-
-//@ts-ignore
-const TOKEN_EXPIRE_TIME_SEC = parseInt(global.TOKEN_EXPIRE_TIME_SEC);
-
-//@ts-ignore
-const FRONTEND_AUTH_CALLBACK_URL = global.FRONTEND_AUTH_CALLBACK_URL;
-
-//@ts-ignore
-const clientId = global.GITHUB_CLIENT_ID;
-
-//@ts-ignore
-const clientSecretGithub = global.GITHUB_CLIENT_SECRET;
-
-//@ts-ignore
-const jwtSecret = global.JWT_SECRET;
-
-const jwt = HS256({
-  key:jwtSecret,
-})
+import {DATABASE, ENV, jwt} from "../helpers/env";
 
 function generateJWT(user: AuthUser) {
   const iat = Math.ceil(+(new Date()) / 1000);
-  const exp = iat + TOKEN_EXPIRE_TIME_SEC
+  const exp = iat + ENV.TOKEN_EXPIRE_TIME_SEC
   console.log("[iat, exp]", iat, exp);
   return jwt.sign({
     iat,
@@ -46,15 +25,30 @@ function generateJWT(user: AuthUser) {
 export async function GithubRedirect(request:Request){
   return Response.redirect(await github.redirect({
     options: {
-      clientId,
+      clientId:ENV.GITHUB_CLIENT_ID,
     }
   }), 302)
 }
 
+export async function genUserId() {
+  let value = await DATABASE.get("USER_INCR")
+  if(!value){
+    value = parseInt(ENV.USER_ID_START);
+  }else{
+    value = parseInt(value) + 1;
+  }
+  await DATABASE.put("USER_INCR",value.toString())
+  return value.toString()
+}
+
 export async function GithubCallback(request:Request){
+  const FRONTEND_AUTH_CALLBACK_URL = ENV.FRONTEND_AUTH_CALLBACK_URL;
+
   try {
+    const clientSecretGithub = ENV.GITHUB_CLIENT_SECRET;
+
     const { user: providerUser } = await github.users({
-      options: { clientSecret:clientSecretGithub, clientId },
+      options: { clientSecret:clientSecretGithub, clientId:ENV.GITHUB_CLIENT_ID },
       request,
     });
     let user_id = await DATABASE.get(`U_GH_${providerUser.id}`);
@@ -69,7 +63,7 @@ export async function GithubCallback(request:Request){
           authUser.github_id = providerUser.id.toString();
         }
       }else{
-        user_id = utils.uuid()
+        user_id = await genUserId()
         authUser = {
           salt:generateRandomString(6),
           user_id,
@@ -89,30 +83,28 @@ export async function GithubCallback(request:Request){
     }
     const token = await generateJWT(authUser);
     const now = new Date();
-    now.setTime(now.getTime() + TOKEN_EXPIRE_TIME_SEC);
+    now.setTime(now.getTime() + ENV.TOKEN_EXPIRE_TIME_SEC);
     const code = utils.uuid()
     await DATABASE.put(`U_C_${code}`,token);
     return new Response("",{
       status: 302,
       headers: {
-        location: `${FRONTEND_AUTH_CALLBACK_URL}?${queryString.stringify({code,email:authUser.email})}`,
+        location: `${FRONTEND_AUTH_CALLBACK_URL}/?${queryString.stringify({code,email:authUser.email})}`,
       },
     })
   } catch (e) {
     return new Response("error",{
       status: 302,
       headers: {
-        location: `${FRONTEND_AUTH_CALLBACK_URL}?${queryString.stringify({err_msg:"OAuth Login Error"})}`,
+        location: `${FRONTEND_AUTH_CALLBACK_URL}/?${queryString.stringify({err_msg:"OAuth Login Error"})}`,
       },
     })
   }
 }
 
 export async function GoogleRedirect(request:Request){
-  //@ts-ignore
-  const client_id = global.GOOGLE_CLIENT_ID;
-  //@ts-ignore
-  const redirect_uri = global.GOOGLE_REDIRECT_PROD_URL;
+  const client_id = ENV.GOOGLE_CLIENT_ID;
+  const redirect_uri = ENV.GOOGLE_REDIRECT_PROD_URL;
   const params = queryString.stringify({
     client_id,
     redirect_uri,
@@ -126,18 +118,16 @@ export async function GoogleRedirect(request:Request){
 
 export async function GoogleCallback(request:Request){
 
-  //@ts-ignore
-  const clientId = global.GOOGLE_CLIENT_ID;
-  //@ts-ignore
-  const redirectUrl = global.GOOGLE_REDIRECT_PROD_URL;
-  //@ts-ignore
-  const clientSecret = global.GOOGLE_CLIENT_SECRET;
+  const clientId = ENV.GOOGLE_CLIENT_ID;
+  const redirectUrl = ENV.GOOGLE_REDIRECT_PROD_URL;
+  const clientSecret = ENV.GOOGLE_CLIENT_SECRET;
 
   const options = {
     clientId,
     clientSecret,
     redirectUrl,
   };
+  const FRONTEND_AUTH_CALLBACK_URL = ENV.FRONTEND_AUTH_CALLBACK_URL;
 
   try {
     const { user: providerUser } = await google.users({
@@ -159,7 +149,7 @@ export async function GoogleCallback(request:Request){
           authUser.name = providerUser.name;
         }
       }else{
-        user_id = utils.uuid()
+        user_id = genUserId()
         authUser = {
           salt:generateRandomString(6),
           user_id,
@@ -185,20 +175,19 @@ export async function GoogleCallback(request:Request){
     return new Response("",{
       status: 302,
       headers: {
-        location: `${FRONTEND_AUTH_CALLBACK_URL}?${queryString.stringify({code,email:authUser.email})}`,
+        location: `${FRONTEND_AUTH_CALLBACK_URL}/?${queryString.stringify({code,email:authUser.email})}`,
       },
     })
   } catch (e) {
     return new Response("error",{
       status: 302,
       headers: {
-        location: `${FRONTEND_AUTH_CALLBACK_URL}?${queryString.stringify({err_msg:"OAuth Login Error"})}`,
+        location: `${FRONTEND_AUTH_CALLBACK_URL}/?${queryString.stringify({err_msg:"OAuth Login Error"})}`,
       },
     })
   }
 }
-
-export async function Me(request:Request){
+export async function getAuthUser(request:Request){
   const auth = request.headers.get("Authorization")
   if (!auth) {
     return reply(401, 'Missing "Authorization" header');
@@ -212,7 +201,19 @@ export async function Me(request:Request){
   try {
     const claims = await jwt.verify(token);
     const user_id = claims.iss;
-    const authUser = JSON.parse(await DATABASE.get(`U_${user_id}`));
+    return JSON.parse(await DATABASE.get(`U_${user_id}`));
+  }catch (e){
+    // @ts-ignore
+    return reply(500, e?.message);
+  }
+}
+
+export async function Me(request:Request){
+  const authUser = await getAuthUser(request);
+  if(!authUser.user_id){
+    return authUser;
+  }
+  try {
     let githubUserStr,googleUserStr;
     if(authUser && authUser.google_id){
       googleUserStr = await DATABASE.get(`U_GO_U_${authUser.google_id}`)
@@ -224,7 +225,7 @@ export async function Me(request:Request){
     const githubUser = authUser?.github_id ? JSON.parse(githubUserStr) : null;
     const googleUser = authUser?.github_id ? JSON.parse(googleUserStr) : null;
     return ResponseJson({
-      authUser,claims,githubUser,googleUser
+      authUser,githubUser,googleUser
     });
   }catch (e){
     // @ts-ignore
@@ -257,7 +258,7 @@ export async function Login(request:Request){
           token,
           user:{
             user_id:user.user_id,
-            email:user.user_id,
+            email:user.email,
             name:user.name,
             avatar:user.avatar,
           }
@@ -293,7 +294,7 @@ export async function Reg(request:Request){
   let user_id = await DATABASE.get(`U_E_UID_${email}`);
   let res:AuthResponse;
   if(!user_id ){
-    user_id = utils.uuid();
+    user_id = await genUserId();
     const salt = generateRandomString(6)
     const authUser:AuthUser = {
       password:await SHA1(password+salt),
@@ -308,6 +309,7 @@ export async function Reg(request:Request){
     await DATABASE.put(`U_E_UID_${email}`,user_id);
     const token = await generateJWT(authUser);
     res = {
+      password_empty: false,
       token,
       user:{
         user_id:authUser.user_id,

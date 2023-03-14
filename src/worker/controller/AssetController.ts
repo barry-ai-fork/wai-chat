@@ -39,5 +39,6 @@ export default async function (event:FetchEvent){
     }
     // @ts-ignore
     return new Response(e.message || e.toString(), { status: 500 });
+
   }
 }

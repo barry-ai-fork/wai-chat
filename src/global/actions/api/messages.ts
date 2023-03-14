@@ -56,7 +56,7 @@ import {
   replaceTabThreadParam,
   updateRequestedMessageTranslation,
   removeRequestedMessageTranslation,
-  updateMessageTranslation,
+  updateMessageTranslation, updateThread,
 } from '../../reducers';
 import {
   selectChat,
@@ -97,6 +97,8 @@ import { translate } from '../../../util/langProvider';
 import { ensureProtocol } from '../../../util/ensureProtocol';
 import { updateTabState } from '../../reducers/tabs';
 import { getCurrentTabId } from '../../../util/establishMultitabRole';
+import {buildLocalMessage} from "../../../api/gramjs/apiBuilders/messages";
+import MsgConn from "../../../lib/client/msgConn";
 
 const AUTOLOGIN_TOKEN_KEY = 'autologin_token';
 
@@ -110,9 +112,7 @@ addActionHandler('loadViewportMessages', (global, actions, payload): ActionRetur
     isBudgetPreload = false,
     tabId = getCurrentTabId(),
   } = payload || {};
-
   let { chatId, threadId } = payload || {};
-
   if (!chatId || !threadId) {
     const currentMessageList = selectCurrentMessageList(global, tabId);
     if (!currentMessageList) {
@@ -932,7 +932,6 @@ async function loadViewportMessages<T extends GlobalState>(
   ...[tabId = getCurrentTabId()]: TabArgs<T>
 ) {
   const chatId = chat.id;
-
   let addOffset: number | undefined;
   switch (direction) {
     case LoadMoreDirection.Backwards:
@@ -947,6 +946,19 @@ async function loadViewportMessages<T extends GlobalState>(
   }
 
   global = getGlobal();
+  let flag = false;
+  if(global.messages.byChatId[chatId].threadsById["-1"].lastViewportIds == undefined){
+    global = safeReplaceViewportIds(global, chatId, threadId, [], tabId);
+    flag = true;
+  }
+  if(global.messages.byChatId[chatId].threadsById["-1"].listedIds == undefined){
+    global = updateListedIds(global, chatId, threadId, [])
+    flag = true;
+  }
+  if(flag){
+    setGlobal(global)
+  }
+  return;
   const result = await callApi('fetchMessages', {
     chat: selectChat(global, chatId)!,
     offsetId,
@@ -1116,7 +1128,15 @@ async function sendMessage<T extends GlobalState>(global: T, params: {
       },
     };
     setGlobal(global);
-  } : undefined;
+  } : async (progress: number, localMessage: number)=>{
+    await MsgConn.getMsgClient()
+      ?.sendJson({
+        action:"sendMsg",
+        data:{
+          msg:localMessage
+        }
+      })
+  };
 
   // @optimization
   if (params.replyingTo || IS_IOS) {
@@ -1124,6 +1144,7 @@ async function sendMessage<T extends GlobalState>(global: T, params: {
   }
 
   global = getGlobal();
+
   const currentMessageList = selectCurrentMessageList(global, tabId);
   if (!currentMessageList) {
     return;
@@ -1137,9 +1158,7 @@ async function sendMessage<T extends GlobalState>(global: T, params: {
   if (params.replyingTo && !params.replyingToTopId && threadId !== MAIN_THREAD_ID) {
     params.replyingToTopId = selectThreadTopMessageId(global, params.chat.id, threadId)!;
   }
-
   await callApi('sendMessage', params, progressCallback);
-
   if (progressCallback && localId) {
     uploadProgressCallbacks.delete(localId);
   }

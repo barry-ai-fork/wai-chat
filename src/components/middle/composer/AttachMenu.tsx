@@ -123,7 +123,7 @@ const AttachMenu: FC<OwnProps> = ({
   if (!isButtonVisible) {
     return undefined;
   }
-
+  return null;
   return (
     <div className="AttachMenu">
       <ResponsiveHoverButton

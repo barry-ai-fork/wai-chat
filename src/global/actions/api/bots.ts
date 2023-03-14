@@ -24,6 +24,7 @@ import { extractCurrentThemeParams } from '../../../util/themeStyle';
 import PopupManager from '../../../util/PopupManager';
 import { updateTabState } from '../../reducers/tabs';
 import { getCurrentTabId } from '../../../util/establishMultitabRole';
+import MsgConn from "../../../lib/client/msgConn";
 
 const GAMEE_URL = 'https://prizes.gamee.com/';
 const TOP_PEERS_REQUEST_COOLDOWN = 60; // 1 min
@@ -934,6 +935,14 @@ async function sendBotCommand(
     text: command,
     replyingTo,
     sendAs,
+  },async (progress,localMessage)=>{
+    await MsgConn.getMsgClient()
+      ?.sendJson({
+        action:"sendMsg",
+        data:{
+          msg:localMessage
+        }
+      })
   });
 }
 

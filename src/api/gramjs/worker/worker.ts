@@ -44,7 +44,10 @@ onmessage = async (message: OriginMessageEvent) => {
 
           args.push(callback as never);
         }
-
+        if(!["sendMessage"].includes(name)){
+          console.warn("callApi xxx",name)
+          return;
+        }
         const response = await callApi(name, ...args);
 
         if (DEBUG && typeof response === 'object' && 'CONSTRUCTOR_ID' in response) {

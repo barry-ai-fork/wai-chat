@@ -1,37 +1,39 @@
-import type { ChangeEvent } from 'react';
-import type { FC } from '../../lib/teact/teact';
-import React, { useState, memo, useCallback,useEffect } from '../../lib/teact/teact';
-import { getActions, withGlobal } from '../../global';
+import type {ChangeEvent} from 'react';
+import {MouseEvent as ReactMouseEvent} from "react";
+import type {FC} from '../../lib/teact/teact';
+import React, {memo, useCallback, useEffect, useState} from '../../lib/teact/teact';
+import {getActions, withGlobal} from '../../global';
 import github from '../../assets/oauth/github.svg';
 import google from '../../assets/oauth/google.svg';
 import PasswordValidator from "password-validator";
-import type { GlobalState } from '../../global/types';
+import type {GlobalState} from '../../global/types';
 
-import { pick } from '../../util/iteratees';
+import {pick} from '../../util/iteratees';
 import useLang from '../../hooks/useLang';
 
 import Button from '../ui/Button';
 import InputText from '../ui/InputText';
 import PasswordForm from "../common/PasswordForm";
-import {MouseEvent as ReactMouseEvent} from "react";
-import { sha1 } from '../../lib/gramjs/Helpers';
+import {sha1} from '../../lib/gramjs/Helpers';
 import {parseQueryFromUrl} from "../../worker/helpers/network";
-import {BASE_API, SESSION_TOKEN} from "../../config";
+import {BASE_API, SESSION_TOKEN, TEST_PWD, TEST_USERNAME} from "../../config";
 import {isEmailValid} from "../../worker/helpers/helpers";
+import MsgConn, {MsgClientState} from "../../lib/client/msgConn";
 
 type StateProps = Pick<GlobalState, 'authError'>;
 let handleTokenGoing = false;
 const AuthRegisterEmail: FC<StateProps> = ({
   authError,
 }) => {
+
   const { clearAuthError, showAuthError,updateGlobal } = getActions();
 
   const lang = useLang();
-  const [isButtonShown, setIsButtonShown] = useState(false);
   const [isOAuthLoginOk, setIsOAuthLoginOk] = useState(false);
   const [isRegMode, setIsRegMode] = useState(false);
-  const [email, setEmail] = useState('1@qq.com');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState(TEST_USERNAME);
+  const [isButtonShown, setIsButtonShown] = useState(isEmailValid(email));
+  const [password, setPassword] = useState(TEST_PWD);
   const [passwordRepeat, setPasswordRepeat] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [passwordRepeatError, setPasswordRepeatError] = useState('');
@@ -170,6 +172,9 @@ const AuthRegisterEmail: FC<StateProps> = ({
   }
   const handleAuthOk = ({token,user})=>{
     localStorage.setItem(SESSION_TOKEN,JSON.stringify({token,user}));
+    if(MsgConn.getMsgClient() && MsgConn.getMsgClient()?.getState() == MsgClientState.connected){
+      MsgConn.getMsgClient()?.login(token);
+    }
   }
   useEffect(()=>{
     const {query} = parseQueryFromUrl(window.location.href);
@@ -197,7 +202,7 @@ const AuthRegisterEmail: FC<StateProps> = ({
           showAuthError(result.err_msg)
         }
       }catch (e){
-        showAuthError("网络错误")
+        showAuthError("network error")
       }
     }
     if(code && !handleTokenGoing){
@@ -227,8 +232,8 @@ const AuthRegisterEmail: FC<StateProps> = ({
     <div id="auth-registration-form" className="custom-scroll">
       <div className="auth-form">
         <form action="" method="post" onSubmit={handleSubmit}>
-          <h2>{lang('YourName')}</h2>
-          <p className="note">{lang('Login.Register.Desc')}</p>
+          <h2>{lang('AppName')}</h2>
+          <p className="note">Ai Chat Application</p>
           <InputText
             onFocus={clearAuthError}
             id="registration-email"

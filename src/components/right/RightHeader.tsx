@@ -367,17 +367,17 @@ const RightHeader: FC<OwnProps & StateProps> = ({
           <>
             <h3>{lang('InviteLink')}</h3>
             <section className="tools">
-              {currentInviteInfo && !currentInviteInfo.isRevoked && (
-                <Button
-                  round
-                  color="translucent"
-                  size="smaller"
-                  ariaLabel={lang('Edit')}
-                  onClick={handleEditInviteClick}
-                >
-                  <i className="icon-edit" />
-                </Button>
-              )}
+              {/* {currentInviteInfo && !currentInviteInfo.isRevoked && ( */}
+              {/*   <Button */}
+              {/*     round */}
+              {/*     color="translucent" */}
+              {/*     size="smaller" */}
+              {/*     ariaLabel={lang('Edit')} */}
+              {/*     onClick={handleEditInviteClick} */}
+              {/*   > */}
+              {/*     <i className="icon-edit" /> */}
+              {/*   </Button> */}
+              {/* )} */}
               {currentInviteInfo && currentInviteInfo.isRevoked && (
                 <>
                   <Button
@@ -448,28 +448,28 @@ const RightHeader: FC<OwnProps & StateProps> = ({
             <h3>{getHeaderTitle()}
             </h3>
             <section className="tools">
-              {canAddContact && (
-                <Button
-                  round
-                  color="translucent"
-                  size="smaller"
-                  ariaLabel={lang('AddContact')}
-                  onClick={handleAddContact}
-                >
-                  <i className="icon-add-user" />
-                </Button>
-              )}
-              {canManage && !isInsideTopic && (
-                <Button
-                  round
-                  color="translucent"
-                  size="smaller"
-                  ariaLabel={lang('Edit')}
-                  onClick={handleToggleManagement}
-                >
-                  <i className="icon-edit" />
-                </Button>
-              )}
+              {/* {canAddContact && ( */}
+              {/*   <Button */}
+              {/*     round */}
+              {/*     color="translucent" */}
+              {/*     size="smaller" */}
+              {/*     ariaLabel={lang('AddContact')} */}
+              {/*     onClick={handleAddContact} */}
+              {/*   > */}
+              {/*     <i className="icon-add-user" /> */}
+              {/*   </Button> */}
+              {/* )} */}
+              {/* {canManage && !isInsideTopic && ( */}
+              {/*   <Button */}
+              {/*     round */}
+              {/*     color="translucent" */}
+              {/*     size="smaller" */}
+              {/*     ariaLabel={lang('Edit')} */}
+              {/*     onClick={handleToggleManagement} */}
+              {/*   > */}
+              {/*     <i className="icon-edit" /> */}
+              {/*   </Button> */}
+              {/* )} */}
               {canEditTopic && (
                 <Button
                   round

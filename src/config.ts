@@ -1,11 +1,15 @@
 import type { ApiLimitType } from './global/types';
 
-export const BASE_API = 'http://localhost:1235';
+export const BASE_API = process.env.BASE_API;
+export const WS_URL = process.env.WS_URL;
+
 export const SESSION_TOKEN = 'user_token';
 
-export const APP_NAME = process.env.APP_NAME || 'Telegram WebZ';
+export const APP_NAME = process.env.APP_NAME || 'AiChat';
 export const APP_VERSION = process.env.APP_VERSION!;
 export const RELEASE_DATETIME = process.env.RELEASE_DATETIME;
+export const TEST_USERNAME = process.env.TEST_USERNAME;
+export const TEST_PWD = process.env.TEST_PWD;
 
 export const PRODUCTION_HOSTNAME = 'web.telegram.org';
 
@@ -17,7 +21,7 @@ export const IS_TEST = process.env.APP_ENV === 'test';
 export const IS_PERF = process.env.APP_ENV === 'perf';
 export const IS_BETA = process.env.APP_ENV === 'staging';
 
-export const BETA_CHANGELOG_URL = 'https://telegra.ph/WebZ-Beta-04-01';
+export const BETA_CHANGELOG_URL = 'https://github.com/barry-ai-fork/ai-chat/issues';
 
 export const DEBUG_ALERT_MSG = 'Shoot!\nSomething went wrong, please see the error details in Dev Tools Console.';
 export const DEBUG_GRAMJS = false;
@@ -270,7 +274,7 @@ export const SCHEDULED_WHEN_ONLINE = 0x7FFFFFFE;
 export const DEFAULT_LANG_CODE = 'en';
 export const DEFAULT_LANG_PACK = 'android';
 export const LANG_PACKS = ['android', 'ios', 'tdesktop', 'macos'] as const;
-export const FEEDBACK_URL = 'https://bugs.telegram.org/?tag_ids=41&sort=time';
+export const FEEDBACK_URL = 'https://github.com/barry-ai-fork/ai-chat/issues';
 export const GENERAL_TOPIC_ID = 1;
 
 export const LIGHT_THEME_BG_COLOR = '#99BA92';

@@ -24,6 +24,7 @@ import ArchivedChats from './ArchivedChats.async';
 import './LeftColumn.scss';
 
 type StateProps = {
+  chatCreationProgress?:ChatCreationProgress;
   searchQuery?: string;
   searchDate?: number;
   isFirstChatFolderActive: boolean;
@@ -53,8 +54,9 @@ enum ContentType {
 
 const RENDER_COUNT = Object.keys(ContentType).length / 2;
 const RESET_TRANSITION_DELAY_MS = 250;
-
+const leftColumnContent = window.sessionStorage.getItem("LeftColumnContent") || LeftColumnContent.ChatList;
 const LeftColumn: FC<StateProps> = ({
+  chatCreationProgress,
   searchQuery,
   searchDate,
   isFirstChatFolderActive,
@@ -86,14 +88,18 @@ const LeftColumn: FC<StateProps> = ({
 
   // eslint-disable-next-line no-null/no-null
   const resizeRef = useRef<HTMLDivElement>(null);
-  const [content, setContent] = useState<LeftColumnContent>(LeftColumnContent.ChatList);
+
+  const [content, setContent] = useState<LeftColumnContent>(Number(leftColumnContent));
   const [settingsScreen, setSettingsScreen] = useState(SettingsScreens.Main);
   const [contactsFilter, setContactsFilter] = useState<string>('');
   const [foldersState, foldersDispatch] = useFoldersReducer();
 
   // Used to reset child components in background.
   const [lastResetTime, setLastResetTime] = useState<number>(0);
-
+  const setContent_ = (v:LeftColumnContent)=>{
+    setContent(v);
+    window.sessionStorage.setItem("LeftColumnContent",v.toString())
+  }
   let contentType: ContentType = ContentType.Main;
   switch (content) {
     case LeftColumnContent.Archived:
@@ -114,7 +120,7 @@ const LeftColumn: FC<StateProps> = ({
 
   const handleReset = useCallback((forceReturnToChatList?: true | Event) => {
     function fullReset() {
-      setContent(LeftColumnContent.ChatList);
+      setContent_(LeftColumnContent.ChatList);
       setContactsFilter('');
       setGlobalSearchClosing({ isClosing: true });
       resetChatCreation();
@@ -133,12 +139,12 @@ const LeftColumn: FC<StateProps> = ({
     }
 
     if (content === LeftColumnContent.NewGroupStep2) {
-      setContent(LeftColumnContent.NewGroupStep1);
+      setContent_(LeftColumnContent.NewGroupStep1);
       return;
     }
 
     if (content === LeftColumnContent.NewChannelStep2) {
-      setContent(LeftColumnContent.NewChannelStep1);
+      setContent_(LeftColumnContent.NewChannelStep1);
       return;
     }
 
@@ -290,7 +296,7 @@ const LeftColumn: FC<StateProps> = ({
           return;
 
         case SettingsScreens.FoldersEditFolderFromChatList:
-          setContent(LeftColumnContent.ChatList);
+          setContent_(LeftColumnContent.ChatList);
           setSettingsScreen(SettingsScreens.Main);
           return;
 
@@ -308,7 +314,7 @@ const LeftColumn: FC<StateProps> = ({
     }
 
     if (content === LeftColumnContent.ChatList && isFirstChatFolderActive) {
-      setContent(LeftColumnContent.GlobalSearch);
+      setContent_(LeftColumnContent.GlobalSearch);
 
       return;
     }
@@ -325,7 +331,7 @@ const LeftColumn: FC<StateProps> = ({
       return;
     }
 
-    setContent(LeftColumnContent.GlobalSearch);
+    setContent_(LeftColumnContent.GlobalSearch);
 
     if (query !== searchQuery) {
       setGlobalSearchQuery({ query });
@@ -351,7 +357,7 @@ const LeftColumn: FC<StateProps> = ({
     }
 
     e.preventDefault();
-    setContent(LeftColumnContent.GlobalSearch);
+    setContent_(LeftColumnContent.GlobalSearch);
   }, [content]);
 
   const handleHotkeySavedMessages = useCallback((e: KeyboardEvent) => {
@@ -366,7 +372,7 @@ const LeftColumn: FC<StateProps> = ({
 
   const handleHotkeySettings = useCallback((e: KeyboardEvent) => {
     e.preventDefault();
-    setContent(LeftColumnContent.Settings);
+    setContent_(LeftColumnContent.Settings);
   }, []);
 
   useHotkeys({
@@ -402,7 +408,7 @@ const LeftColumn: FC<StateProps> = ({
   }), resetLeftColumnWidth, leftColumnWidth, '--left-column-width');
 
   const handleSettingsScreenSelect = useCallback((screen: SettingsScreens) => {
-    setContent(LeftColumnContent.Settings);
+    setContent_(LeftColumnContent.Settings);
     setSettingsScreen(screen);
   }, []);
 
@@ -428,7 +434,7 @@ const LeftColumn: FC<StateProps> = ({
                   onTopicSearch={handleTopicSearch}
                   foldersDispatch={foldersDispatch}
                   onSettingsScreenSelect={handleSettingsScreenSelect}
-                  onLeftColumnContentChange={setContent}
+                  onLeftColumnContentChange={setContent_}
                   isForumPanelOpen={isForumPanelOpen}
                   archiveSettings={archiveSettings}
                 />
@@ -452,7 +458,7 @@ const LeftColumn: FC<StateProps> = ({
                   isActive={isActive}
                   isChannel
                   content={content}
-                  onContentChange={setContent}
+                  onContentChange={setContent_}
                   onReset={handleReset}
                 />
               );
@@ -462,7 +468,7 @@ const LeftColumn: FC<StateProps> = ({
                   key={lastResetTime}
                   isActive={isActive}
                   content={content}
-                  onContentChange={setContent}
+                  onContentChange={setContent_}
                   onReset={handleReset}
                 />
               );
@@ -475,7 +481,7 @@ const LeftColumn: FC<StateProps> = ({
                   searchDate={searchDate}
                   contactsFilter={contactsFilter}
                   foldersDispatch={foldersDispatch}
-                  onContentChange={setContent}
+                  onContentChange={setContent_}
                   onSearchQuery={handleSearchQuery}
                   onSettingsScreenSelect={handleSettingsScreenSelect}
                   onReset={handleReset}
@@ -502,6 +508,7 @@ export default memo(withGlobal(
   (global): StateProps => {
     const tabState = selectTabState(global);
     const {
+      chatCreation,
       globalSearch: {
         query,
         date,
@@ -526,6 +533,7 @@ export default memo(withGlobal(
     const forumPanelChatId = tabState.forumPanelChatId;
 
     return {
+      chatCreationProgress:chatCreation?.progress,
       searchQuery: query,
       searchDate: date,
       isFirstChatFolderActive: activeChatFolder === 0,

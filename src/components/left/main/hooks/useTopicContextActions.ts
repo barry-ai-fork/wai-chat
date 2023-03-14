@@ -18,7 +18,6 @@ export default function useTopicContextActions(
   handleDelete?: NoneToVoidFunction,
 ) {
   const lang = useLang();
-
   return useMemo(() => {
     const {
       isPinned, isMuted, isClosed, id: topicId,

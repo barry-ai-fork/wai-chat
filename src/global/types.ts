@@ -835,6 +835,7 @@ type WithTabId = { tabId?: number };
 
 export interface ActionPayloads {
   updateGlobal:Record<string, any>,
+  updateMsg:Record<string, any>,
   // system
   init: ({
     isMasterTab?: boolean;

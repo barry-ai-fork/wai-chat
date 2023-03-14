@@ -228,18 +228,18 @@ const HeaderActions: FC<OwnProps & StateProps> = ({
               {lang('BotRestart')}
             </Button>
           )}
-          {canSearch && (
-            <Button
-              round
-              ripple={isRightColumnShown}
-              color="translucent"
-              size="smaller"
-              onClick={handleSearchClick}
-              ariaLabel="Search in this chat"
-            >
-              <i className="icon-search" />
-            </Button>
-          )}
+          {/* {canSearch && ( */}
+          {/*   <Button */}
+          {/*     round */}
+          {/*     ripple={isRightColumnShown} */}
+          {/*     color="translucent" */}
+          {/*     size="smaller" */}
+          {/*     onClick={handleSearchClick} */}
+          {/*     ariaLabel="Search in this chat" */}
+          {/*   > */}
+          {/*     <i className="icon-search" /> */}
+          {/*   </Button> */}
+          {/* )} */}
           {canCall && (
             <Button
               round
@@ -268,19 +268,19 @@ const HeaderActions: FC<OwnProps & StateProps> = ({
           <div className="badge">{pendingJoinRequests}</div>
         </Button>
       )}
-      <Button
-        ref={menuButtonRef}
-        className={isMenuOpen ? 'active' : ''}
-        round
-        ripple={!isMobile}
-        size="smaller"
-        color="translucent"
-        disabled={noMenu}
-        ariaLabel="More actions"
-        onClick={handleHeaderMenuOpen}
-      >
-        <i className="icon-more" />
-      </Button>
+      {/* <Button */}
+      {/*   ref={menuButtonRef} */}
+      {/*   className={isMenuOpen ? 'active' : ''} */}
+      {/*   round */}
+      {/*   ripple={!isMobile} */}
+      {/*   size="smaller" */}
+      {/*   color="translucent" */}
+      {/*   disabled={noMenu} */}
+      {/*   ariaLabel="More actions" */}
+      {/*   onClick={handleHeaderMenuOpen} */}
+      {/* > */}
+      {/*   <i className="icon-more" /> */}
+      {/* </Button> */}
       {menuPosition && (
         <HeaderMenuContainer
           chatId={chatId}

@@ -43,7 +43,7 @@ export async function initApi(_onUpdate: OnApiUpdate, initialArgs: ApiInitialArg
 
   if (initialLocalDb) updateFullLocalDb(initialLocalDb);
 
-  //await initClient(handleUpdate, initialArgs);
+  await initClient(handleUpdate, initialArgs);
 }
 
 export function callApi<T extends keyof Methods>(fnName: T, ...args: MethodArgs<T>): MethodResponse<T> {

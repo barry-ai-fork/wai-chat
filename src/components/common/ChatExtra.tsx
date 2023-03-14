@@ -234,17 +234,17 @@ const ChatExtra: FC<OwnProps & StateProps> = ({
           <span className="subtitle">{lang('SetUrlPlaceholder')}</span>
         </ListItem>
       )}
-      {!forceShowSelf && (
-        <ListItem icon="unmute" ripple onClick={handleNotificationChange}>
-          <span>{lang('Notifications')}</span>
-          <Switcher
-            id="group-notifications"
-            label={userId ? 'Toggle User Notifications' : 'Toggle Chat Notifications'}
-            checked={areNotificationsEnabled}
-            inactive
-          />
-        </ListItem>
-      )}
+      {/* {!forceShowSelf && ( */}
+      {/*   <ListItem icon="unmute" ripple onClick={handleNotificationChange}> */}
+      {/*     <span>{lang('Notifications')}</span> */}
+      {/*     <Switcher */}
+      {/*       id="group-notifications" */}
+      {/*       label={userId ? 'Toggle User Notifications' : 'Toggle Chat Notifications'} */}
+      {/*       checked={areNotificationsEnabled} */}
+      {/*       inactive */}
+      {/*     /> */}
+      {/*   </ListItem> */}
+      {/* )} */}
     </div>
   );
 };

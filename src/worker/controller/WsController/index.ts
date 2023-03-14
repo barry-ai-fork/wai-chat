@@ -1,23 +1,87 @@
-import {bufferToString, stringToBuffer} from "../../helpers/buffer";
+import {stringToBuffer} from "../../helpers/buffer";
+import {decode} from "worktop/buffer";
+import {getAuthUser} from "../AuthController";
+import * as utils from "worktop/utils";
+import {AuthTokenForm, AuthUser} from "../../types";
+import {ResponseJson} from "../../helpers/network";
+import {sendMsg} from "../MsgController";
+import {loadChats} from "../ChatController";
+import {createBot, getUser} from "../UserController";
+import {reply} from "worktop/response";
+import {DATABASE, jwt,ENV} from "../../helpers/env";
 
-let count = 0;
+export const UserWsMap:Record<string, WebSocket> = {};
+export const WsUserMap:Record<WebSocket, AuthUser> = {};
+
+const getTokenAuthUser = async (msg)=>{
+  const {token} = msg.data;
+  const claims = await jwt.verify(token);
+  const user_id = claims.iss;
+  return JSON.parse(await DATABASE.get(`U_${user_id}`));
+}
 
 async function handleSession(websocket: WebSocket) {
   // @ts-ignore
   websocket.accept();
   websocket.addEventListener('message', async ({ data }) => {
-    const msg = bufferToString(data);
-    if (msg === 'CLICK') {
-      count += 1;
-      websocket.send(stringToBuffer(JSON.stringify({ count, tz: new Date() })));
-    } else {
-      // An unknown message came into the server. Send back an error message
-      websocket.send(stringToBuffer(JSON.stringify({ error: 'Unknown message received', tz: new Date() })));
+    let seq_num = 0;
+    try {
+      const dataJson = JSON.parse(decode(data));
+      console.log("on message",dataJson)
+      switch (dataJson.action){
+        case "login":
+          let authUser;
+          try{
+            authUser = await getTokenAuthUser(dataJson)
+          }catch (e){
+            console.error(e)
+            websocket.send(stringToBuffer(JSON.stringify({
+              action:dataJson.action,
+              seq_num:dataJson.seq_num || 0,
+              err_msg:"token is invalid",
+              err:400,
+              data:{
+              }
+            })));
+            return;
+          }
+          UserWsMap[authUser.user_id] =  websocket;
+          WsUserMap[websocket] = authUser;
+          websocket.send(stringToBuffer(JSON.stringify({
+            action:dataJson.action,
+            seq_num:dataJson.seq_num || 0,
+            data:{
+              currentUser: await getUser(authUser.user_id,true),
+              currentUserId: authUser.user_id
+            }
+          })));
+          break
+        default:
+          console.log("WsUserMap",WsUserMap)
+          if(WsUserMap[websocket]){
+            await _ApiMsg(dataJson,WsUserMap[websocket].user_id,websocket)
+          }else{
+            websocket.send(stringToBuffer(JSON.stringify({
+              action:dataJson.action,
+              seq_num:dataJson.seq_num || 0,
+              err_msg:"not found user",
+              data:{ }
+            })));
+          }
+          break
+      }
+    }catch (e){
+      console.error(e)
+      websocket.send(stringToBuffer(JSON.stringify({
+        err_msg:"system error",
+        seq_num
+      })));
     }
   });
 
   websocket.addEventListener('close', async evt => {
-    console.log(evt);
+    console.log("[close]",WsUserMap[websocket]);
+    delete UserWsMap[WsUserMap[websocket].user_id];
   });
 }
 
@@ -37,4 +101,56 @@ async function websocketHandler(req: Request) {
 
 export default async function (event:FetchEvent){
   return await websocketHandler(event.request);
+}
+
+export async function _ApiMsg(dataJson:Record<string, any>,user_id:string,websocket?:WebSocket){
+  const {action,seq_num} = dataJson;
+  let result = null
+  switch (action){
+    case "loadChats":
+      const chat_gpt = await createBot(ENV.USER_ID_CHATGPT,"ChatGPT","ChatGPT");
+
+      result = await loadChats(dataJson,user_id,websocket)
+      break
+    case "super_init":
+      result = await super_init(dataJson,user_id,websocket)
+      break
+    case "sendMsg":
+      result = await sendMsg(dataJson,user_id,websocket)
+      break
+  }
+  console.log({action,result})
+  return result
+}
+
+
+async function super_init(dataJson,user_id,websocket){
+  const res = {
+    seq_num:dataJson.seq_num || 0,
+    action:dataJson.action,
+    data:{
+      // chat_gpt
+    }
+  }
+  return res;
+}
+export async function ApiMsg(request:Request){
+  const authUser = await getAuthUser(request);
+  if(!authUser){
+    return reply(400, 'not found user');
+  }
+  if(!authUser.user_id){
+    return authUser;
+  }
+  let input;
+  try {
+    input = await utils.body<AuthTokenForm>(request);
+  } catch (err) {
+    return ResponseJson({
+      err_msg:"Error parsing request body"
+    })
+  }
+
+  const result = await _ApiMsg(await input,authUser.user_id,UserWsMap[authUser.user_id] || undefined);
+  return ResponseJson(result);
 }

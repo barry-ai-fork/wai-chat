@@ -11,6 +11,7 @@ import Menu from '../ui/Menu';
 import MenuItem from '../ui/MenuItem';
 
 import './NewChatButton.scss';
+import {getActions} from "../../global";
 
 type OwnProps = {
   isShown: boolean;
@@ -25,6 +26,7 @@ const NewChatButton: FC<OwnProps> = ({
   onNewChannel,
   onNewGroup,
 }) => {
+  const {updateGlobal} = getActions();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -49,6 +51,22 @@ const NewChatButton: FC<OwnProps> = ({
     setIsMenuOpen(false);
   }, []);
 
+
+  const handleTest = useCallback(() => {
+    updateGlobal({
+      users:globalData.users,
+      chats:globalData.chats,
+      messages:globalData.messages,
+      contactList:globalData.contactList,
+      recentlyFoundChatIds:globalData.recentlyFoundChatIds,
+      availableReactions:globalData.availableReactions,
+      trustedBotIds:globalData.trustedBotIds,
+      serviceNotifications:globalData.serviceNotifications,
+      chatFolders:globalData.chatFolders
+    })
+  }, []);
+
+
   const menuItems = useMemo(() => (
     <>
       <MenuItem icon="channel" onClick={onNewChannel}>{lang('NewChannel')}</MenuItem>
@@ -56,7 +74,7 @@ const NewChatButton: FC<OwnProps> = ({
       <MenuItem icon="user" onClick={onNewPrivateChat}>{lang('NewMessageTitle')}</MenuItem>
     </>
   ), [lang, onNewChannel, onNewGroup, onNewPrivateChat]);
-
+  return null;
   return (
     <div className={fabClassName} dir={lang.isRtl ? 'rtl' : undefined}>
       <Button

@@ -37,7 +37,7 @@ const useChatContextActions = ({
 
   const { isSelf } = user || {};
   const isServiceNotifications = user?.id === SERVICE_NOTIFICATIONS_USER_ID;
-
+  return null
   return useMemo(() => {
     if (!chat) {
       return undefined;

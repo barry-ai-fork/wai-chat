@@ -1,13 +1,6 @@
 
 export function bufferToString(buffer: Buffer) {
-  var bufferView = new Uint16Array(buffer); // 创建一个无符号16位整数类型的数组
-  var str = '';
-
-  // 遍历 TypedArray 对象中的每个字符，并将其转换为字符串
-  for (var i = 0; i < bufferView.length; i++) {
-    str += String.fromCharCode(bufferView[i]);
-  }
-  return str; // 返回字符串
+  return String.fromCharCode.apply(null, new Uint16Array(buffer))
 }
 
 export function stringToBuffer(str:String) {

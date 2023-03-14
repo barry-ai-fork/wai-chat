@@ -122,6 +122,7 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
     requestNextSettingsScreen,
     skipLockOnUnload,
     openUrl,
+    signOut
   } = getActions();
 
   const lang = useLang();
@@ -245,6 +246,9 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
     openUrl({ url: FEEDBACK_URL });
   }, [openUrl]);
 
+  const handleSignOutClick = useCallback(() => {
+    signOut({ forceInitApi: true });
+  }, [signOut]);
   const handleLockScreen = useCallback(() => {
     lockScreen();
   }, [lockScreen]);
@@ -271,35 +275,35 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
 
   const menuItems = useMemo(() => (
     <>
-      <MenuItem
-        icon="saved-messages"
-        onClick={handleSelectSaved}
-      >
-        {lang('SavedMessages')}
-      </MenuItem>
-      {archiveSettings.isHidden && (
-        <MenuItem
-          icon="archive"
-          onClick={onSelectArchived}
-        >
-          <span className="menu-item-name">{lang('ArchivedChats')}</span>
-          {archivedUnreadChatsCount > 0 && (
-            <div className="right-badge">{archivedUnreadChatsCount}</div>
-          )}
-        </MenuItem>
-      )}
-      <MenuItem
-        icon="user"
-        onClick={onSelectContacts}
-      >
-        {lang('Contacts')}
-      </MenuItem>
-      <MenuItem
-        icon="settings"
-        onClick={onSelectSettings}
-      >
-        {lang('Settings')}
-      </MenuItem>
+      {/* <MenuItem */}
+      {/*   icon="saved-messages" */}
+      {/*   onClick={handleSelectSaved} */}
+      {/* > */}
+      {/*   {lang('SavedMessages')} */}
+      {/* </MenuItem> */}
+      {/* {archiveSettings.isHidden && ( */}
+      {/*   <MenuItem */}
+      {/*     icon="archive" */}
+      {/*     onClick={onSelectArchived} */}
+      {/*   > */}
+      {/*     <span className="menu-item-name">{lang('ArchivedChats')}</span> */}
+      {/*     {archivedUnreadChatsCount > 0 && ( */}
+      {/*       <div className="right-badge">{archivedUnreadChatsCount}</div> */}
+      {/*     )} */}
+      {/*   </MenuItem> */}
+      {/* )} */}
+      {/* <MenuItem */}
+      {/*   icon="user" */}
+      {/*   onClick={onSelectContacts} */}
+      {/* > */}
+      {/*   {lang('Contacts')} */}
+      {/* </MenuItem> */}
+      {/* <MenuItem */}
+      {/*   icon="settings" */}
+      {/*   onClick={onSelectSettings} */}
+      {/* > */}
+      {/*   {lang('Settings')} */}
+      {/* </MenuItem> */}
       <MenuItem
         icon="darkmode"
         onClick={handleDarkModeToggle}
@@ -323,35 +327,41 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
           checked={animationLevel > 0}
         />
       </MenuItem>
-      <MenuItem
-        icon="help"
-        onClick={handleOpenTipsChat}
-      >
-        {lang('TelegramFeatures')}
-      </MenuItem>
+      {/* <MenuItem */}
+      {/*   icon="help" */}
+      {/*   onClick={handleOpenTipsChat} */}
+      {/* > */}
+      {/*   {lang('TelegramFeatures')} */}
+      {/* </MenuItem> */}
       <MenuItem
         icon="bug"
         onClick={handleBugReportClick}
       >
         Report Bug
       </MenuItem>
-      {IS_BETA && (
-        <MenuItem
-          icon="permissions"
-          onClick={handleChangelogClick}
-        >
-          Beta Changelog
-        </MenuItem>
-      )}
-      {withOtherVersions && (
-        <MenuItem
-          icon="char-K"
-          href={WEBK_VERSION_URL}
-          onClick={handleSwitchToWebK}
-        >
-          Switch to K Version
-        </MenuItem>
-      )}
+      <MenuItem
+        icon="logout"
+        onClick={handleSignOutClick}
+      >
+        Sign Out
+      </MenuItem>
+      {/* {IS_BETA && ( */}
+      {/*   <MenuItem */}
+      {/*     icon="permissions" */}
+      {/*     onClick={handleChangelogClick} */}
+      {/*   > */}
+      {/*     Beta Changelog */}
+      {/*   </MenuItem> */}
+      {/* )} */}
+      {/* {withOtherVersions && ( */}
+      {/*   <MenuItem */}
+      {/*     icon="char-K" */}
+      {/*     href={WEBK_VERSION_URL} */}
+      {/*     onClick={handleSwitchToWebK} */}
+      {/*   > */}
+      {/*     Switch to K Version */}
+      {/*   </MenuItem> */}
+      {/* )} */}
       {canInstall && (
         <MenuItem
           icon="install"
@@ -384,46 +394,46 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
         >
           {menuItems}
         </DropdownMenu>
-        <SearchInput
-          inputId="telegram-search-input"
-          parentContainerClassName="LeftSearch"
-          className={buildClassName(
-            (globalSearchChatId || searchDate) ? 'with-picker-item' : undefined,
-            shouldHideSearch && 'SearchInput--hidden',
-          )}
-          value={isClosingSearch ? undefined : (contactsFilter || searchQuery)}
-          focused={isSearchFocused}
-          isLoading={isLoading || connectionStatusPosition === 'minimized'}
-          spinnerColor={connectionStatusPosition === 'minimized' ? 'yellow' : undefined}
-          spinnerBackgroundColor={connectionStatusPosition === 'minimized' && theme === 'light' ? 'light' : undefined}
-          placeholder={searchInputPlaceholder}
-          autoComplete="off"
-          canClose={Boolean(globalSearchChatId || searchDate)}
-          onChange={onSearchQuery}
-          onReset={onReset}
-          onFocus={handleSearchFocus}
-          onSpinnerClick={connectionStatusPosition === 'minimized' ? toggleConnectionStatus : undefined}
-        >
-          {selectedSearchDate && (
-            <PickerSelectedItem
-              icon="calendar"
-              title={selectedSearchDate}
-              canClose
-              isMinimized={Boolean(globalSearchChatId)}
-              className="search-date"
-              onClick={setGlobalSearchDate}
-              clickArg={clearedDateSearchParam}
-            />
-          )}
-          {globalSearchChatId && (
-            <PickerSelectedItem
-              chatOrUserId={globalSearchChatId}
-              onClick={setGlobalSearchChatId}
-              canClose
-              clickArg={clearedChatSearchParam}
-            />
-          )}
-        </SearchInput>
+        {/* <SearchInput */}
+        {/*   inputId="telegram-search-input" */}
+        {/*   parentContainerClassName="LeftSearch" */}
+        {/*   className={buildClassName( */}
+        {/*     (globalSearchChatId || searchDate) ? 'with-picker-item' : undefined, */}
+        {/*     shouldHideSearch && 'SearchInput--hidden', */}
+        {/*   )} */}
+        {/*   value={isClosingSearch ? undefined : (contactsFilter || searchQuery)} */}
+        {/*   focused={isSearchFocused} */}
+        {/*   isLoading={isLoading || connectionStatusPosition === 'minimized'} */}
+        {/*   spinnerColor={connectionStatusPosition === 'minimized' ? 'yellow' : undefined} */}
+        {/*   spinnerBackgroundColor={connectionStatusPosition === 'minimized' && theme === 'light' ? 'light' : undefined} */}
+        {/*   placeholder={searchInputPlaceholder} */}
+        {/*   autoComplete="off" */}
+        {/*   canClose={Boolean(globalSearchChatId || searchDate)} */}
+        {/*   onChange={onSearchQuery} */}
+        {/*   onReset={onReset} */}
+        {/*   onFocus={handleSearchFocus} */}
+        {/*   onSpinnerClick={connectionStatusPosition === 'minimized' ? toggleConnectionStatus : undefined} */}
+        {/* > */}
+        {/*   {selectedSearchDate && ( */}
+        {/*     <PickerSelectedItem */}
+        {/*       icon="calendar" */}
+        {/*       title={selectedSearchDate} */}
+        {/*       canClose */}
+        {/*       isMinimized={Boolean(globalSearchChatId)} */}
+        {/*       className="search-date" */}
+        {/*       onClick={setGlobalSearchDate} */}
+        {/*       clickArg={clearedDateSearchParam} */}
+        {/*     /> */}
+        {/*   )} */}
+        {/*   {globalSearchChatId && ( */}
+        {/*     <PickerSelectedItem */}
+        {/*       chatOrUserId={globalSearchChatId} */}
+        {/*       onClick={setGlobalSearchChatId} */}
+        {/*       canClose */}
+        {/*       clickArg={clearedChatSearchParam} */}
+        {/*     /> */}
+        {/*   )} */}
+        {/* </SearchInput> */}
         {isCurrentUserPremium && <StatusButton />}
         {hasPasscode && (
           <Button

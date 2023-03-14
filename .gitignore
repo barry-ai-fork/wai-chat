@@ -20,3 +20,5 @@ public/statoscope-report.html
 
 wrangler.toml
 wrangler.prod.toml
+.env.prod
+.env.dev
