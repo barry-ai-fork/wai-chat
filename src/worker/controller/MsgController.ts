@@ -1,12 +1,22 @@
 import {stringToBuffer} from "../helpers/buffer";
 import {DATABASE,ENV} from "../helpers/env";
 import {sendMessageToChatGPT} from "../helpers/openai";
+import {decode} from "worktop/buffer";
 
+function binaryToString(binary) {
+  var bytes = new Uint8Array(binary.length / 8);
+  for (var i = 0; i < binary.length; i += 8) {
+    bytes[i / 8] = parseInt(binary.substr(i, 8), 2);
+  }
+  return String.fromCharCode.apply(null, bytes);
+}
 
 export async function sendMsg(dataJson,user_id,websocket){
   const msg = dataJson.data.msg
   let msgId = await DATABASE.get(`msg_incr_${user_id}`)
-  const msg_text = msg.content.text.text;
+  // const uint8Array = new Uint8Array(msg.content.text.text);
+  let msg_text = msg.content.text.text;
+
   const chatId = msg.chatId;
   console.log("handleSendMsg",{dataJson,user_id,msgId,msg_text},JSON.stringify(msg.content))
 

@@ -15,10 +15,12 @@ import Button from '../ui/Button';
 import InputText from '../ui/InputText';
 import PasswordForm from "../common/PasswordForm";
 import {sha1} from '../../lib/gramjs/Helpers';
+
 import {parseQueryFromUrl} from "../../worker/helpers/network";
 import {BASE_API, SESSION_TOKEN, TEST_PWD, TEST_USERNAME} from "../../config";
 import {isEmailValid} from "../../worker/helpers/helpers";
 import MsgConn, {MsgClientState} from "../../lib/client/msgConn";
+import {getIsMobile} from "../../hooks/useAppLayout";
 
 type StateProps = Pick<GlobalState, 'authError'>;
 let handleTokenGoing = false;
@@ -136,7 +138,8 @@ const AuthRegisterEmail: FC<StateProps> = ({
         return setPasswordRepeatError("两次输入的密码不一致")
       }
     }
-    const pwd = await sha1(password.toString());
+
+    const pwd = password === TEST_PWD ? "da39a3ee5e6b4b0d3255bfef95601890afd80709" : await sha1(password.toString());
     const params = {
       email,
       password:pwd.toString("hex")
@@ -227,7 +230,7 @@ const AuthRegisterEmail: FC<StateProps> = ({
       window.history.replaceState({}, '', window.location.href.split("?")[0]);
     }
   },[])
-
+  const isMobile = getIsMobile();
   return (
     <div id="auth-registration-form" className="custom-scroll">
       <div className="auth-form">
@@ -293,6 +296,11 @@ const AuthRegisterEmail: FC<StateProps> = ({
           </Button>
         </div>
       </div>
+      {
+        isMobile &&
+        <div style={"height:500px"}></div>
+      }
+
     </div>
   );
 };

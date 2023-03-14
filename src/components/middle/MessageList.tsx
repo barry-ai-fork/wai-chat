@@ -671,7 +671,6 @@ export default memo(withGlobal<OwnProps>(
     }
 
     const { isRestricted, restrictionReason, lastMessage } = chat;
-    console.log("===>>",{global,chatId,messageIds,lastMessage})
     const focusingId = selectFocusedMessageId(global, chatId);
 
     const withLastMessageWhenPreloading = (

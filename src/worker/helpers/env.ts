@@ -12,7 +12,7 @@ export const ENV = {
   GOOGLE_CLIENT_ID : "",
   GOOGLE_CLIENT_SECRET : "",
   FRONTEND_AUTH_CALLBACK_URL : "http://localhost:1234/",
-
+  Access_Control_Allow_Origin : "*",
   // OpenAI API Key
   OPENAI_API_KEY: "",
 

@@ -68,7 +68,9 @@ export async function getBotChat(bot_id){
 
 export async function getChats(user_id){
   const currentUserChat = await getChat(user_id);
-  const listIds_active = [];
+  const listIds_active = [
+    user_id
+  ];
   const chats = [];
   chats.push(currentUserChat)
   const byChatId = {

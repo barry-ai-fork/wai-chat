@@ -2,6 +2,11 @@ name = "chat"
 main = "src/worker/index.ts"
 compatibility_date = "2022-05-03"
 node_compat = true
+
+[dev]
+port = 1235
+ip = "192.168.43.244"
+
 #
 #[site]
 #bucket = "dist"
@@ -24,5 +29,6 @@ GOOGLE_REDIRECT_PROD_URL="https://xxxx.dev/auth/google/callback"
 GOOGLE_CLIENT_ID = ""
 GOOGLE_CLIENT_SECRET = ""
 
-FRONTEND_AUTH_CALLBACK_URL = "https://xxxx.dev"
 OPENAI_API_KEY=""
+FRONTEND_AUTH_CALLBACK_URL = "https://xxxx.dev"
+Access_Control_Allow_Origin="https://xxxx.dev"

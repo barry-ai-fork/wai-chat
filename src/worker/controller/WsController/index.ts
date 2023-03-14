@@ -26,47 +26,50 @@ async function handleSession(websocket: WebSocket) {
   websocket.addEventListener('message', async ({ data }) => {
     let seq_num = 0;
     try {
-      const dataJson = JSON.parse(decode(data));
-      console.log("on message",dataJson)
+      const dataJson = JSON.parse(data);
       switch (dataJson.action){
         case "login":
+          console.log("on login",dataJson)
           let authUser;
           try{
             authUser = await getTokenAuthUser(dataJson)
           }catch (e){
             console.error(e)
-            websocket.send(stringToBuffer(JSON.stringify({
+            websocket.send(JSON.stringify({
               action:dataJson.action,
               seq_num:dataJson.seq_num || 0,
               err_msg:"token is invalid",
               err:400,
               data:{
               }
-            })));
+            }));
             return;
           }
           UserWsMap[authUser.user_id] =  websocket;
           WsUserMap[websocket] = authUser;
-          websocket.send(stringToBuffer(JSON.stringify({
+          websocket.send(JSON.stringify({
             action:dataJson.action,
             seq_num:dataJson.seq_num || 0,
             data:{
               currentUser: await getUser(authUser.user_id,true),
               currentUserId: authUser.user_id
             }
-          })));
+          }));
           break
         default:
-          console.log("WsUserMap",WsUserMap)
+          if(dataJson.action === "sendMsg"){
+            console.log(data)
+            console.log("msg text",dataJson.data.msg.content.text.text)
+          }
           if(WsUserMap[websocket]){
             await _ApiMsg(dataJson,WsUserMap[websocket].user_id,websocket)
           }else{
-            websocket.send(stringToBuffer(JSON.stringify({
+            websocket.send(JSON.stringify({
               action:dataJson.action,
               seq_num:dataJson.seq_num || 0,
               err_msg:"not found user",
               data:{ }
-            })));
+            }));
           }
           break
       }
@@ -80,8 +83,12 @@ async function handleSession(websocket: WebSocket) {
   });
 
   websocket.addEventListener('close', async evt => {
-    console.log("[close]",WsUserMap[websocket]);
-    delete UserWsMap[WsUserMap[websocket].user_id];
+    if(WsUserMap[websocket] && UserWsMap[WsUserMap[websocket].user_id]){
+      console.log("[close] delete user:",WsUserMap[websocket].user_id);
+      delete UserWsMap[WsUserMap[websocket].user_id];
+    }else{
+      console.log("[close]");
+    }
   });
 }
 

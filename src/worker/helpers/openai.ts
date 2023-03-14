@@ -18,7 +18,7 @@ export async function sendMessageToChatGPT(message, history) {
       body: JSON.stringify(body),
     }).then((res) => res.json());
     if (resp.error?.message) {
-      return `OpenAI API error\n> ${resp.error.message}}`;
+      return `OpenAI API error\n> ${resp.error.message}`;
     }
     return resp.choices[0].message.content;
   } catch (e) {

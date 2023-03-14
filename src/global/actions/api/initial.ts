@@ -146,6 +146,7 @@ addActionHandler('initApi', async (global, actions): Promise<void> => {
         switch (notify.action){
           case MsgConnNotifyAction.onData:
             const payload = notify.payload;
+            console.log("onData",payload)
             actions.updateMsg(payload);
             break;
         }

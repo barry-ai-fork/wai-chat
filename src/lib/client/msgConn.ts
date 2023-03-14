@@ -1,5 +1,6 @@
 import {BASE_API, SESSION_TOKEN, WS_URL} from '../../config';
 import {bufferToString} from "../../worker/helpers/buffer";
+import {decode} from "worktop/buffer";
 
 export enum MsgConnNotifyAction{
   onInitAccount,
@@ -86,7 +87,7 @@ export default class MsgConn {
       }
       this.notifyState(MsgClientState.connecting);
       this.client = new WebSocket(`${WS_URL}`);
-      this.client.binaryType = 'arraybuffer';
+      // this.client.binaryType = 'arraybuffer';
       this.client.onopen = this.onConnected.bind(this);
       this.client.onmessage = this.onData.bind(this);
       this.client.onclose = this.onClose.bind(this);
@@ -148,24 +149,23 @@ export default class MsgConn {
     }
   }
   login(token){
-    this.client.send(Buffer.from(JSON.stringify({
+    this.sendJson({
       action:"login",
       seq_num:0,
       data:{
         token
       },
-    })))
+    })
   }
   notify(notifyList:MsgConnNotify[]) {
     if (this.__msgHandler) {
       this.__msgHandler(this.accountId,notifyList);
     }
   }
-  onData(e: { data: ArrayBuffer }) {
+  onData(e: { data: String }) {
     let msg;
     try {
-      const msgStr = String.fromCharCode.apply(null, new Uint16Array(e.data));
-      msg = JSON.parse(msgStr);
+      msg = JSON.parse(e.data);
     }catch (e){
       console.error("parse msg error")
     }
@@ -289,8 +289,8 @@ export default class MsgConn {
       this.state
     );
   }
-  sendJson(data){
-    this.client.send(Buffer.from(JSON.stringify(data)))
+  sendJson(data:Object){
+    this.client.send(JSON.stringify(data))
   }
   static getMsgClient() {
     return currentMsgConn;

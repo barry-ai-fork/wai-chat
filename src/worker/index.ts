@@ -13,13 +13,13 @@ addEventListener('fetch', (event) => {
 
 async function handleEvent(event:FetchEvent) {
   console.log("env",ENV)
-  const {FRONTEND_AUTH_CALLBACK_URL} = ENV
+  const {Access_Control_Allow_Origin} = ENV
   const {request} = event;
 	const url = new URL(request.url);
   if(request.method === "OPTIONS"){
     return new Response("",{
       headers:{
-        "Access-Control-Allow-Origin":FRONTEND_AUTH_CALLBACK_URL,
+        "Access-Control-Allow-Origin":Access_Control_Allow_Origin,
         "Access-Control-Allow-Methods":"GET, POST, OPTIONS",
         "Access-Control-Allow-Headers":"Content-Type, Authorization, Accept",
         "Access-Control-Allow-Credentials":"true",
