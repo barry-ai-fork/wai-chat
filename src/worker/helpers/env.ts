@@ -1,4 +1,6 @@
 import {HS256} from "worktop/jwt";
+import CloudFlareKv from "./db/CloudFlareKv";
+import LocalFile from "./db/LocalFile";
 
 export const ENV = {
   IS_PROD: true,
@@ -11,19 +13,19 @@ export const ENV = {
   GOOGLE_REDIRECT_PROD_URL: "http://localhost:1235/auth/google/callback",
   GOOGLE_CLIENT_ID : "",
   GOOGLE_CLIENT_SECRET : "",
-  FRONTEND_AUTH_CALLBACK_URL : "http://localhost:1234/",
+  FRONTEND_URL : "http://localhost:1234/",
   Access_Control_Allow_Origin : "*",
   // OpenAI API Key
   OPENAI_API_KEY: "",
 
 };
 
-export let DATABASE = null;
+export let kv:CloudFlareKv | LocalFile;
 //@ts-ignore
 export let jwt =HS256({key:global.JWT_SECRET});
 
-export function initEnv(env) {
-  DATABASE = env.DATABASE;
+export function initEnv(env:Record<string, any>) {
+
   for (const key in ENV) {
     if (env[key] !== undefined) {
       switch (typeof ENV[key]) {
@@ -46,4 +48,7 @@ export function initEnv(env) {
       }
     }
   }
+  kv = new CloudFlareKv();
+  kv.init(env.DATABASE)
+
 }

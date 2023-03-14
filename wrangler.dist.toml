@@ -5,7 +5,7 @@ node_compat = true
 
 [dev]
 port = 1235
-ip = "192.168.43.244"
+ip = "localhost"
 
 #
 #[site]
@@ -30,5 +30,5 @@ GOOGLE_CLIENT_ID = ""
 GOOGLE_CLIENT_SECRET = ""
 
 OPENAI_API_KEY=""
-FRONTEND_AUTH_CALLBACK_URL = "https://xxxx.dev"
+FRONTEND_URL = "https://xxxx.dev"
 Access_Control_Allow_Origin="https://xxxx.dev"

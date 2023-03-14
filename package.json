@@ -29,7 +29,7 @@
     "postinstall": "(cd dev/eslint-multitab && npm i)",
     "clean:prod": "rm -rf dist/*.map dist/statoscope-report.html dist/build-stats.json public/build-stats.json public/statoscope-report.html dist/img-apple-64 dist/img-apple-160",
     "cf:deploy": "wrangler publish src/worker/index.ts -c wrangler.prod.toml",
-    "cf:dev": "wrangler dev src/worker/index.ts --local",
+    "cf:dev": "wrangler dev src/worker/index.ts --local --experimental-enable-local-persistence",
     "cf:start-stackblitz": "WRANGLER_SEND_METRICS=false wrangler dev src/worker/index.ts --local",
     "log": "wrangler tail --format=pretty"
   },

@@ -8,7 +8,7 @@ import {sendMsg} from "../MsgController";
 import {loadChats} from "../ChatController";
 import {createBot, getUser} from "../UserController";
 import {reply} from "worktop/response";
-import {DATABASE, jwt,ENV} from "../../helpers/env";
+import {kv, jwt,ENV} from "../../helpers/env";
 
 export const UserWsMap:Record<string, WebSocket> = {};
 export const WsUserMap:Record<WebSocket, AuthUser> = {};
@@ -17,7 +17,7 @@ const getTokenAuthUser = async (msg)=>{
   const {token} = msg.data;
   const claims = await jwt.verify(token);
   const user_id = claims.iss;
-  return JSON.parse(await DATABASE.get(`U_${user_id}`));
+  return JSON.parse(await kv.get(`U_${user_id}`));
 }
 
 async function handleSession(websocket: WebSocket) {
@@ -33,6 +33,9 @@ async function handleSession(websocket: WebSocket) {
           let authUser;
           try{
             authUser = await getTokenAuthUser(dataJson)
+            if(!authUser){
+              throw new Error("auth is null")
+            }
           }catch (e){
             console.error(e)
             websocket.send(JSON.stringify({
@@ -116,7 +119,6 @@ export async function _ApiMsg(dataJson:Record<string, any>,user_id:string,websoc
   switch (action){
     case "loadChats":
       const chat_gpt = await createBot(ENV.USER_ID_CHATGPT,"ChatGPT","ChatGPT");
-
       result = await loadChats(dataJson,user_id,websocket)
       break
     case "super_init":

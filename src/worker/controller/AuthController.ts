@@ -8,7 +8,7 @@ import { reply } from 'worktop/response';
 import {generateRandomString} from "../helpers/buffer";
 import {AuthForm, AuthResponse, AuthTokenForm, AuthUser} from "../types";
 
-import {DATABASE, ENV, jwt} from "../helpers/env";
+import {kv, ENV, jwt} from "../helpers/env";
 
 function generateJWT(user: AuthUser) {
   const iat = Math.ceil(+(new Date()) / 1000);
@@ -31,18 +31,18 @@ export async function GithubRedirect(request:Request){
 }
 
 export async function genUserId() {
-  let value = await DATABASE.get("USER_INCR")
+  let value = await kv.get("USER_INCR")
   if(!value){
     value = parseInt(ENV.USER_ID_START);
   }else{
     value = parseInt(value) + 1;
   }
-  await DATABASE.put("USER_INCR",value.toString())
+  await kv.put("USER_INCR",value.toString())
   return value.toString()
 }
 
 export async function GithubCallback(request:Request){
-  const FRONTEND_AUTH_CALLBACK_URL = ENV.FRONTEND_AUTH_CALLBACK_URL;
+  const FRONTEND_URL = ENV.FRONTEND_URL;
 
   try {
     const clientSecretGithub = ENV.GITHUB_CLIENT_SECRET;
@@ -51,14 +51,14 @@ export async function GithubCallback(request:Request){
       options: { clientSecret:clientSecretGithub, clientId:ENV.GITHUB_CLIENT_ID },
       request,
     });
-    let user_id = await DATABASE.get(`U_GH_${providerUser.id}`);
+    let user_id = await kv.get(`U_GH_${providerUser.id}`);
     let authUser:AuthUser;
 
-    await DATABASE.put(`U_GH_U_${providerUser.id}`,JSON.stringify(providerUser));
+    await kv.put(`U_GH_U_${providerUser.id}`,JSON.stringify(providerUser));
     if(user_id === null){
-      user_id = await DATABASE.get(`U_E_UID_${providerUser.email}`);
+      user_id = await kv.get(`U_E_UID_${providerUser.email}`);
       if(user_id){
-        authUser = JSON.parse(await DATABASE.get(`U_${user_id}`));
+        authUser = JSON.parse(await kv.get(`U_${user_id}`));
         if(!authUser.github_id){
           authUser.github_id = providerUser.id.toString();
         }
@@ -73,30 +73,30 @@ export async function GithubCallback(request:Request){
           github_id: providerUser.id.toString(),
         };
         if(providerUser.email){
-          await DATABASE.put(`U_E_UID_${providerUser.email}`,user_id);
+          await kv.put(`U_E_UID_${providerUser.email}`,user_id);
         }
       }
-      await DATABASE.put(`U_${authUser.user_id}`, JSON.stringify(authUser));
-      await DATABASE.put(`U_GH_${providerUser.id}`,user_id);
+      await kv.put(`U_${authUser.user_id}`, JSON.stringify(authUser));
+      await kv.put(`U_GH_${providerUser.id}`,user_id);
     }else{
-      authUser = JSON.parse(await DATABASE.get(`U_${user_id}`));
+      authUser = JSON.parse(await kv.get(`U_${user_id}`));
     }
     const token = await generateJWT(authUser);
     const now = new Date();
     now.setTime(now.getTime() + ENV.TOKEN_EXPIRE_TIME_SEC);
     const code = utils.uuid()
-    await DATABASE.put(`U_C_${code}`,token);
+    await kv.put(`U_C_${code}`,token);
     return new Response("",{
       status: 302,
       headers: {
-        location: `${FRONTEND_AUTH_CALLBACK_URL}/?${queryString.stringify({code,email:authUser.email})}`,
+        location: `${FRONTEND_URL}/?${queryString.stringify({code,email:authUser.email})}`,
       },
     })
   } catch (e) {
     return new Response("error",{
       status: 302,
       headers: {
-        location: `${FRONTEND_AUTH_CALLBACK_URL}/?${queryString.stringify({err_msg:"OAuth Login Error"})}`,
+        location: `${FRONTEND_URL}/?${queryString.stringify({err_msg:"OAuth Login Error"})}`,
       },
     })
   }
@@ -127,21 +127,21 @@ export async function GoogleCallback(request:Request){
     clientSecret,
     redirectUrl,
   };
-  const FRONTEND_AUTH_CALLBACK_URL = ENV.FRONTEND_AUTH_CALLBACK_URL;
+  const FRONTEND_URL = ENV.FRONTEND_URL;
 
   try {
     const { user: providerUser } = await google.users({
       options,
       request,
     });
-    let user_id = await DATABASE.get(`U_GO_${providerUser.id}`);
+    let user_id = await kv.get(`U_GO_${providerUser.id}`);
     let authUser:AuthUser;
 
-    await DATABASE.put(`U_GO_U_${providerUser.id}`,JSON.stringify(providerUser));
+    await kv.put(`U_GO_U_${providerUser.id}`,JSON.stringify(providerUser));
     if(user_id === null){
-      user_id = await DATABASE.get(`U_E_UID_${providerUser.email}`);
+      user_id = await kv.get(`U_E_UID_${providerUser.email}`);
       if(user_id){
-        authUser = JSON.parse(await DATABASE.get(`U_${user_id}`));
+        authUser = JSON.parse(await kv.get(`U_${user_id}`));
         if(!authUser.google_id){
           authUser.google_id = providerUser.id.toString();
         }
@@ -158,31 +158,31 @@ export async function GoogleCallback(request:Request){
           email: providerUser.email || "",
           google_id: providerUser.id.toString(),
         };
-        await DATABASE.put(`U_E_UID_${providerUser.email}`,user_id);
+        await kv.put(`U_E_UID_${providerUser.email}`,user_id);
       }
-      await DATABASE.put(`U_${authUser.user_id}`, JSON.stringify(authUser));
-      await DATABASE.put(`U_GO_${providerUser.id}`,user_id);
+      await kv.put(`U_${authUser.user_id}`, JSON.stringify(authUser));
+      await kv.put(`U_GO_${providerUser.id}`,user_id);
     }else{
-      authUser = JSON.parse(await DATABASE.get(`U_${user_id}`));
+      authUser = JSON.parse(await kv.get(`U_${user_id}`));
       if(!authUser.name){
         authUser.name = providerUser.name;
-        await DATABASE.put(`U_${authUser.user_id}`, JSON.stringify(authUser));
+        await kv.put(`U_${authUser.user_id}`, JSON.stringify(authUser));
       }
     }
     const token = await generateJWT(authUser);
     const code = utils.uuid()
-    await DATABASE.put(`U_C_${code}`,token);
+    await kv.put(`U_C_${code}`,token);
     return new Response("",{
       status: 302,
       headers: {
-        location: `${FRONTEND_AUTH_CALLBACK_URL}/?${queryString.stringify({code,email:authUser.email})}`,
+        location: `${FRONTEND_URL}/?${queryString.stringify({code,email:authUser.email})}`,
       },
     })
   } catch (e) {
     return new Response("error",{
       status: 302,
       headers: {
-        location: `${FRONTEND_AUTH_CALLBACK_URL}/?${queryString.stringify({err_msg:"OAuth Login Error"})}`,
+        location: `${FRONTEND_URL}/?${queryString.stringify({err_msg:"OAuth Login Error"})}`,
       },
     })
   }
@@ -201,7 +201,7 @@ export async function getAuthUser(request:Request){
   try {
     const claims = await jwt.verify(token);
     const user_id = claims.iss;
-    return JSON.parse(await DATABASE.get(`U_${user_id}`));
+    return JSON.parse(await kv.get(`U_${user_id}`));
   }catch (e){
     // @ts-ignore
     return reply(500, e?.message);
@@ -216,11 +216,11 @@ export async function Me(request:Request){
   try {
     let githubUserStr,googleUserStr;
     if(authUser && authUser.google_id){
-      googleUserStr = await DATABASE.get(`U_GO_U_${authUser.google_id}`)
+      googleUserStr = await kv.get(`U_GO_U_${authUser.google_id}`)
     }
 
     if(authUser && authUser.github_id){
-      githubUserStr = await DATABASE.get(`U_GH_U_${authUser.github_id}`)
+      githubUserStr = await kv.get(`U_GH_U_${authUser.github_id}`)
     }
     const githubUser = authUser?.github_id ? JSON.parse(githubUserStr) : null;
     const googleUser = authUser?.github_id ? JSON.parse(googleUserStr) : null;
@@ -242,10 +242,10 @@ export async function Login(request:Request){
   }
 
   const {email,password} = await input
-  const user_id = await DATABASE.get(`U_E_UID_${email}`);
+  const user_id = await kv.get(`U_E_UID_${email}`);
   let res:AuthResponse;
   if(user_id ){
-    let user = await DATABASE.get(`U_${user_id}`);
+    let user = await kv.get(`U_${user_id}`);
     if(user){
       user = JSON.parse(user)
       if(!user.password){
@@ -291,7 +291,7 @@ export async function Reg(request:Request){
   }
 
   const {email,password} = await input
-  let user_id = await DATABASE.get(`U_E_UID_${email}`);
+  let user_id = await kv.get(`U_E_UID_${email}`);
   let res:AuthResponse;
   if(!user_id ){
     user_id = await genUserId();
@@ -305,8 +305,8 @@ export async function Reg(request:Request){
       avatar: "",
       github_id: "",
     };
-    await DATABASE.put(`U_${authUser.user_id}`, JSON.stringify(authUser));
-    await DATABASE.put(`U_E_UID_${email}`,user_id);
+    await kv.put(`U_${authUser.user_id}`, JSON.stringify(authUser));
+    await kv.put(`U_E_UID_${email}`,user_id);
     const token = await generateJWT(authUser);
     res = {
       password_empty: false,
@@ -342,7 +342,7 @@ export async function Token(request:Request){
       err_msg:"Invalid code"
     })
   }
-  const token = await DATABASE.get(`U_C_${code}`);
+  const token = await kv.get(`U_C_${code}`);
   if(!token){
     return ResponseJson({
       err_msg:"Token is null"
@@ -351,7 +351,7 @@ export async function Token(request:Request){
   try {
     const claims = await jwt.verify(token);
     const user_id = claims.iss;
-    const authUser = JSON.parse(await DATABASE.get(`U_${user_id}`));
+    const authUser = JSON.parse(await kv.get(`U_${user_id}`));
     let res:AuthResponse = {
       token,
       password_empty:!!authUser.password,

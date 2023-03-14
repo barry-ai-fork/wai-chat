@@ -1,4 +1,4 @@
-import {DATABASE, ENV} from "../helpers/env";
+import {kv, ENV} from "../helpers/env";
 
 export async function createBot(id:string,user_name:string,first_name:string){
   const info = {
@@ -23,7 +23,7 @@ export async function createBot(id:string,user_name:string,first_name:string){
     "fullInfo": {
       "commonChatsCount": 0,
       "isBlocked": false,
-      "noVoiceMessages": true,
+      "noVoiceMessages": false,
       "botInfo": {
         "botId": id,
         "description": "BotFather is the one bot ",
@@ -41,16 +41,17 @@ export async function createBot(id:string,user_name:string,first_name:string){
     },
     "photos": []
   }
-  await DATABASE.put(`MU_${id}`,JSON.stringify(info))
+  await kv.delete(`MU_${id}`)
+  await kv.put(`MU_${id}`,JSON.stringify(info))
   return info;
 }
 
 export async function getUserFromCache(user_id){
-  return JSON.parse(await DATABASE.get(`MU_${user_id}`));
+  return JSON.parse(await kv.get(`MU_${user_id}`));
 }
 
 export async function getUser(user_id:string,isSelf:boolean = false){
-  const user = JSON.parse(await DATABASE.get(`U_${user_id}`));
+  const user = JSON.parse(await kv.get(`U_${user_id}`));
   const usernames = [];
   let firstName = "";
   if(user.username){
@@ -82,7 +83,7 @@ export async function getUser(user_id:string,isSelf:boolean = false){
     "fullInfo": {
       "commonChatsCount": 0,
       "isBlocked": false,
-      "noVoiceMessages": true,
+      "noVoiceMessages": false,
     },
     "photos": []
   }

@@ -1,5 +1,5 @@
 import {stringToBuffer} from "../helpers/buffer";
-import {DATABASE,ENV} from "../helpers/env";
+import {kv,ENV} from "../helpers/env";
 import {sendMessageToChatGPT} from "../helpers/openai";
 import {decode} from "worktop/buffer";
 
@@ -13,7 +13,7 @@ function binaryToString(binary) {
 
 export async function sendMsg(dataJson,user_id,websocket){
   const msg = dataJson.data.msg
-  let msgId = await DATABASE.get(`msg_incr_${user_id}`)
+  let msgId = await kv.get(`msg_incr_${user_id}`)
   // const uint8Array = new Uint8Array(msg.content.text.text);
   let msg_text = msg.content.text.text;
 
@@ -25,7 +25,7 @@ export async function sendMsg(dataJson,user_id,websocket){
   }else{
     msgId = parseInt(msgId) + 1;
   }
-  await DATABASE.put(`msg_incr_${user_id}`,msgId.toString())
+  await kv.put(`msg_incr_${user_id}`,msgId.toString())
   const localMsgId = msg.id;
   msg.id = msgId;
   const res = {
@@ -44,7 +44,7 @@ export async function sendMsg(dataJson,user_id,websocket){
       if(chatId === ENV.USER_ID_CHATGPT){
         if(msg_text.indexOf("/") === -1){
           const newMsgId = res.data.msg.id+1
-          await DATABASE.put(`msg_incr_${user_id}`,(newMsgId).toString())
+          await kv.put(`msg_incr_${user_id}`,(newMsgId).toString())
           res.data.localMsgId = null
           res.action = "newMessage";
           res.data.msg.senderId = msg.chatId;
@@ -73,7 +73,7 @@ export async function sendMsg(dataJson,user_id,websocket){
         }
 
       }else{
-        await DATABASE.put(`msg_incr_${user_id}`,(res.data.msg.id+1).toString())
+        await kv.put(`msg_incr_${user_id}`,(res.data.msg.id+1).toString())
         setTimeout(async ()=>{
           res.action = "newMessage";
           res.data.localMsgId = null

@@ -1,28 +1,23 @@
 import * as AuthController from "./controller/AuthController";
 import AssetController from "./controller/AssetController";
 import WsController,{ApiMsg} from "./controller/WsController";
-import {initEnv,ENV} from "./helpers/env";
+import {initEnv, ENV, kv} from "./helpers/env";
 import * as queryString from "query-string";
-import {ResponseJson} from "./helpers/network";
+import {getCorsHeader, ResponseJson} from "./helpers/network";
 
-addEventListener('fetch', (event) => {
+addEventListener('fetch', async (event) => {
   initEnv(global);
 	// @ts-ignore
 	event.respondWith(handleEvent(event));
 });
 
 async function handleEvent(event:FetchEvent) {
-  console.log("env",ENV)
-  const {Access_Control_Allow_Origin} = ENV
   const {request} = event;
 	const url = new URL(request.url);
   if(request.method === "OPTIONS"){
     return new Response("",{
       headers:{
-        "Access-Control-Allow-Origin":Access_Control_Allow_Origin,
-        "Access-Control-Allow-Methods":"GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers":"Content-Type, Authorization, Accept",
-        "Access-Control-Allow-Credentials":"true",
+        ...getCorsHeader()
       }
     })
   }
@@ -60,18 +55,15 @@ async function handleEvent(event:FetchEvent) {
   if(url.pathname.startsWith("/me")){
     return await AuthController.Me(request);
   }
-
   if(url.pathname.startsWith("/version")){
     return ResponseJson({
       v:"1.0.1",
-      FRONTEND_AUTH_CALLBACK_URL
     })
   }
   return new Response("",{
     status: 302,
     headers: {
-      location: `${FRONTEND_AUTH_CALLBACK_URL}`,
+      location: `${ENV.FRONTEND_URL}`,
     },
   })
-  // return AssetController(event);
 }
