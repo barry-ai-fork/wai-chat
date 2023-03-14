@@ -3,6 +3,7 @@ import AssetController from "./controller/AssetController";
 import WsController,{ApiMsg} from "./controller/WsController";
 import {initEnv,ENV} from "./helpers/env";
 import * as queryString from "query-string";
+import {ResponseJson} from "./helpers/network";
 
 addEventListener('fetch', (event) => {
   initEnv(global);
@@ -58,6 +59,13 @@ async function handleEvent(event:FetchEvent) {
 
   if(url.pathname.startsWith("/me")){
     return await AuthController.Me(request);
+  }
+
+  if(url.pathname.startsWith("/version")){
+    return ResponseJson({
+      v:"1.0.1",
+      FRONTEND_AUTH_CALLBACK_URL
+    })
   }
   return new Response("",{
     status: 302,

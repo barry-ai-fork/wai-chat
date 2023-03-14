@@ -282,12 +282,12 @@ const AuthRegisterEmail: FC<StateProps> = ({
         </div>
         <div className="oauth-btn">
           <Button type="button" onClick={()=>{
-            window.location.href = "http://localhost:1235/auth/github";
+            window.location.href = `${BASE_API}/auth/github`;
           }} className="Button translucent round" aria-label="Github" style="">
             <img src={github} alt="Github"/>
           </Button>
           <Button type="button" onClick={()=>{
-            window.location.href = "http://localhost:1235/auth/google";
+            window.location.href = `${BASE_API}/auth/google`;
           }} className="Button translucent round" aria-label="Google" style="">
             <img src={google} alt="Google"/>
           </Button>
