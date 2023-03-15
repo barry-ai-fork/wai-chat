@@ -1,11 +1,11 @@
 .message-content {
   position: relative;
-  max-width: var(--max-width);
+  max-width: calc(100vw);
 
   @media (max-width: 600px) {
     max-width: min(29rem, calc(100vw - 6.25rem));
     .MessageList.no-avatars & {
-      max-width: min(29rem, calc(100vw - 3.75rem));
+      max-width: min(29rem, calc(100vw - 1.36rem));
     }
     .Message.own & {
       max-width: min(30rem, calc(100vw - 3.75rem));
