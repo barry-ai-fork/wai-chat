@@ -4,7 +4,8 @@ import WsController,{ApiMsg} from "./controller/WsController";
 import {initEnv, ENV, kv} from "./helpers/env";
 import * as queryString from "query-string";
 import {getCorsHeader, ResponseJson} from "./helpers/network";
-
+var protobuf = require("protobufjs/minimal");
+console.log("protobuf")
 addEventListener('fetch', async (event) => {
   initEnv(global);
 	// @ts-ignore
