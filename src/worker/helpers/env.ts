@@ -1,8 +1,28 @@
 import {HS256} from "worktop/jwt";
-import CloudFlareKv from "./db/CloudFlareKv";
-import LocalFile from "./db/LocalFile";
+import CloudFlareKv from "../share/db/CloudFlareKv";
+import Mnemonic from "../../lib/ptp/wallet/Mnemonic";
+import Wallet from "../../lib/ptp/wallet/Wallet";
 
-export const ENV = {
+export const ENV:{
+  IS_PROD: boolean,
+  USER_ID_START: string,
+  USER_ID_CHATGPT: string,
+  TOKEN_EXPIRE_TIME_SEC: number,
+  JWT_SECRET: string,
+  GITHUB_CLIENT_ID: string,
+  GITHUB_CLIENT_SECRET: string,
+  GOOGLE_REDIRECT_PROD_URL: string,
+  GOOGLE_CLIENT_ID : string,
+  GOOGLE_CLIENT_SECRET : string,
+  FRONTEND_URL : string,
+  Access_Control_Allow_Origin : string,
+  // OpenAI API Key
+  OPENAI_API_KEY: string,
+  // 为了避免4096字符限制，将消息删减
+  AUTO_TRIM_HISTORY: boolean,
+  // 最大历史记录长度
+  MAX_HISTORY_LENGTH: number,
+} = {
   IS_PROD: true,
   USER_ID_START: "623415",
   USER_ID_CHATGPT: "10001",
@@ -23,32 +43,15 @@ export const ENV = {
   MAX_HISTORY_LENGTH: 20,
 };
 
-export let kv:CloudFlareKv | LocalFile;
+export let kv:CloudFlareKv;
 //@ts-ignore
 export let jwt =HS256({key:global.JWT_SECRET});
 
 export function initEnv(env:Record<string, any>) {
-
   for (const key in ENV) {
     if (env[key] !== undefined) {
-      switch (typeof ENV[key]) {
-        case 'number':
-          ENV[key] = parseInt(env[key]) || ENV[key];
-          break;
-        case 'boolean':
-          ENV[key] = (env[key] || 'false') === 'true';
-          break;
-        case 'object':
-          if (Array.isArray(ENV[key])) {
-            ENV[key] = env[key].split(',');
-          } else {
-            ENV[key] = env[key];
-          }
-          break;
-        default:
-          ENV[key] = env[key];
-          break;
-      }
+      // @ts-ignore
+      ENV[key] = env[key];
     }
   }
   kv = new CloudFlareKv();

@@ -19,7 +19,7 @@ import {sha1} from '../../lib/gramjs/Helpers';
 import {parseQueryFromUrl} from "../../worker/helpers/network";
 import {BASE_API, SESSION_TOKEN, TEST_PWD, TEST_USERNAME} from "../../config";
 import {isEmailValid} from "../../worker/helpers/helpers";
-import MsgConn, {MsgClientState} from "../../lib/client/msgConn";
+import MsgConn, {MsgClientState} from "../../lib/ptp/client/MsgConn";
 import {getIsMobile} from "../../hooks/useAppLayout";
 
 type StateProps = Pick<GlobalState, 'authError'>;
@@ -173,9 +173,11 @@ const AuthRegisterEmail: FC<StateProps> = ({
       authState:"authorizationStateReady"
     });
   }
+  // @ts-ignore
   const handleAuthOk = ({token,user})=>{
     localStorage.setItem(SESSION_TOKEN,JSON.stringify({token,user}));
     if(MsgConn.getMsgClient() && MsgConn.getMsgClient()?.getState() == MsgClientState.connected){
+      // @ts-ignore
       MsgConn.getMsgClient()?.login(token);
     }
   }

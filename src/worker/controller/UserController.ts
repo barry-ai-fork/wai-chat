@@ -94,12 +94,15 @@ export async function getUser(user_id:string,isSelf:boolean = false){
   }
 }
 
-export async function getUsers(user_id){
+export async function getUsers(user_id?:string){
   const users = [];
-  const userStatusesById = {
-    [user_id]:{
-      "type": "userStatusOnline",
-      "expires": Math.ceil(+(new Date())/1000) + 24 * 3600
+  let userStatusesById:any = {};
+  if(user_id){
+    userStatusesById[user_id] = {
+      [user_id]:{
+        "type": "userStatusOnline",
+        "expires": Math.ceil(+(new Date())/1000) + 24 * 3600
+      }
     }
   }
   const chatGpt = ENV.USER_ID_CHATGPT;

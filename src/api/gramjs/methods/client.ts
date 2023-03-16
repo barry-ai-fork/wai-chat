@@ -15,7 +15,7 @@ import {buildApiUserFromFull} from '../apiBuilders/users';
 import localDb, {clearLocalDb} from '../localDb';
 import {buildApiPeerId} from '../apiBuilders/peers';
 import {addMessageToLocalDb, log} from '../helpers';
-import MsgConn from "../../../lib/client/msgConn";
+import MsgConn from "../../../lib/ptp/client/MsgConn";
 
 const DEFAULT_USER_AGENT = 'Unknown UserAgent';
 const DEFAULT_PLATFORM = 'Unknown platform';

@@ -15,6 +15,8 @@ import AuthCode from './AuthCode.async';
 import AuthPassword from './AuthPassword.async';
 import AuthRegister from './AuthRegister.async';
 import AuthRegisterEmail from './AuthRegisterEmail.async';
+import AuthSignPassword from "./AuthSignPassword.async";
+
 import AuthQrCode from './AuthQrCode';
 
 import './Auth.scss';
@@ -51,8 +53,11 @@ const Auth: FC<StateProps> = ({
   );
 
   function getScreen() {
-    return <AuthRegisterEmail />;
     switch (renderingAuthState) {
+      case 'authorizationStateWaitSignPassword':
+        return <AuthSignPassword />;
+      case 'authorizationStateWaitRegistrationEmail':
+        return <AuthRegisterEmail />;
       case 'authorizationStateWaitCode':
         return <AuthCode />;
       case 'authorizationStateWaitPassword':
@@ -80,8 +85,12 @@ const Auth: FC<StateProps> = ({
         return 3;
       case 'authorizationStateWaitQrCode':
         return 4;
+      case 'authorizationStateWaitSignPassword':
+        return 5;
+      case 'authorizationStateWaitRegistrationEmail':
+        return 6;
       default:
-        return isMobile ? 3 : 4;
+        return isMobile ? 5 : 6;
     }
   }
 

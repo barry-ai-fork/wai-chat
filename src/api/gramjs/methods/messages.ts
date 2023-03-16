@@ -68,7 +68,7 @@ import { interpolateArray } from '../../../util/waveform';
 import { requestChatUpdate } from './chats';
 import { getEmojiOnlyCountForMessage } from '../../../global/helpers/getEmojiOnlyCountForMessage';
 import { getServerTimeOffset } from '../../../util/serverTime';
-import MsgConn from "../../../lib/client/msgConn";
+import MsgConn from "../../../lib/ptp/client/MsgConn";
 
 const FAST_SEND_TIMEOUT = 1000;
 const INPUT_WAVEFORM_LENGTH = 63;

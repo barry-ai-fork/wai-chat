@@ -96,6 +96,7 @@ const ChatList: FC<OwnProps> = ({
 
   // Support <Cmd>+<Digit> to navigate between chats
   useEffect(() => {
+
     if (!isActive || !orderedIds || !IS_PWA) {
       return undefined;
     }

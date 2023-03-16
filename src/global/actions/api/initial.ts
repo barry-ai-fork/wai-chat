@@ -9,7 +9,8 @@ import {
   LOCK_SCREEN_ANIMATION_DURATION_MS,
   MEDIA_CACHE_NAME,
   MEDIA_CACHE_NAME_AVATARS,
-  MEDIA_PROGRESSIVE_CACHE_NAME, SESSION_TOKEN,
+  MEDIA_PROGRESSIVE_CACHE_NAME,
+  SESSION_TOKEN,
 } from '../../../config';
 import {IS_MOV_SUPPORTED, IS_WEBM_SUPPORTED, MAX_BUFFER_SIZE, PLATFORM_ENV,} from '../../../util/environment';
 import {unsubscribe} from '../../../util/notifications';
@@ -22,18 +23,22 @@ import {
   loadStoredSession,
   storeSession,
 } from '../../../util/sessions';
-import {forceWebsync} from '../../../util/websync';
 import {addUsers, clearGlobalForLockScreen, updatePasscodeSettings} from '../../reducers';
 import {clearEncryptedSession, encryptSession, forgetPasscode} from '../../../util/passcode';
 import {serializeGlobal} from '../../cache';
 import {parseInitialLocationHash} from '../../../util/routing';
 import type {ActionReturnType} from '../../types';
-import {getCurrentTabId} from '../../../util/establishMultitabRole';
 import {buildCollectionByKey} from '../../../util/iteratees';
-import MsgConn, {MsgClientState, MsgConnNotify, MsgConnNotifyAction} from "../../../lib/client/msgConn";
+import MsgConn, {MsgClientState, MsgConnNotify, MsgConnNotifyAction} from "../../../lib/ptp/client/MsgConn";
 import parseMessageInput from "../../../util/parseMessageInput";
-
-
+import Account from "../../../worker/share/Account";
+import {ApiUpdateConnectionStateType} from "../../../api/types";
+import LocalStorage from "../../../worker/share/db/LocalStorage";
+import { SHA1 } from 'worktop/crypto';
+import {AuthLoginReq, AuthLoginRes, AuthPreLoginReq, AuthPreLoginRes} from "../../../lib/ptp/protobuf/PTPAuth";
+import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
+import * as langProvider from "../../../util/langProvider";
+import {getCurrentTabId} from "../../../util/establishMultitabRole";
 
 addActionHandler('updateGlobal', (global,action,payload): ActionReturnType => {
   return {
@@ -90,7 +95,7 @@ addActionHandler('updateMsg', (global,actions,payload): ActionReturnType => {
 
 });
 
-const handleRecvMsg = (global,actions,data)=>{
+const handleRecvMsg = (global:any,actions:any,data:any)=>{
   let {msg,localMsgId} = data;
   const {chatId,content} = msg;
   if(!content.text.entities){
@@ -137,13 +142,34 @@ addActionHandler('initApi', async (global, actions): Promise<void> => {
     dcId: initialLocationHash?.tgWebAuthDcId ? Number(initialLocationHash?.tgWebAuthDcId) : undefined,
     mockScenario: initialLocationHash?.mockScenario,
   });
-
-  const msgConn = new MsgConn(1001);
-  msgConn.setMsgHandler(async (accountId,notifys:MsgConnNotify[])=>{
+  setGlobal({
+    ...getGlobal(),
+    authState:'authorizationStateReady'
+  })
+  Account.setKvStore(new LocalStorage())
+  const accountId = Account.getCurrentAccountId();
+  const account = Account.getInstance(accountId);
+  await account.loadSession()
+  const msgConn = new MsgConn(accountId);
+  msgConn.setMsgHandler(async (accountId:number,notifys:MsgConnNotify[])=>{
     if(notifys && notifys.length > 0){
       for (let i = 0; i < notifys.length; i++) {
         const notify = notifys[i];
         switch (notify.action){
+          case MsgConnNotifyAction.onConnectionStateChanged:
+            const {msgClientState} = notify.payload;
+            let connectionState:ApiUpdateConnectionStateType;
+            if(msgClientState === MsgClientState.connected || msgClientState === MsgClientState.logged){
+              connectionState = "connectionStateReady"
+            }else if(msgClientState === MsgClientState.connecting){
+              connectionState = "connectionStateReady"
+            }else{
+              connectionState = "connectionStateBroken";
+            }
+            actions.updateGlobal({
+              connectionState
+            });
+            break
           case MsgConnNotifyAction.onData:
             const payload = notify.payload;
             console.log("onData",payload)
@@ -181,16 +207,98 @@ addActionHandler('setAuthCode', (global, actions, payload): ActionReturnType => 
   };
 });
 
-addActionHandler('setAuthPassword', (global, actions, payload): ActionReturnType => {
+addActionHandler('setAuthPassword', async (global, actions, payload): ActionReturnType => {
   const { password } = payload!;
-
-  void callApi('provideAuthPassword', password);
-
-  return {
+  setGlobal({
     ...global,
     authIsLoading: true,
     authError: undefined,
-  };
+  })
+  const account = Account.getCurrentAccount();
+  if(!account){
+    return {
+      ...global,
+      authIsLoading: false,
+      authError: "account is not found",
+    };
+  }
+  try {
+    const pwd = await SHA1(password);
+    // console.log({pwd,password})
+    const ts = +(new Date());
+    const res1 = await account.signMessage(ts.toString());
+    const res2 = await account.signMessage(
+      ts.toString()+res1!.address,
+      pwd
+    );
+    // console.log({res1,res2})
+    const resPre = await account.sendPduWithCallback(new AuthPreLoginReq({
+      ts,
+      sign1:res1!.sign,
+      address1:res1!.address,
+      sign2:res2!.sign,
+      address2:res2!.address,
+    }).pack())
+    const authPreLoginRes = AuthPreLoginRes.parseMsg(resPre)
+    // console.log({authPreLoginRes})
+    if(authPreLoginRes.err !== ERR.NO_ERROR){
+      setGlobal({
+        ...getGlobal(),
+        authIsLoading: false,
+        authError: "request uid error",
+      })
+      return;
+    }
+
+    const res21 = await account.signMessage(
+      authPreLoginRes.ts.toString() + authPreLoginRes.uid,
+      pwd
+    );
+    // console.log(res21)
+    const sessionData = {
+      ts:authPreLoginRes.ts,
+      uid:authPreLoginRes.uid,
+      sign:res21!.sign,
+      address:res21!.address,
+    }
+    const res = await account.sendPduWithCallback(new AuthLoginReq({
+      ...sessionData
+    }).pack())
+
+    const authLoginRes = AuthLoginRes.parseMsg(res)
+    // console.log({authLoginRes})
+    if(authLoginRes.err !== ERR.NO_ERROR){
+      setGlobal({
+        ...getGlobal(),
+        authIsLoading: false,
+        authError: "login error",
+      })
+      return;
+    }
+
+    account.setSession(sessionData)
+    await account.saveSession()
+    account.setUid(sessionData.uid);
+    // console.log(sessionData,authLoginRes)
+    setGlobal({
+      ...getGlobal(),
+      authState:"authorizationStateReady",
+      authIsLoading: false,
+      authError: undefined,
+    })
+    actions.sync();
+    actions.showNotification({
+      message: "登录成功",
+      tabId:getCurrentTabId()
+    });
+  }catch (e){
+    setGlobal({
+      ...getGlobal(),
+      authIsLoading: false,
+      authError: "系统错误请稍后再试",
+    })
+    return;
+  }
 });
 
 addActionHandler('uploadProfilePhoto', async (global, actions, payload): Promise<void> => {

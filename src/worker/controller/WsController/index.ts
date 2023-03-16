@@ -1,97 +1,190 @@
-import {stringToBuffer} from "../../helpers/buffer";
-import {decode} from "worktop/buffer";
-import {getAuthUser} from "../AuthController";
-import * as utils from "worktop/utils";
-import {AuthTokenForm, AuthUser} from "../../types";
-import {ResponseJson} from "../../helpers/network";
-import {sendMsg} from "../MsgController";
+import {genUserId} from "../AuthController";
+import {randomize} from "worktop/utils";
+import {AuthUser} from "../../types";
 import {loadChats} from "../ChatController";
-import {createBot, getUser} from "../UserController";
-import {reply} from "worktop/response";
-import {kv, jwt,ENV} from "../../helpers/env";
+import {createBot} from "../UserController";
+import {ENV, jwt, kv} from "../../helpers/env";
+import Account from "../../share/Account";
+import {
+  AuthLoginReq,
+  AuthLoginRes,
+  AuthPreLoginReq,
+  AuthPreLoginRes,
+  AuthStep1Req,
+  AuthStep1Res,
+  AuthStep2Req,
+  AuthStep2Res
+} from "../../../lib/ptp/protobuf/PTPAuth";
+import {Pdu} from "../../../lib/ptp/protobuf/BaseMsg";
+import {ActionCommands, getActionCommandsName} from "../../../lib/ptp/protobuf/ActionCommands";
+import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
+import {OtherNotify} from "../../../lib/ptp/protobuf/PTPOther";
+import {LoadChatsReq, LoadChatsRes} from "../../../lib/ptp/protobuf/PTPChats";
 
 export const UserWsMap:Record<string, WebSocket> = {};
+// @ts-ignore
 export const WsUserMap:Record<WebSocket, AuthUser> = {};
 
-const getTokenAuthUser = async (msg)=>{
+const getTokenAuthUser = async (msg: { data: { token: any; }; })=>{
   const {token} = msg.data;
   const claims = await jwt.verify(token);
   const user_id = claims.iss;
   return JSON.parse(await kv.get(`U_${user_id}`));
 }
 
+const accountIdStart = +(new Date());
 async function handleSession(websocket: WebSocket) {
   // @ts-ignore
   websocket.accept();
+  Account.setKvStore(kv)
+  const accountServer = new Account(accountIdStart + 1);
+  accountServer.setMsgConn(websocket);
+  accountServer.genEntropy();
+  let captcha = undefined;
+  let p: Buffer | undefined = undefined;
+  let q: Buffer | undefined = undefined;
+  let authLoginTs: number | undefined = 0;
   websocket.addEventListener('message', async ({ data }) => {
-    let seq_num = 0;
     try {
-      const dataJson = JSON.parse(data);
-      switch (dataJson.action){
-        case "login":
-          console.log("on login",dataJson)
-          let authUser;
-          try{
-            authUser = await getTokenAuthUser(dataJson)
-            if(!authUser){
-              throw new Error("auth is null")
-            }
-          }catch (e){
-            console.error(e)
-            websocket.send(JSON.stringify({
-              action:dataJson.action,
-              seq_num:dataJson.seq_num || 0,
-              err_msg:"token is invalid",
-              err:400,
-              data:{
-              }
-            }));
-            return;
+      if(data.length < 16) {
+        return
+      }
+      let pdu = new Pdu(Buffer.from(data));
+      console.log("[message]",
+        pdu.getSeqNum(),
+        pdu.getCommandId(),
+        getActionCommandsName(pdu.getCommandId())
+      )
+      let pduRsp:Pdu|undefined = undefined;
+      switch (pdu.getCommandId()){
+        case ActionCommands.CID_AuthStep1Req:
+          const authStep1Req = AuthStep1Req.parseMsg(pdu);
+          p = Buffer.from(authStep1Req.p)
+          captcha = Buffer.from(randomize(4))
+          q = Buffer.from(randomize(16));
+          const ts = +(new Date());
+          const {sign}:{sign:Buffer} = await accountServer.signMessage(ts+Buffer.concat([p,q]).toString("hex"))
+          const address = await accountServer.getAccountAddress();
+          pduRsp = new AuthStep1Res({
+            ts,
+            q,
+            sign,
+            address,
+            err:ERR.NO_ERROR
+          }).pack();
+          break
+        case ActionCommands.CID_AuthStep2Req:
+          const authStep2Req = AuthStep2Req.parseMsg(pdu);
+          const res = accountServer.recoverAddressAndPubKey(
+            authStep2Req.sign,authStep2Req.ts+Buffer.concat([p!,q!]).toString("hex"))
+          await accountServer.initEcdh(res.pubKey,p!,q!);
+          // console.log(authStep2Req.address,res.address)
+          // console.log("shareKey",accountServer.getShareKey());
+          pduRsp = new AuthStep2Res({
+            err:ERR.NO_ERROR
+          }).pack()
+          break
+        case ActionCommands.CID_AuthPreLoginReq:
+          if(!accountServer.getIv()){
+            pduRsp = new AuthPreLoginRes({
+              uid:'',
+              ts:0,
+              err:ERR.ERR_AUTH_LOGIN
+            }).pack()
+            break;
           }
-          UserWsMap[authUser.user_id] =  websocket;
-          WsUserMap[websocket] = authUser;
-          websocket.send(JSON.stringify({
-            action:dataJson.action,
-            seq_num:dataJson.seq_num || 0,
-            data:{
-              currentUser: await getUser(authUser.user_id,true),
-              currentUserId: authUser.user_id
-            }
-          }));
+          const authPreLoginReq = AuthPreLoginReq.parseMsg(pdu);
+          const res1 = accountServer.recoverAddressAndPubKey(
+            authPreLoginReq.sign1,authPreLoginReq.ts.toString())
+
+          if(res1.address !== authPreLoginReq.address1){
+            pduRsp = new AuthPreLoginRes({
+              uid:'',
+              ts:0,
+              err:ERR.ERR_AUTH_LOGIN
+            }).pack()
+            break;
+          }
+
+          const res2 = accountServer.recoverAddressAndPubKey(
+            authPreLoginReq.sign2,
+            authPreLoginReq.ts + authPreLoginReq.address1
+          )
+
+          if(res2.address !== authPreLoginReq.address2){
+            pduRsp = new AuthPreLoginRes({
+              uid:'',
+              ts:0,
+              err:ERR.ERR_AUTH_LOGIN
+            }).pack()
+            break;
+          }
+          let uid = await accountServer.getUidFromCacheByAddress(res2.address);
+          if(!uid){
+            uid = await genUserId();
+          }
+          authLoginTs = +(new Date)
+
+          pduRsp = new AuthPreLoginRes({
+            uid,
+            ts:authLoginTs,
+            err:ERR.NO_ERROR
+          }).pack()
+          break
+        case ActionCommands.CID_AuthLoginReq:
+          if(!accountServer.getIv()){
+            pduRsp = new AuthLoginRes({
+              err:ERR.ERR_AUTH_LOGIN
+            }).pack()
+            break;
+          }
+          const authLoginReq = AuthLoginReq.parseMsg(pdu);
+          if(authLoginTs && authLoginTs !== authLoginReq.ts){
+            pduRsp = new AuthLoginRes({
+              err:ERR.ERR_AUTH_LOGIN
+            }).pack()
+            break;
+          }
+          const resLogin = accountServer.recoverAddressAndPubKey(
+            Buffer.from(authLoginReq.sign),authLoginReq.ts.toString() + authLoginReq.uid)
+
+          if(resLogin.address !== authLoginReq.address){
+            pduRsp = new AuthLoginRes({
+              err:ERR.ERR_AUTH_LOGIN
+            }).pack()
+            break;
+          }
+          const uid_cache = await accountServer.getUidFromCacheByAddress(authLoginReq.address);
+          console.log("uid_cache => ",uid_cache,authLoginReq.uid)
+          if(uid_cache && uid_cache !== authLoginReq.uid){
+            pduRsp = new AuthLoginRes({
+              err:ERR.ERR_AUTH_LOGIN
+            }).pack()
+            break;
+          }
+          await accountServer.afterServerLoginOk(authLoginReq);
+          pduRsp = new AuthLoginRes({
+            err:ERR.NO_ERROR
+          }).pack()
           break
         default:
-          if(dataJson.action === "sendMsg"){
-            console.log(data)
-            console.log("msg text",dataJson.data.msg.content.text.text)
-          }
-          if(WsUserMap[websocket]){
-            await _ApiMsg(dataJson,WsUserMap[websocket].user_id,websocket)
-          }else{
-            websocket.send(JSON.stringify({
-              action:dataJson.action,
-              seq_num:dataJson.seq_num || 0,
-              err_msg:"not found user",
-              data:{ }
-            }));
-          }
+          await _ApiMsg(pdu,accountServer)
           break
+      }
+      if(pduRsp){
+        pduRsp.updateSeqNo(pdu.getSeqNum())
+        accountServer.sendPdu(pduRsp);
       }
     }catch (e){
       console.error(e)
-      websocket.send(stringToBuffer(JSON.stringify({
-        err_msg:"system error",
-        seq_num
-      })));
+      accountServer.sendPdu(new OtherNotify({
+        err:ERR.ERR_SYSTEM
+      }).pack());
     }
   });
 
   websocket.addEventListener('close', async evt => {
-    if(WsUserMap[websocket] && UserWsMap[WsUserMap[websocket].user_id]){
-      console.log("[close] delete user:",WsUserMap[websocket].user_id);
-      delete UserWsMap[WsUserMap[websocket].user_id];
-    }else{
-      console.log("[close]");
-    }
+    console.log("[close]");
   });
 }
 
@@ -113,53 +206,25 @@ export default async function (event:FetchEvent){
   return await websocketHandler(event.request);
 }
 
-export async function _ApiMsg(dataJson:Record<string, any>,user_id:string,websocket?:WebSocket){
-  const {action,seq_num} = dataJson;
-  let result = null
-  switch (action){
-    case "loadChats":
+export async function _ApiMsg(pdu:Pdu,account:Account){
+  let pduRsp:Pdu | undefined = undefined;
+  switch (pdu.getCommandId()){
+    case ActionCommands.CID_LoadChatsReq:
+      console.log("=====>>",account.getUid());
+      const loadChatsReq = LoadChatsReq.parseMsg(pdu);
       const chat_gpt = await createBot(ENV.USER_ID_CHATGPT,"ChatGPT","ChatGPT");
-      result = await loadChats(dataJson,user_id,websocket)
+      let user_id = account.getUid() || undefined;
+      pduRsp = new LoadChatsRes({
+        err:ERR.NO_ERROR,
+        payload:JSON.stringify(await loadChats(user_id))
+      }).pack();
       break
-    case "super_init":
-      result = await super_init(dataJson,user_id,websocket)
-      break
-    case "sendMsg":
-      result = await sendMsg(dataJson,user_id,websocket)
+    default:
       break
   }
-  console.log({action,result})
-  return result
+  if(pduRsp){
+    pduRsp.updateSeqNo(pdu.getSeqNum())
+    account.sendPdu(pduRsp);
+  }
 }
 
-
-async function super_init(dataJson,user_id,websocket){
-  const res = {
-    seq_num:dataJson.seq_num || 0,
-    action:dataJson.action,
-    data:{
-      // chat_gpt
-    }
-  }
-  return res;
-}
-export async function ApiMsg(request:Request){
-  const authUser = await getAuthUser(request);
-  if(!authUser){
-    return reply(400, 'not found user');
-  }
-  if(!authUser.user_id){
-    return authUser;
-  }
-  let input;
-  try {
-    input = await utils.body<AuthTokenForm>(request);
-  } catch (err) {
-    return ResponseJson({
-      err_msg:"Error parsing request body"
-    })
-  }
-
-  const result = await _ApiMsg(await input,authUser.user_id,UserWsMap[authUser.user_id] || undefined);
-  return ResponseJson(result);
-}

@@ -43,7 +43,9 @@ export type ApiUpdateAuthorizationStateType = (
   'authorizationStateWaitPhoneNumber' |
   'authorizationStateWaitCode' |
   'authorizationStateWaitPassword' |
+  'authorizationStateWaitSignPassword' |
   'authorizationStateWaitRegistration' |
+  'authorizationStateWaitRegistrationEmail' |
   'authorizationStateReady' |
   'authorizationStateClosing' |
   'authorizationStateClosed' |

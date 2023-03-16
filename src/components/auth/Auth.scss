@@ -1,7 +1,11 @@
 .Auth {
   height: 100%;
 }
-
+.auth-close{
+  position: absolute;
+  top:44px;
+  right:44px;
+}
 .auth-form {
   width: 100%;
   max-width: 25.5rem;

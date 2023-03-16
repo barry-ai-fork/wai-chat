@@ -42,7 +42,6 @@ addActionHandler('sync', (global, actions): ActionReturnType => {
     // eslint-disable-next-line no-console
     console.log('>>> START SYNC');
   }
-
   if (releaseStatusTimeout) {
     clearTimeout(releaseStatusTimeout);
   }
@@ -241,6 +240,7 @@ let previousGlobal: GlobalState | undefined;
 // RAF can be unreliable when device goes into sleep mode, so sync logic is handled outside any component
 addCallback((global: GlobalState) => {
   const { connectionState, authState } = global;
+
   const { isMasterTab } = selectTabState(global);
   if (!isMasterTab || (previousGlobal?.connectionState === connectionState
     && previousGlobal?.authState === authState)) {

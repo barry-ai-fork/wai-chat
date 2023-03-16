@@ -1,0 +1,16 @@
+syntax = "proto2";
+package PTP.Common;
+option java_package = "com.ptp.im.protobuf";
+
+option optimize_for = LITE_RUNTIME;
+
+enum ERR{
+  NO_ERROR = 0;
+  ERR_SYSTEM = 1;
+}
+
+enum AUTH_TYPE{
+  AUTH_TYPE_USERNAME = 0;
+  AUTH_TYPE_EMAIL = 1;
+  AUTH_TYPE_MOBILE = 2;
+}

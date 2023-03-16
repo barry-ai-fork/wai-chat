@@ -19,6 +19,7 @@ export default class CloudFlareKv{
     const rows = [];
     let cur = null;
     do {
+      // @ts-ignore
       const {keys, cursor} = await this.db.list({
         prefix: options.prefix,
         cursor: cur,

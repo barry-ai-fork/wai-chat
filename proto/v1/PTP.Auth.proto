@@ -1,0 +1,55 @@
+syntax = "proto2";
+package PTP.Auth;
+import "PTP.Common.proto";
+option java_package = "com.ptp.im.protobuf";
+
+option optimize_for = LITE_RUNTIME;
+
+message AuthStep1Req{
+  required bytes p = 1;
+}
+
+message AuthStep1Res{
+  required bytes q = 1;
+  required string address = 2;
+  required bytes sign = 3;
+  required uint64 ts = 6;
+  required Common.ERR err = 100;
+}
+
+message AuthStep2Req{
+  required uint64 ts = 1;
+  required string address = 2;
+  required bytes sign = 3;
+}
+
+message AuthStep2Res{
+  required Common.ERR err = 100;
+}
+
+message AuthPreLoginReq{
+  required bytes sign1 = 1;
+  required string address1 = 2;
+  required bytes sign2 = 3;
+  required string address2 = 4;
+  required uint64 ts = 5;
+}
+
+message AuthPreLoginRes{
+  required string uid = 1;
+  required uint64 ts = 2;
+  required Common.ERR err = 100;
+}
+
+message AuthLoginReq{
+  required bytes sign = 1;
+  required uint64 ts = 2;
+  required string uid = 3;
+  required string address = 4;
+}
+
+message AuthLoginRes{
+  required Common.ERR err = 100;
+}
+
+

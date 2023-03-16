@@ -2,7 +2,7 @@ import {USER_CONFIG} from './context';
 import {ENV} from './env.js';
 
 // 发送消息到ChatGPT
-export async function sendMessageToChatGPT(message, history) {
+export async function sendMessageToChatGPT(message:string, history:{role:string,content:string}[]) {
   try {
     const body = {
       model: 'gpt-3.5-turbo',
@@ -24,6 +24,7 @@ export async function sendMessageToChatGPT(message, history) {
     return [false,resp.choices[0].message.content];
   } catch (e) {
     console.error(e);
+    // @ts-ignore
     return [true,`invoke openai error, message : ${e.message}`];
   }
 }

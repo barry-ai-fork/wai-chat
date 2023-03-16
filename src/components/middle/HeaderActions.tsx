@@ -31,6 +31,7 @@ import { useHotkeys } from '../../hooks/useHotkeys';
 
 import Button from '../ui/Button';
 import HeaderMenuContainer from './HeaderMenuContainer.async';
+import Account from "../../worker/share/Account";
 
 interface OwnProps {
   chatId: string;
@@ -130,7 +131,20 @@ const HeaderActions: FC<OwnProps & StateProps> = ({
   }, [joinChannel, chatId, shouldSendJoinRequest, showNotification, isChannel, lang]);
 
   const handleStartBot = useCallback(() => {
-    sendBotCommand({ command: '/start' });
+
+    if(!Account.getCurrentAccount()?.getSession()){
+      getActions().updateGlobal({
+        authState:"authorizationStateWaitSignPassword"
+      })
+    }else{
+      if(Account.getCurrentAccount()?.getUid()){
+        sendBotCommand({ command: '/start' });
+      }else{
+        getActions().showNotification({
+          message:"正在登录请稍后再试"
+        })
+      }
+    }
   }, [sendBotCommand]);
 
   const handleRestartBot = useCallback(() => {

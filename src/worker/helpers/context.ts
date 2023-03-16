@@ -29,16 +29,16 @@ export const SHARE_CONTEXT = {
 };
 
 // 初始化用户配置
-export async function initUserConfig(id) {
+export async function initUserConfig() {
   try {
+    // @ts-ignore
     const userConfig = await kv.get(SHARE_CONTEXT.configStoreKey).then(
         (res) => JSON.parse(res) || {},
     );
     for (const key in userConfig) {
-      if (
-        USER_CONFIG.hasOwnProperty(key) &&
-        typeof USER_CONFIG[key] === typeof userConfig[key]
-      ) {
+      // @ts-ignore
+      if (USER_CONFIG.hasOwnProperty(key) &&typeof USER_CONFIG[key] === typeof userConfig[key]) {
+        // @ts-ignore
         USER_CONFIG[key] = userConfig[key];
       }
     }

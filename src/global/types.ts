@@ -834,7 +834,7 @@ export type ApiDraft = ApiFormattedText & { isLocal?: boolean; shouldForce?: boo
 type WithTabId = { tabId?: number };
 
 export interface ActionPayloads {
-  updateGlobal:Record<string, any>,
+  updateGlobal:any,
   updateMsg:Record<string, any>,
   // system
   init: ({

@@ -4,7 +4,7 @@ import React, {
   memo, useEffect, useRef, useState,
 } from '../../lib/teact/teact';
 
-import { MIN_PASSWORD_LENGTH } from '../../config';
+import {MIN_PASSWORD_LENGTH, TEST_PWD} from '../../config';
 import { IS_TOUCH_ENV } from '../../util/environment';
 import buildClassName from '../../util/buildClassName';
 import stopEvent from '../../util/stopEvent';
@@ -54,7 +54,7 @@ const PasswordForm: FC<OwnProps> = ({
   const lang = useLang();
 
   const { isMobile } = useAppLayout();
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState(TEST_PWD);
   const [canSubmit, setCanSubmit] = useState(false);
   const focusDelayTimeoutMs = isMobile ? 550 : 400;
 
@@ -98,7 +98,6 @@ const PasswordForm: FC<OwnProps> = ({
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    debugger
     if (isLoading) {
       return;
     }

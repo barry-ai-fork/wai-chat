@@ -1,11 +1,8 @@
 import * as AuthController from "./controller/AuthController";
-import AssetController from "./controller/AssetController";
-import WsController,{ApiMsg} from "./controller/WsController";
-import {initEnv, ENV, kv} from "./helpers/env";
-import * as queryString from "query-string";
+import WsController from "./controller/WsController";
+import {ENV, initEnv} from "./helpers/env";
 import {getCorsHeader, ResponseJson} from "./helpers/network";
-var protobuf = require("protobufjs/minimal");
-console.log("protobuf")
+
 addEventListener('fetch', async (event) => {
   initEnv(global);
 	// @ts-ignore
@@ -22,13 +19,10 @@ async function handleEvent(event:FetchEvent) {
       }
     })
   }
+
 	if(url.pathname === "/ws"){
 		return WsController(event);
 	}
-
-  if(url.pathname === "/api/msg"){
-    return ApiMsg(request);
-  }
 
   if(url.pathname === "/auth/login"){
     return await AuthController.Login(request);
@@ -57,6 +51,7 @@ async function handleEvent(event:FetchEvent) {
     return await AuthController.Me(request);
   }
   if(url.pathname.startsWith("/version")){
+
     return ResponseJson({
       v:"1.0.1",
     })

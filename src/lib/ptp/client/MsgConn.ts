@@ -1,12 +1,16 @@
-import {BASE_API, SESSION_TOKEN, WS_URL} from '../../config';
-import {bufferToString} from "../../worker/helpers/buffer";
-import {decode} from "worktop/buffer";
+import {SESSION_TOKEN, WS_URL} from '../../../config';
+import Account from "../../../worker/share/Account";
+import LocalStorage from "../../../worker/share/db/LocalStorage";
+import {Pdu} from "../protobuf/BaseMsg";
+import {ERR} from "../protobuf/PTPCommon";
+import {AuthLoginReq, AuthLoginRes, AuthStep1Req, AuthStep1Res, AuthStep2Req, AuthStep2Res} from "../protobuf/PTPAuth";
+import {randomize} from "worktop/utils";
+import {getActions} from "../../../global";
 
 export enum MsgConnNotifyAction{
   onInitAccount,
   onConnectionStateChanged,
   onLoginOk,
-  onInitGroupOk,
   onData
 }
 
@@ -36,7 +40,7 @@ export default class MsgConn {
   private autoConnect: boolean;
   public state: MsgClientState;
   public client: WebSocket | any | undefined;
-  private __rev_msg_map: Record<number, any>;
+  private __rev_msg_map: Record<number, Pdu>;
   private __sending_msg_map: Record<number, boolean>;
   private __msgHandler: any;
   private sendMsgTimer?: NodeJS.Timeout;
@@ -87,7 +91,7 @@ export default class MsgConn {
       }
       this.notifyState(MsgClientState.connecting);
       this.client = new WebSocket(`${WS_URL}`);
-      // this.client.binaryType = 'arraybuffer';
+      this.client.binaryType = 'arraybuffer';
       this.client.onopen = this.onConnected.bind(this);
       this.client.onmessage = this.onData.bind(this);
       this.client.onclose = this.onClose.bind(this);
@@ -137,56 +141,92 @@ export default class MsgConn {
   setMsgHandler(msgHandler: any) {
     this.__msgHandler = msgHandler;
   }
-
   onConnected() {
-    console.log("onConnected")
     currentMsgConn = this;
     this.notifyState(MsgClientState.connected);
-    let user_auth_json = localStorage.getItem(SESSION_TOKEN);
-    if(user_auth_json){
-      const {token} = JSON.parse(user_auth_json);
-      this.login(token);
+    this.authStep1().catch(console.error)
+  }
+  async login(){
+    const account = Account.getInstance(this.accountId)
+    const session = account.getSession()
+    if(session){
+      const pdu = await account.sendPduWithCallback(new AuthLoginReq({
+        ...session
+      }).pack());
+      const {err} = AuthLoginRes.parseMsg(pdu);
+      if(err === ERR.NO_ERROR){
+        account.setUid(session.uid);
+        console.log("login OK!",account.getUid())
+        return account.getUid()
+      }else{
+        return false;
+      }
+    }else{
+      return false;
     }
   }
-  login(token){
-    this.sendJson({
-      action:"login",
-      seq_num:0,
-      data:{
-        token
-      },
-    })
+  async authStep2(){
+    const accountClient = Account.getInstance(this.accountId);
+    const ts = +(new Date())
+    const { sign }= await accountClient.signMessage(ts + Buffer.concat([accountClient.getIv(),accountClient.getAad()]).toString("hex"));
+    const pdu = await accountClient.sendPduWithCallback(new AuthStep2Req({
+      sign,
+      ts,
+      address:await accountClient.getAccountAddress()
+    }).pack());
+    const authStep2Res = AuthStep2Res.parseMsg(pdu)
+    console.log("authStep2Res finished!",authStep2Res)
+    await this.login();
+  }
+  async authStep1(){
+    const accountClient = Account.getInstance(this.accountId);
+    accountClient.setMsgConn(this)
+    const p = Buffer.from(randomize(16));
+    const req = new AuthStep1Req({
+      p
+    }).pack();
+    const t = AuthStep1Req.parseMsg(req);
+    const pdu = await accountClient.sendPduWithCallback(req);
+    const {err,address,q,sign,ts} = AuthStep1Res.parseMsg(pdu)
+    console.log("AuthStep1Res",{err,p,q,address,sign})
+    if(err == ERR.NO_ERROR){
+      const res = accountClient.recoverAddressAndPubKey(sign,ts+Buffer.concat([p,q]).toString("hex"))
+      console.log(res.address,address)
+      if(res.address != address){
+        console.error("invalid server address")
+      }else{
+        await accountClient.initEcdh(res.pubKey,p,q)
+        this.authStep2().catch(console.error)
+      }
+    }else{
+      console.error(err)
+    }
   }
   notify(notifyList:MsgConnNotify[]) {
     if (this.__msgHandler) {
       this.__msgHandler(this.accountId,notifyList);
     }
   }
-  onData(e: { data: String }) {
-    let msg;
-    try {
-      msg = JSON.parse(e.data);
-    }catch (e){
-      console.error("parse msg error")
-    }
-    if(msg){
-      if(this.__sending_msg_map[msg.seq_num]){
-        this.__rev_msg_map[msg.seq_num] = msg
-        delete this.__sending_msg_map[msg.seq_num];
+  onData(e: { data: Buffer }) {
+    if(e.data && e.data.byteLength && e.data.byteLength > 16){
+      let pdu = new Pdu(Buffer.from(e.data));
+      const seq_num = pdu.getSeqNum();
+      if(this.__sending_msg_map[seq_num]){
+        this.__rev_msg_map[seq_num] = pdu
+        delete this.__sending_msg_map[seq_num];
       }else{
-        if (this.__msgHandler) {
-          this.__msgHandler(msg);
-          this.notify([
-            {
-              action: MsgConnNotifyAction.onData,
-              payload: msg,
-            },
-          ]);
-        }
+        // if (this.__msgHandler) {
+        //   this.__msgHandler(msg);
+        //   this.notify([
+        //     {
+        //       action: MsgConnNotifyAction.onData,
+        //       payload: msg,
+        //     },
+        //   ]);
+        // }
       }
-    }else{
-
     }
+
   }
   notifyState(state: MsgClientState) {
     this.state = state;
@@ -241,7 +281,7 @@ export default class MsgConn {
     timeout: number = 5000,
     startTime: number = 0
   ) {
-    return new Promise<Record<string, any>>((resolve, reject) => {
+    return new Promise<Pdu>((resolve, reject) => {
       setTimeout(() => {
         if (this.__rev_msg_map[seq_num]) {
           const res = this.__rev_msg_map[seq_num];
@@ -262,16 +302,20 @@ export default class MsgConn {
       }, 200);
     });
   }
-  sendJsonWithCallback(
-    data,
+
+  send(data:Buffer|Uint8Array){
+    this.client.send(data);
+  }
+
+  sendPduWithCallback(
+    pdu:Pdu,
     timeout: number = 10000
   ) {
-    return new Promise<Record<string, any>>((resolve, reject) => {
+    return new Promise<Pdu>((resolve, reject) => {
       if (this.isConnect()) {
-        data.seq_num = ++seq_num;
-        this.__sending_msg_map[data.seq_num] = true;
-        this.sendJson(data)
-        this.waitForMsgCallback(data.seq_num, timeout)
+        this.__sending_msg_map[pdu.getSeqNum()] = true;
+        this.send(pdu.getPbData())
+        this.waitForMsgCallback(pdu.getSeqNum(), timeout)
           .then(resolve)
           .catch(reject);
       } else {
@@ -288,9 +332,6 @@ export default class MsgConn {
     return [MsgClientState.connected, MsgClientState.logged].includes(
       this.state
     );
-  }
-  sendJson(data:Object){
-    this.client.send(JSON.stringify(data))
   }
   static getMsgClient() {
     return currentMsgConn;

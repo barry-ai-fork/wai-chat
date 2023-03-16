@@ -24,7 +24,7 @@ import { extractCurrentThemeParams } from '../../../util/themeStyle';
 import PopupManager from '../../../util/PopupManager';
 import { updateTabState } from '../../reducers/tabs';
 import { getCurrentTabId } from '../../../util/establishMultitabRole';
-import MsgConn from "../../../lib/client/msgConn";
+import MsgConn from "../../../lib/ptp/client/MsgConn";
 
 const GAMEE_URL = 'https://prizes.gamee.com/';
 const TOP_PEERS_REQUEST_COOLDOWN = 60; // 1 min

@@ -98,7 +98,7 @@ import { ensureProtocol } from '../../../util/ensureProtocol';
 import { updateTabState } from '../../reducers/tabs';
 import { getCurrentTabId } from '../../../util/establishMultitabRole';
 import {buildLocalMessage} from "../../../api/gramjs/apiBuilders/messages";
-import MsgConn from "../../../lib/client/msgConn";
+import MsgConn from "../../../lib/ptp/client/MsgConn";
 
 const AUTOLOGIN_TOKEN_KEY = 'autologin_token';
 

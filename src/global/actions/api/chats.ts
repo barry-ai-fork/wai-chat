@@ -1,81 +1,90 @@
-import type { RequiredGlobalActions } from '../../index';
-import {
-  addActionHandler, getGlobal, setGlobal,
-} from '../../index';
+import type {RequiredGlobalActions} from '../../index';
+import {addActionHandler, getGlobal, setGlobal,} from '../../index';
 
-import type {
-  ApiChat, ApiUser, ApiError, ApiChatMember,
-} from '../../../api/types';
-import { MAIN_THREAD_ID } from '../../../api/types';
-import { NewChatMembersProgress, ChatCreationProgress, ManagementProgress } from '../../../types';
-import type {
-  GlobalState, ActionReturnType, TabArgs,
-} from '../../types';
+import type {ApiChat, ApiChatMember, ApiError, ApiUser,} from '../../../api/types';
+import {MAIN_THREAD_ID} from '../../../api/types';
+import {ChatCreationProgress, ManagementProgress, NewChatMembersProgress} from '../../../types';
+import type {ActionReturnType, GlobalState, TabArgs,} from '../../types';
 
 import {
+  ALL_FOLDER_ID,
   ARCHIVED_FOLDER_ID,
-  TOP_CHAT_MESSAGES_PRELOAD_LIMIT,
   CHAT_LIST_LOAD_SLICE,
+  DEBUG,
   RE_TG_LINK,
   SERVICE_NOTIFICATIONS_USER_ID,
+  TME_WEB_DOMAINS,
   TMP_CHAT_ID,
-  ALL_FOLDER_ID,
-  DEBUG,
+  TOP_CHAT_MESSAGES_PRELOAD_LIMIT,
   TOPICS_SLICE,
   TOPICS_SLICE_SECOND_LOAD,
-  TME_WEB_DOMAINS,
 } from '../../../config';
-import { callApi } from '../../../api/gramjs';
+import {callApi} from '../../../api/gramjs';
 import {
+  addChatMembers,
   addChats,
+  addMessages,
   addUsers,
   addUserStatuses,
-  replaceThreadParam,
-  updateChatListIds,
-  updateChats,
-  updateChat,
-  updateChatListSecondaryInfo,
-  updateManagementProgress,
+  deleteTopic,
   leaveChat,
+  replaceChatListIds,
+  replaceChats,
+  replaceThreadParam,
   replaceUsers,
   replaceUserStatuses,
-  replaceChats,
-  replaceChatListIds,
-  addChatMembers,
-  updateUser,
-  addMessages,
-  updateTopics,
-  deleteTopic,
-  updateTopic,
-  updateThreadInfo,
+  updateChat,
+  updateChatListIds,
+  updateChatListSecondaryInfo,
+  updateChats,
   updateListedTopicIds,
+  updateManagementProgress,
+  updateThreadInfo,
+  updateTopic,
+  updateTopics,
+  updateUser,
 } from '../../reducers';
 import {
-  selectChat, selectUser, selectChatListType, selectIsChatPinned,
-  selectChatFolder, selectSupportChat, selectChatByUsername,
-  selectCurrentMessageList, selectThreadInfo, selectCurrentChat, selectLastServiceNotification,
-  selectVisibleUsers, selectUserByPhoneNumber, selectDraft, selectThreadTopMessageId,
-  selectTabState, selectThreadOriginChat, selectThread,
+  selectChat,
+  selectChatByUsername,
+  selectChatFolder,
+  selectChatListType,
+  selectCurrentChat,
+  selectCurrentMessageList,
+  selectDraft,
+  selectIsChatPinned,
+  selectLastServiceNotification,
+  selectSupportChat,
+  selectTabState,
+  selectThread,
+  selectThreadInfo,
+  selectThreadOriginChat,
+  selectThreadTopMessageId,
+  selectUser,
+  selectUserByPhoneNumber,
+  selectVisibleUsers,
 } from '../../selectors';
-import { buildCollectionByKey, omit } from '../../../util/iteratees';
-import { debounce, pause, throttle } from '../../../util/schedulers';
+import {buildCollectionByKey, omit} from '../../../util/iteratees';
+import {debounce, pause, throttle} from '../../../util/schedulers';
 import {
-  isChatSummaryOnly,
   isChatArchived,
   isChatBasicGroup,
   isChatChannel,
+  isChatSummaryOnly,
   isChatSuperGroup,
   isUserBot,
 } from '../../helpers';
-import { formatShareText, parseChooseParameter, processDeepLink } from '../../../util/deeplink';
-import { updateGroupCall } from '../../reducers/calls';
-import { selectGroupCall } from '../../selectors/calls';
-import { getOrderedIds } from '../../../util/folderManager';
+import {formatShareText, parseChooseParameter, processDeepLink} from '../../../util/deeplink';
+import {updateGroupCall} from '../../reducers/calls';
+import {selectGroupCall} from '../../selectors/calls';
+import {getOrderedIds} from '../../../util/folderManager';
 import * as langProvider from '../../../util/langProvider';
-import { selectCurrentLimit } from '../../selectors/limits';
-import { updateTabState } from '../../reducers/tabs';
-import { getCurrentTabId } from '../../../util/establishMultitabRole';
-import MsgConn from "../../../lib/client/msgConn";
+import {selectCurrentLimit} from '../../selectors/limits';
+import {updateTabState} from '../../reducers/tabs';
+import {getCurrentTabId} from '../../../util/establishMultitabRole';
+import Account from "../../../worker/share/Account";
+import {LoadChatsReq, LoadChatsRes} from "../../../lib/ptp/protobuf/PTPChats";
+import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
 
 const TOP_CHAT_MESSAGES_PRELOAD_INTERVAL = 100;
 const INFINITE_LOOP_MARKER = 100;
@@ -243,7 +252,7 @@ addActionHandler('loadAllChats', async (global, actions, payload): Promise<void>
   const getOrderDate = (chat: ApiChat) => {
     return chat.lastMessage?.date || chat.joinDate;
   };
-
+  console.log("loadAllChats")
   while (shouldReplace || !global.chats.isFullyLoaded[listType]) {
     if (i++ >= INFINITE_LOOP_MARKER) {
       if (DEBUG) {
@@ -255,8 +264,12 @@ addActionHandler('loadAllChats', async (global, actions, payload): Promise<void>
     }
 
     global = getGlobal();
+    //
+    // if (global.connectionState !== 'connectionStateReady' || global.authState !== 'authorizationStateReady') {
+    //   return;
+    // }
 
-    if (global.connectionState !== 'connectionStateReady' || global.authState !== 'authorizationStateReady') {
+    if (global.connectionState !== 'connectionStateReady') {
       return;
     }
 
@@ -1821,22 +1834,27 @@ async function loadChats<T extends GlobalState>(
   isFullDraftSync?: boolean,
 ) {
   global = getGlobal();
+
   let lastLocalServiceMessage = selectLastServiceNotification(global)?.message;
   try {
-    const res = await MsgConn.getMsgClient()?.sendJsonWithCallback({
-      action:"loadChats",
-      data:{
-        limit: CHAT_LIST_LOAD_SLICE,
-        offsetDate,
-        archived: listType === 'archived',
-        withPinned: shouldReplace,
-        lastLocalServiceMessage,
-      }
-    })
-    if (!res) {
+    const loadChatsRes = await Account.getCurrentAccount()?.sendPduWithCallback(new LoadChatsReq({
+      limit: CHAT_LIST_LOAD_SLICE,
+      offsetDate,
+      archived: listType === 'archived',
+      withPinned: shouldReplace,
+      // lastLocalServiceMessage:JSON.stringify(lastLocalServiceMessage),
+    }).pack())
+
+    if(!loadChatsRes){
       return;
     }
-    const result = res.data;
+
+    const res = LoadChatsRes.parseMsg(loadChatsRes);
+    if (!res || res.err !== ERR.NO_ERROR) {
+      return;
+    }
+
+    const result = JSON.parse(res.payload);
     const { chatIds } = result;
 
     if (chatIds.length > 0 && chatIds[0] === offsetId) {

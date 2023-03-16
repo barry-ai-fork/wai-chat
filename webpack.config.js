@@ -130,6 +130,9 @@ module.exports = (_env, { mode = 'production' }) => {
     resolve: {
       extensions: ['.js', '.ts', '.tsx'],
       fallback: {
+        stream: require.resolve("stream-browserify"),
+        assert: require.resolve("assert/"),
+        crypto: require.resolve('crypto-browserify'),
         path: require.resolve('path-browserify'),
         os: require.resolve('os-browserify/browser'),
         buffer: require.resolve('buffer/'),
@@ -162,6 +165,7 @@ module.exports = (_env, { mode = 'production' }) => {
         ignoreOrder: true,
       }),
       new EnvironmentPlugin({
+        NODE_DEBUG:undefined,
         APP_ENV,
         APP_MOCKED_CLIENT,
         // eslint-disable-next-line no-null/no-null

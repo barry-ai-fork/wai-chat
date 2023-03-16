@@ -66,32 +66,36 @@ export async function getBotChat(bot_id){
   }
 }
 
-export async function getChats(user_id){
-  const currentUserChat = await getChat(user_id);
-  const listIds_active = [
-    user_id
-  ];
+export async function getChats(user_id?:string){
+  const listIds_active = [];
   const chats = [];
-  chats.push(currentUserChat)
-  const byChatId = {
-    [user_id]:{
-      byId:{},
-      threadsById:{
-        "-1":{
-          lastViewportIds:[],
-          listedIds:[],
-          lastScrollOffset:undefined,
-          noWebPage:undefined
+  let byChatId:any = {};
+  let byId = {}
+  if(user_id){
+    listIds_active.push(user_id);
+    const currentUserChat = await getChat(user_id);
+    chats.push(currentUserChat)
+    byId = {
+      [user_id]:currentUserChat
+    }
+    byChatId = {
+      [user_id]:{
+        byId:{},
+        threadsById:{
+          "-1":{
+            lastViewportIds:[],
+            listedIds:[],
+            lastScrollOffset:undefined,
+            noWebPage:undefined
+          }
         }
       }
-    }
-  };
+    };
+  }
   const chatGpt = ENV.USER_ID_CHATGPT;
   const bots = [chatGpt]
   let totalCount_all = 1
-  const byId = {
-    [user_id]:currentUserChat
-  }
+
 
   for (let i = 0; i < bots.length; i++) {
     const bot_id = bots[i];
@@ -117,30 +121,10 @@ export async function getChats(user_id){
     replyingToById:{},
     chatIds:listIds_active,
     chats,
-
-    // messages:{
-    //   byChatId,
-    // },
-    // chats:{
-    //   byId,
-    //   "listIds": {
-    //     "active": listIds_active,
-    //     "archived": []
-    //   },
-    //   "isFullyLoaded": {},
-    //   "orderedPinnedIds": {
-    //     "active": [],
-    //     "archived": []
-    //   },
-    //   "totalCount": {
-    //     "all": totalCount_all,
-    //     "archived": 0
-    //   }
-    // }
   }
 }
 
-export async function getChatFolder(user_id){
+export async function getChatFolder(){
   const chatGpt = ENV.USER_ID_CHATGPT;
   return {
     "byId": {
@@ -160,26 +144,18 @@ export async function getChatFolder(user_id){
       2
     ]
   }
+
 }
 
-export async function loadChats(dataJson,user_id,websocket){
-
+export async function loadChats(user_id?:string){
+  const chatFolders = await getChatFolder()
   const users = await getUsers(user_id);
   const chats = await getChats(user_id);
-  const chatFolders = await getChatFolder(user_id)
 
-  let res = {
-    seq_num:dataJson.seq_num,
-    action:dataJson.action,
-    data:{
-      ...users,
-      ...chats,
-      chatFolders,
-    }
+  return {
+    ...users,
+    ...chats,
+    chatFolders
   }
-  if(websocket){
-    websocket.send(stringToBuffer(JSON.stringify(res)))
 
-  }
-  return res;
 }

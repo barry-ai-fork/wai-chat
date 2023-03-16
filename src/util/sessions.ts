@@ -10,6 +10,7 @@ import * as cacheApi from './cacheApi';
 const DC_IDS = [1, 2, 3, 4, 5];
 
 export function hasStoredSession(withLegacy = false) {
+  return true;
   if (withLegacy && localStorage.getItem(LEGACY_SESSION_KEY)) {
     return true;
   }

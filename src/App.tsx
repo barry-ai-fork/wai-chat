@@ -92,7 +92,6 @@ const App: FC<StateProps> = ({
 
   let activeKey: number;
   let page: UiLoaderPage | undefined;
-
   if (isInactive) {
     activeKey = AppScreens.inactive;
   } else if (isScreenLocked) {
@@ -106,6 +105,10 @@ const App: FC<StateProps> = ({
         break;
       case 'authorizationStateWaitCode':
         page = 'authCode';
+        activeKey = AppScreens.auth;
+        break;
+      case 'authorizationStateWaitSignPassword':
+        page = 'authPassword';
         activeKey = AppScreens.auth;
         break;
       case 'authorizationStateWaitPassword':
