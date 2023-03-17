@@ -342,7 +342,6 @@ export function sendMessage(
         await onProgress(1,localMessage)
       }
     } catch (error: any) {
-      debugger
       onUpdate({
         '@type': 'updateMessageSendFailed',
         chatId: chat.id,

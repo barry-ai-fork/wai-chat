@@ -606,7 +606,7 @@ var $conv_message = $createConverter([
                     '$': {"1":["sign","bytes",[]],"2":["ts","uint64",{"low":0,"high":0,"unsigned":true}],"3":["uid","string",""],"4":["address","string",""]}
                 },
                 AuthLoginRes: {
-                    '$': {"100":["err","uint32",0]}
+                    '$': {"1":["payload","string",""],"100":["err","uint32",0]}
                 },
                 AuthPreLoginReq: {
                     '$': {"1":["sign1","bytes",[]],"2":["address1","string",""],"3":["sign2","bytes",[]],"4":["address2","string",""],"5":["ts","uint64",{"low":0,"high":0,"unsigned":true}]}
@@ -640,7 +640,15 @@ var $conv_message = $createConverter([
                     '@': {"AUTH_TYPE_USERNAME":0,"AUTH_TYPE_EMAIL":1,"AUTH_TYPE_MOBILE":2}
                 },
                 ERR: {
-                    '@': {"NO_ERROR":0,"ERR_SYSTEM":1}
+                    '@': {"NO_ERROR":0,"ERR_SYSTEM":1,"ERR_AUTH_LOGIN":2}
+                }
+            },
+            Msg: {
+                SendReq: {
+                    '$': {"1":["payload","string",""]}
+                },
+                SendRes: {
+                    '$': {"1":["action","string",""],"2":["payload","string",""],"100":["err","uint32",0]}
                 }
             },
             Other: {

@@ -5,8 +5,10 @@ import Wallet from "../../lib/ptp/wallet/Wallet";
 
 export const ENV:{
   IS_PROD: boolean,
+  TEST_TOKEN:string,
   USER_ID_START: string,
   USER_ID_CHATGPT: string,
+  USER_ID_BOT_FATHER:string,
   TOKEN_EXPIRE_TIME_SEC: number,
   JWT_SECRET: string,
   GITHUB_CLIENT_ID: string,
@@ -24,7 +26,9 @@ export const ENV:{
   MAX_HISTORY_LENGTH: number,
 } = {
   IS_PROD: true,
+  TEST_TOKEN:"",
   USER_ID_START: "623415",
+  USER_ID_BOT_FATHER: "10000",
   USER_ID_CHATGPT: "10001",
   TOKEN_EXPIRE_TIME_SEC: 3600,
   JWT_SECRET: "",

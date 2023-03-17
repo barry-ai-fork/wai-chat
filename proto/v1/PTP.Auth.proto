@@ -49,6 +49,7 @@ message AuthLoginReq{
 }
 
 message AuthLoginRes{
+  optional string payload = 1;
   required Common.ERR err = 100;
 }
 

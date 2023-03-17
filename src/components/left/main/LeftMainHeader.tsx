@@ -308,7 +308,7 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
         icon="darkmode"
         onClick={handleDarkModeToggle}
       >
-        <span className="menu-item-name">{lang('lng_menu_night_mode')}</span>
+        <span className="menu-item-name">{lang('NightMode')}</span>
         <Switcher
           id="darkmode"
           label={lang(theme === 'dark' ? 'lng_settings_disable_night_theme' : 'lng_settings_enable_night_theme')}
@@ -320,7 +320,7 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
         icon="animations"
         onClick={handleAnimationLevelChange}
       >
-        <span className="menu-item-name capitalize">{lang('Appearance.Animations').toLowerCase()}</span>
+        <span className="menu-item-name capitalize">{lang('Animations')}</span>
         <Switcher
           id="animations"
           label="Toggle Animations"
@@ -337,13 +337,13 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
         icon="bug"
         onClick={handleBugReportClick}
       >
-        Report Bug
+        {lang('ReportBug')}
       </MenuItem>
       <MenuItem
         icon="logout"
         onClick={handleSignOutClick}
       >
-        Sign Out
+        {lang('SignOut')}
       </MenuItem>
       {/* {IS_BETA && ( */}
       {/*   <MenuItem */}

@@ -1,7 +1,7 @@
-import * as AuthController from "./controller/AuthController";
 import WsController from "./controller/WsController";
 import {ENV, initEnv} from "./helpers/env";
 import {getCorsHeader, ResponseJson} from "./helpers/network";
+import TestController from "./controller/TestController";
 
 addEventListener('fetch', async (event) => {
   initEnv(global);
@@ -19,39 +19,14 @@ async function handleEvent(event:FetchEvent) {
       }
     })
   }
-
-	if(url.pathname === "/ws"){
-		return WsController(event);
+  if(url.pathname === "/ws"){
+    return WsController(event);
+  }
+	if(url.pathname === "/test" ){
+		return TestController(event.request);
 	}
 
-  if(url.pathname === "/auth/login"){
-    return await AuthController.Login(request);
-  }
-  if(url.pathname === "/auth/reg"){
-    return await AuthController.Reg(request);
-  }
-  if(url.pathname === "/auth/github/callback"){
-    return await AuthController.GithubCallback(request);
-  }
-  if(url.pathname === "/auth/github"){
-    return await AuthController.GithubRedirect(request);
-  }
-  if(url.pathname === "/auth/google/callback"){
-    return await AuthController.GoogleCallback(request);
-  }
-  if(url.pathname === "/auth/google"){
-    return await AuthController.GoogleRedirect(request);
-  }
-
-  if(url.pathname === "/auth/token"){
-    return await AuthController.Token(request);
-  }
-
-  if(url.pathname.startsWith("/me")){
-    return await AuthController.Me(request);
-  }
   if(url.pathname.startsWith("/version")){
-
     return ResponseJson({
       v:"1.0.1",
     })

@@ -32,6 +32,7 @@ import {
 } from '../../selectors';
 import { init as initFolderManager } from '../../../util/folderManager';
 import { updateTabState } from '../../reducers/tabs';
+import MsgConn, {MsgClientState} from "../../../lib/ptp/client/MsgConn";
 
 const RELEASE_STATUS_TIMEOUT = 15000; // 15 sec;
 
@@ -237,13 +238,18 @@ function loadTopMessages(chat: ApiChat, threadId: number, lastReadInboxId?: numb
 }
 
 let previousGlobal: GlobalState | undefined;
+let previousMsgClientState: MsgClientState | undefined;
 // RAF can be unreliable when device goes into sleep mode, so sync logic is handled outside any component
 addCallback((global: GlobalState) => {
   const { connectionState, authState } = global;
-
+  const msgConn = MsgConn.getMsgClient();
   const { isMasterTab } = selectTabState(global);
   if (!isMasterTab || (previousGlobal?.connectionState === connectionState
     && previousGlobal?.authState === authState)) {
+    if(msgConn && previousMsgClientState !== MsgClientState.logged && msgConn?.getState() === MsgClientState.logged ){
+        getActions().sync();
+    }
+    previousMsgClientState = msgConn?.getState();
     previousGlobal = global;
     return;
   }
@@ -252,6 +258,6 @@ addCallback((global: GlobalState) => {
     // eslint-disable-next-line eslint-multitab-tt/no-getactions-in-actions
     getActions().sync();
   }
-
+  previousMsgClientState = msgConn?.getState();
   previousGlobal = global;
 });

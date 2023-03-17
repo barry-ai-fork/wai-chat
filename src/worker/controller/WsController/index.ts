@@ -1,36 +1,24 @@
 import {genUserId} from "../AuthController";
 import {randomize} from "worktop/utils";
-import {AuthUser} from "../../types";
-import {loadChats} from "../ChatController";
-import {createBot} from "../UserController";
-import {ENV, jwt, kv} from "../../helpers/env";
+import {loadChats, getUser, initSystemBot} from "../UserController";
+import {kv} from "../../helpers/env";
 import Account from "../../share/Account";
+import {ActionCommands, getActionCommandsName} from "../../../lib/ptp/protobuf/ActionCommands";
+import {Pdu} from "../../../lib/ptp/protobuf/BaseMsg";
 import {
   AuthLoginReq,
-  AuthLoginRes,
-  AuthPreLoginReq,
+  AuthLoginRes, AuthPreLoginReq,
   AuthPreLoginRes,
   AuthStep1Req,
   AuthStep1Res,
   AuthStep2Req,
   AuthStep2Res
 } from "../../../lib/ptp/protobuf/PTPAuth";
-import {Pdu} from "../../../lib/ptp/protobuf/BaseMsg";
-import {ActionCommands, getActionCommandsName} from "../../../lib/ptp/protobuf/ActionCommands";
 import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
-import {OtherNotify} from "../../../lib/ptp/protobuf/PTPOther";
 import {LoadChatsReq, LoadChatsRes} from "../../../lib/ptp/protobuf/PTPChats";
+import {OtherNotify} from "../../../lib/ptp/protobuf/PTPOther";
+import {sendMsg} from "../MsgController";
 
-export const UserWsMap:Record<string, WebSocket> = {};
-// @ts-ignore
-export const WsUserMap:Record<WebSocket, AuthUser> = {};
-
-const getTokenAuthUser = async (msg: { data: { token: any; }; })=>{
-  const {token} = msg.data;
-  const claims = await jwt.verify(token);
-  const user_id = claims.iss;
-  return JSON.parse(await kv.get(`U_${user_id}`));
-}
 
 const accountIdStart = +(new Date());
 async function handleSession(websocket: WebSocket) {
@@ -141,7 +129,7 @@ async function handleSession(websocket: WebSocket) {
           const authLoginReq = AuthLoginReq.parseMsg(pdu);
           if(authLoginTs && authLoginTs !== authLoginReq.ts){
             pduRsp = new AuthLoginRes({
-              err:ERR.ERR_AUTH_LOGIN
+              err:ERR.ERR_AUTH_LOGIN,
             }).pack()
             break;
           }
@@ -164,7 +152,10 @@ async function handleSession(websocket: WebSocket) {
           }
           await accountServer.afterServerLoginOk(authLoginReq);
           pduRsp = new AuthLoginRes({
-            err:ERR.NO_ERROR
+            err:ERR.NO_ERROR,
+            payload:JSON.stringify({
+              currentUser:await getUser(authLoginReq.uid,true)
+            })
           }).pack()
           break
         default:
@@ -209,10 +200,16 @@ export default async function (event:FetchEvent){
 export async function _ApiMsg(pdu:Pdu,account:Account){
   let pduRsp:Pdu | undefined = undefined;
   switch (pdu.getCommandId()){
+    case ActionCommands.CID_SendReq:
+      if(!account.getUid()){
+        break
+      }
+      await sendMsg(pdu,account);
+      break;
     case ActionCommands.CID_LoadChatsReq:
       console.log("=====>>",account.getUid());
+      await initSystemBot();
       const loadChatsReq = LoadChatsReq.parseMsg(pdu);
-      const chat_gpt = await createBot(ENV.USER_ID_CHATGPT,"ChatGPT","ChatGPT");
       let user_id = account.getUid() || undefined;
       pduRsp = new LoadChatsRes({
         err:ERR.NO_ERROR,

@@ -4,7 +4,7 @@ import './util/setupServiceWorker';
 import React from './lib/teact/teact';
 import TeactDOM from './lib/teact/teact-dom';
 
-import {getActions, getGlobal,} from './global';
+import {getActions, getGlobal, setGlobal,} from './global';
 import updateWebmanifest from './util/updateWebmanifest';
 import {IS_MULTITAB_SUPPORTED} from './util/environment';
 import './global/init';
@@ -18,6 +18,7 @@ import App from './App';
 import './styles/index.scss';
 import Mnemonic from "./lib/ptp/wallet/Mnemonic";
 import Aes256Gcm from "./lib/ptp/wallet/Aes256Gcm";
+import {selectTabState} from "./global/selectors";
 const crypto = require('./lib/gramjs/crypto/crypto');
 
 async function init() {
@@ -68,15 +69,20 @@ async function init() {
   }
 
   if (DEBUG) {
-    document.addEventListener('dblclick', () => {
-      // eslint-disable-next-line no-console
-      // console.warn('TAB STATE', selectTabState(getGlobal()));
-      // eslint-disable-next-line no-console
+    // @ts-ignore
+    window['init'] = ()=>{
       getActions().updateGlobal({
         users:{},
         chats:{},
-        message:{}
+        messages:{}
       })
+      localStorage.removeItem("tt-global-state");
+
+    }
+    document.addEventListener('dblclick', () => {
+      // eslint-disable-next-line no-console
+      console.warn('TAB STATE', selectTabState(getGlobal()));
+      // eslint-disable-next-line no-console
       console.warn({
         chatIds:getGlobal().chats.listIds.active
       })

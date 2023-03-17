@@ -11,7 +11,6 @@ export enum AUTH_TYPE {
 export enum ERR {
   NO_ERROR = 0,
   ERR_SYSTEM = 1,
-
-  ERR_AUTH_LOGIN = 1,
+  ERR_AUTH_LOGIN = 2,
 }
 

@@ -99,6 +99,7 @@ import { updateTabState } from '../../reducers/tabs';
 import { getCurrentTabId } from '../../../util/establishMultitabRole';
 import {buildLocalMessage} from "../../../api/gramjs/apiBuilders/messages";
 import MsgConn from "../../../lib/ptp/client/MsgConn";
+import {SendReq} from "../../../lib/ptp/protobuf/PTPMsg";
 
 const AUTOLOGIN_TOKEN_KEY = 'autologin_token';
 
@@ -947,11 +948,11 @@ async function loadViewportMessages<T extends GlobalState>(
 
   global = getGlobal();
   let flag = false;
-  if(!global.messages.byChatId[chatId].threadsById || global.messages.byChatId[chatId].threadsById["-1"].lastViewportIds == undefined){
+  if(!global.messages.byChatId[chatId]  || !global.messages.byChatId[chatId].threadsById || global.messages.byChatId[chatId].threadsById["-1"].lastViewportIds == undefined){
     global = safeReplaceViewportIds(global, chatId, threadId, [], tabId);
     flag = true;
   }
-  if(!global.messages.byChatId[chatId].threadsById || global.messages.byChatId[chatId].threadsById["-1"].listedIds == undefined){
+  if(!global.messages.byChatId[chatId]  || !global.messages.byChatId[chatId].threadsById || global.messages.byChatId[chatId].threadsById["-1"].listedIds == undefined){
     global = updateListedIds(global, chatId, threadId, [])
     flag = true;
   }
@@ -1128,14 +1129,13 @@ async function sendMessage<T extends GlobalState>(global: T, params: {
       },
     };
     setGlobal(global);
-  } : async (progress: number, localMessage: number)=>{
+  } : async (progress: number, localMessage: any)=>{
     await MsgConn.getMsgClient()
-      ?.sendJson({
-        action:"sendMsg",
-        data:{
+      ?.sendPduWithCallback(new SendReq({
+        payload:JSON.stringify({
           msg:localMessage
-        }
-      })
+        })
+      }).pack());
   };
 
   // @optimization

@@ -240,7 +240,7 @@ export async function Login(request:Request){
   } catch (err) {
     return reply(400, 'Error parsing request body');
   }
-
+//@ts-ignore
   const {email,password} = await input
   const user_id = await kv.get(`U_E_UID_${email}`);
   let res:AuthResponse;
@@ -289,7 +289,7 @@ export async function Reg(request:Request){
   } catch (err) {
     return reply(400, 'Error parsing request body');
   }
-
+//@ts-ignore
   const {email,password} = await input
   let user_id = await kv.get(`U_E_UID_${email}`);
   let res:AuthResponse;
@@ -335,7 +335,7 @@ export async function Token(request:Request){
       err_msg:"Error parsing request body"
     })
   }
-
+  //@ts-ignore
   const {code} = await input
   if(!code){
     return ResponseJson({

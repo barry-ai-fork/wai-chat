@@ -1,16 +1,11 @@
-import {stringToBuffer} from "../helpers/buffer";
-import {kv,ENV} from "../helpers/env";
+import {ENV, kv} from "../helpers/env";
 import {sendMessageToChatGPT} from "../helpers/openai";
-import {decode} from "worktop/buffer";
 import {USER_CONFIG} from "../helpers/context";
-
-function binaryToString(binary) {
-  var bytes = new Uint8Array(binary.length / 8);
-  for (var i = 0; i < binary.length; i += 8) {
-    bytes[i / 8] = parseInt(binary.substr(i, 8), 2);
-  }
-  return String.fromCharCode.apply(null, bytes);
-}
+import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
+import Account from "../share/Account";
+import {SendReq, SendRes} from "../../lib/ptp/protobuf/PTPMsg";
+import {ERR} from "../../lib/ptp/protobuf/PTPCommon";
+import {getBot} from "./UserController";
 
 export enum AiChatRole {
   NONE,
@@ -153,107 +148,117 @@ export class ModelMsg{
   }
 }
 
-export async function sendMsg(dataJson:Record<string, any>,user_id:string,websocket:{send:any}){
-  const {msg} = dataJson.data;
+export async function sendMsg(pdu:Pdu,account:Account){
+  const sendReq = SendReq.parseMsg(pdu);
+  const {payload} = sendReq;
+  const {msg} = JSON.parse(payload)
   const {chatId,id} = msg;
+  const user_id = account.getUid()!;
   const msgModel = new ModelMsg(user_id,chatId,user_id);
   const msgId =await msgModel.incrMsgId();
   msgModel.setMsg({
     ...msg,
     id:msgId
   });
-  if(websocket){
-    websocket.send(JSON.stringify({
-      action:"updateMessageSendSucceeded",
-      data:{
-        localMsgId:id,
-        msg:msgModel.msg
-      }
-    }))
-    if(chatId != user_id){
-      if(chatId === ENV.USER_ID_CHATGPT){
-        if(msgModel.getMsgText()){
-          if(msgModel.getMsgText().indexOf("/") === 0){
-            msgModel.save().catch(console.error)
-            const msgModelBotCmdReply = new ModelMsg(user_id,chatId,chatId);
-            msgModelBotCmdReply.setMsg({
-              ...msg,
-              senderId:chatId,
-              isOutgoing:false,
-              id:await msgModelBotCmdReply.incrMsgId(),
-              content:{
-                text:{
-                  text:"[[thinking...]]"
-                }
-              }
-            });
-            switch (msgModel.getMsgText()){
-              case "/start":
-                msgModelBotCmdReply.setMsgText("/start")
-                break
-              case "/clear":
-                await msgModel.clearAiMsgHistory();
-              case "/history":
-                const history = await msgModel.getAiMsgHistory();
-                console.log(history)
-                msgModelBotCmdReply.setMsgText(`==============\nHistory\n==============\n\n${history.map(({role,content})=>{
-                    return `${role === "user" ? "\n>" : "<"}:${content}`
-                }).join("\n")}`)
-                break
-              default:
-                return;
-            }
+  account.sendPdu(new SendRes({
+    err:ERR.NO_ERROR,
+    action:"updateMessageSendSucceeded",
+    payload:JSON.stringify({
+      localMsgId:id,
+      msg:msgModel.msg
+    })
+  }).pack())
+  const botInfo = await getBot(chatId)
 
-            msgModelBotCmdReply.save().catch(console.error)
-            websocket.send(JSON.stringify({
-              action:"newMessage",
-              data:{
-                msg:msgModelBotCmdReply.msg
-              }
-            }))
-          }else{
-            const history = await msgModel.getAiMsgHistory();
-            const msgModelBotReply = new ModelMsg(user_id,chatId,chatId);
-            msgModelBotReply.setMsg({
-              ...msg,
-              senderId:chatId,
-              isOutgoing:false,
-              id:await msgModelBotReply.incrMsgId(),
-              content:{
-                text:{
-                  text:"[[thinking...]]"
-                }
-              }
-            });
-            websocket.send(JSON.stringify({
-              action:"newMessage",
-              data:{
-                msg:msgModelBotReply.msg
-              }
-            }))
-            const [error,reply] = await sendMessageToChatGPT(msgModel.getMsgText(),history);
-            if(!error){
-              msgModelBotReply.aiRole = AiChatRole.ASSISTANT;
-              msgModel.aiRole = AiChatRole.USER;
-            }
-            msgModel.save().catch(console.error);
-            msgModelBotReply.setMsgText(reply)
-            websocket.send(JSON.stringify({
-              action:"newMessage",
-              data:{
-                msg:msgModelBotReply.msg
-              }
-            }))
-            msgModelBotReply.save().catch(console.error)
-          }
 
-        }
-      }else{
+  if(botInfo){
+    if(msgModel.getMsgText()){
+      if(msgModel.getMsgText().indexOf("/") === 0){
         msgModel.save().catch(console.error)
+
+        const msgModelBotCmdReply = new ModelMsg(user_id,chatId,chatId);
+        msgModelBotCmdReply.setMsg({
+          ...msg,
+          senderId:chatId,
+          isOutgoing:false,
+          id:await msgModelBotCmdReply.incrMsgId(),
+          content:{
+            text:{
+              text:"..."
+            }
+          }
+        });
+        switch (msgModel.getMsgText()){
+          case "/start":
+            msgModelBotCmdReply.setMsgText(botInfo['fullInfo']['botInfo']['description'])
+            break
+          case "/clear":
+            await msgModel.clearAiMsgHistory();
+          case "/history":
+            const history = await msgModel.getAiMsgHistory();
+            msgModelBotCmdReply.setMsgText(`==============\nHistory\n==============\n\n${history.map(({role,content})=>{
+              return `${role === "user" ? "\n>" : "<"}:${content}`
+            }).join("\n")}`)
+            break
+          default:
+            return;
+        }
+        msgModelBotCmdReply.save().catch(console.error)
+        account.sendPdu(new SendRes({
+          err:ERR.NO_ERROR,
+          action:"newMessage",
+          payload:JSON.stringify({
+            msg:msgModelBotCmdReply.msg
+          })
+        }).pack())
+
+      }else{
+        if(chatId === ENV.USER_ID_CHATGPT){
+          const history = await msgModel.getAiMsgHistory();
+          const msgModelBotReply = new ModelMsg(user_id,chatId,chatId);
+          msgModelBotReply.setMsg({
+            ...msg,
+            senderId:chatId,
+            isOutgoing:false,
+            id:await msgModelBotReply.incrMsgId(),
+            content:{
+              text:{
+                text:"..."
+              }
+            }
+          });
+          account.sendPdu(new SendRes({
+            err:ERR.NO_ERROR,
+            action:"newMessage",
+            payload:JSON.stringify({
+              msg:msgModelBotReply.msg
+            })
+          }).pack())
+
+          const [error,reply] = await sendMessageToChatGPT(msgModel.getMsgText(),history);
+          if(!error){
+            msgModelBotReply.aiRole = AiChatRole.ASSISTANT;
+            msgModel.aiRole = AiChatRole.USER;
+          }
+          msgModel.save().catch(console.error);
+          msgModelBotReply.setMsgText(reply)
+
+          account.sendPdu(new SendRes({
+            err:ERR.NO_ERROR,
+            action:"newMessage",
+            payload:JSON.stringify({
+              msg:msgModelBotReply.msg
+            })
+          }).pack())
+
+          msgModelBotReply.save().catch(console.error)
+        }
+
       }
-    }else{
-      msgModel.save().catch(console.error)
+
     }
+  }else{
+    msgModel.save().catch(console.error)
   }
   return {msg:msgModel.msg};
 }

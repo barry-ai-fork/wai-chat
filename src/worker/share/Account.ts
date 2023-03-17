@@ -8,7 +8,6 @@ import Aes256Gcm from "../../lib/ptp/wallet/Aes256Gcm";
 import LocalStorage from "./db/LocalStorage";
 import CloudFlareKv from "./db/CloudFlareKv";
 import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
-import {AuthLoginReq} from "../../lib/ptp/protobuf/PTPAuth";
 import {AuthLoginReq_Type} from "../../lib/ptp/protobuf/PTPAuth/types";
 import {getActionCommandsName} from "../../lib/ptp/protobuf/ActionCommands";
 
@@ -32,6 +31,7 @@ let kvStore:LocalStorage | CloudFlareKv | undefined = undefined
 export default class Account {
   private accountId: number;
   private uid?: string;
+  private userInfo?: object;
   private shareKey?: Buffer;
   private iv?: Buffer;
   private aad?: Buffer;
@@ -122,6 +122,15 @@ export default class Account {
   setUid(uid: string) {
     this.uid = uid;
   }
+
+  setUserInfo(userInfo: object) {
+    this.userInfo = userInfo;
+  }
+
+  getUserInfo() {
+    return this.userInfo ;
+  }
+
   getUid() {
     return this.uid;
   }

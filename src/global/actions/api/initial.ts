@@ -34,11 +34,11 @@ import parseMessageInput from "../../../util/parseMessageInput";
 import Account from "../../../worker/share/Account";
 import {ApiUpdateConnectionStateType} from "../../../api/types";
 import LocalStorage from "../../../worker/share/db/LocalStorage";
-import { SHA1 } from 'worktop/crypto';
-import {AuthLoginReq, AuthLoginRes, AuthPreLoginReq, AuthPreLoginRes} from "../../../lib/ptp/protobuf/PTPAuth";
-import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
-import * as langProvider from "../../../util/langProvider";
+import {SHA1} from 'worktop/crypto';
+import {AuthPreLoginReq, AuthPreLoginRes} from "../../../lib/ptp/protobuf/PTPAuth";
 import {getCurrentTabId} from "../../../util/establishMultitabRole";
+import {SendRes} from "../../../lib/ptp/protobuf/PTPMsg";
+import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
 
 addActionHandler('updateGlobal', (global,action,payload): ActionReturnType => {
   return {
@@ -47,52 +47,26 @@ addActionHandler('updateGlobal', (global,action,payload): ActionReturnType => {
   };
 });
 
-
-addActionHandler('updateMsg', (global,actions,payload): ActionReturnType => {
-  console.log("[updateMsg]",payload.data);
-  switch (payload.action){
-    case "login":
-      if(payload.err){
-        return {
-          ...global,
-          authState:"authorizationStateWaitRegistration",
-          connectionState:"connectionStateReady",
-          currentUserId:undefined,
-          users:{
-            ...global.users,
-            byId:{
-
-            }
-          }
-        }
-      }else{
-        return {
-          ...global,
-          connectionState:"connectionStateReady",
-          currentUserId:payload.data.currentUserId,
-          users:{
-            ...global.users,
-            byId:{
-              ...global.users.byId,
-              [payload.data.currentUserId]:payload.data.currentUser
-            }
-          }
-        }
-      }
-
-    case "newMessage":
-    case "updateMessageSendSucceeded":
-      handleRecvMsg(global,actions,payload.data)
-      break
-    default:
-      const {action,...data} = payload;
-      actions.apiUpdate({
-        '@type': action,
-        ...data
-      });
-      break
+addActionHandler('updateMsg', (global,actions,payload:any): ActionReturnType => {
+  try{
+    const sendRes = SendRes.parseMsg(payload!)
+    const payloadData = JSON.parse(sendRes.payload)
+    switch (sendRes.action){
+      case "newMessage":
+      case "updateMessageSendSucceeded":
+        handleRecvMsg(global,actions,payloadData)
+        break
+      default:
+        const {action,...data} = payload;
+        actions.apiUpdate({
+          '@type': sendRes.action,
+          ...payloadData
+        });
+        break
+    }
+  }catch (e){
+    console.error(e)
   }
-
 });
 
 const handleRecvMsg = (global:any,actions:any,data:any)=>{
@@ -142,8 +116,7 @@ addActionHandler('initApi', async (global, actions): Promise<void> => {
     dcId: initialLocationHash?.tgWebAuthDcId ? Number(initialLocationHash?.tgWebAuthDcId) : undefined,
     mockScenario: initialLocationHash?.mockScenario,
   });
-  setGlobal({
-    ...getGlobal(),
+  actions.updateGlobal({
     authState:'authorizationStateReady'
   })
   Account.setKvStore(new LocalStorage())
@@ -161,8 +134,21 @@ addActionHandler('initApi', async (global, actions): Promise<void> => {
             let connectionState:ApiUpdateConnectionStateType;
             if(msgClientState === MsgClientState.connected || msgClientState === MsgClientState.logged){
               connectionState = "connectionStateReady"
+              if(msgClientState === MsgClientState.logged){
+                console.log("onConnectionStateChanged",'logged',account.getUserInfo())
+                actions.updateGlobal({
+                  currentUserId:account.getUid(),
+                  users:{
+                    ...global.users,
+                    byId:{
+                      ...global.users.byId,
+                      [account.getUid()!]:account.getUserInfo()
+                    }
+                  }
+                });
+              }
             }else if(msgClientState === MsgClientState.connecting){
-              connectionState = "connectionStateReady"
+              connectionState = "connectionStateConnecting"
             }else{
               connectionState = "connectionStateBroken";
             }
@@ -261,24 +247,7 @@ addActionHandler('setAuthPassword', async (global, actions, payload): ActionRetu
       sign:res21!.sign,
       address:res21!.address,
     }
-    const res = await account.sendPduWithCallback(new AuthLoginReq({
-      ...sessionData
-    }).pack())
-
-    const authLoginRes = AuthLoginRes.parseMsg(res)
-    // console.log({authLoginRes})
-    if(authLoginRes.err !== ERR.NO_ERROR){
-      setGlobal({
-        ...getGlobal(),
-        authIsLoading: false,
-        authError: "login error",
-      })
-      return;
-    }
-
-    account.setSession(sessionData)
-    await account.saveSession()
-    account.setUid(sessionData.uid);
+    await MsgConn.getMsgClient()?.login(sessionData)
     // console.log(sessionData,authLoginRes)
     setGlobal({
       ...getGlobal(),
@@ -286,7 +255,6 @@ addActionHandler('setAuthPassword', async (global, actions, payload): ActionRetu
       authIsLoading: false,
       authError: undefined,
     })
-    actions.sync();
     actions.showNotification({
       message: "登录成功",
       tabId:getCurrentTabId()

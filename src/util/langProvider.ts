@@ -209,20 +209,22 @@ async function importFallbackLangPack() {
 }
 
 async function fetchRemote(langCode: string): Promise<ApiLangPack | undefined> {
+  return undefined;
   let remote;
   if(['en','zh-rCN'].includes(langCode)){
     remote = {
       langPack:null
     }
-    switch (langCode){
-      case "zh-rCN":
-        remote.langPack = (await import('./LangPack-zh-rCN')).default;
-        break;
-      default:
-      case "en":
-        remote.langPack = (await import('./LangPack-en')).default;
-        break;
-    }
+    // switch (langCode){
+    //   case "en":
+    //   case "zh-rCN":
+    //     remote.langPack = (await import('./LangPack-zh-rCN')).default;
+    //     break;
+    //   default:
+    //   // case "en":
+    //     remote.langPack = (await import('./LangPack-en')).default;
+    //     break;
+    // }
   }else{
     remote = await callApi('fetchLangPack', { sourceLangPacks: LANG_PACKS, langCode });
   }

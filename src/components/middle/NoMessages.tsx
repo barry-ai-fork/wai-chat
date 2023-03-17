@@ -75,12 +75,12 @@ function renderSavedMessages(lang: LangFn) {
     <div className="NoMessages">
       <div className="wrapper">
         <i className="icon icon-cloud-download" />
-        <h3 className="title">{lang('Conversation.CloudStorageInfo.Title')}</h3>
+        <h3 className="title">{lang('ChatYourSelfTitle')}</h3>
         <ul className="description">
-          <li>{lang('Conversation.ClousStorageInfo.Description1')}</li>
-          <li>{lang('Conversation.ClousStorageInfo.Description2')}</li>
-          <li>{lang('Conversation.ClousStorageInfo.Description3')}</li>
-          <li>{lang('Conversation.ClousStorageInfo.Description4')}</li>
+          <li>{lang('ChatYourSelfDescription1')}</li>
+          <li>{lang('ChatYourSelfDescription2')}</li>
+          <li>{lang('ChatYourSelfDescription3')}</li>
+          <li>{lang('ChatYourSelfDescription1')}</li>
         </ul>
       </div>
     </div>

@@ -85,6 +85,7 @@ import {getCurrentTabId} from '../../../util/establishMultitabRole';
 import Account from "../../../worker/share/Account";
 import {LoadChatsReq, LoadChatsRes} from "../../../lib/ptp/protobuf/PTPChats";
 import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
+import MsgConn, {MsgClientState} from "../../../lib/ptp/client/MsgConn";
 
 const TOP_CHAT_MESSAGES_PRELOAD_INTERVAL = 100;
 const INFINITE_LOOP_MARKER = 100;
@@ -149,7 +150,8 @@ addActionHandler('openChat', (global, actions, payload): ActionReturnType => {
       }
     }
   } else if (isChatSummaryOnly(chat) && !chat.isMin) {
-    actions.requestChatUpdate({ chatId: id });
+    //todo
+    // actions.requestChatUpdate({ chatId: id });
   }
 
   if (threadId !== MAIN_THREAD_ID) {
@@ -252,7 +254,6 @@ addActionHandler('loadAllChats', async (global, actions, payload): Promise<void>
   const getOrderDate = (chat: ApiChat) => {
     return chat.lastMessage?.date || chat.joinDate;
   };
-  console.log("loadAllChats")
   while (shouldReplace || !global.chats.isFullyLoaded[listType]) {
     if (i++ >= INFINITE_LOOP_MARKER) {
       if (DEBUG) {
@@ -286,7 +287,6 @@ addActionHandler('loadAllChats', async (global, actions, payload): Promise<void>
         /* eslint-enable @typescript-eslint/no-loop-func */
         .sort((chat1, chat2) => getOrderDate(chat1)! - getOrderDate(chat2)!)[0]
       : undefined;
-
     await loadChats(global,
       listType,
       oldestChat?.id,
@@ -1901,8 +1901,7 @@ async function loadChats<T extends GlobalState>(
       global = replaceUsers(global, buildCollectionByKey(visibleUsers.concat(result.users), 'id'));
       global = replaceUserStatuses(global, result.userStatusesById);
       global = replaceChats(global, buildCollectionByKey(visibleChats.concat(result.chats), 'id'));
-      global = replaceChatListIds(global, listType, chatIds);
-
+      global = updateChatListIds(global, listType, chatIds);
       global = {
         ...global,
         chatFolders:result.chatFolders

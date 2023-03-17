@@ -9,7 +9,9 @@ export enum ActionCommands {
   CID_AuthStep2Res = 1008,
   CID_LoadChatsReq = 2001,
   CID_LoadChatsRes = 2002,
-  CID_OtherNotify = 3001,
+  CID_SendReq = 3001,
+  CID_SendRes = 3002,
+  CID_OtherNotify = 4001,
 }
 
 export const ActionCommandsName = {
@@ -23,7 +25,9 @@ export const ActionCommandsName = {
   1008: "CID_AuthStep2Res",
   2001: "CID_LoadChatsReq",
   2002: "CID_LoadChatsRes",
-  3001: "CID_OtherNotify",
+  3001: "CID_SendReq",
+  3002: "CID_SendRes",
+  4001: "CID_OtherNotify",
 };
 
 export const getActionCommandsName = (cid:ActionCommands)=>{

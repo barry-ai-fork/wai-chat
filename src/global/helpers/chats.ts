@@ -326,6 +326,7 @@ export function isChatArchived(chat: ApiChat) {
 export function selectIsChatMuted(
   chat: ApiChat, notifySettings: NotifySettings, notifyExceptions: Record<string, NotifyException> = {},
 ) {
+  return false
   // If this chat is in exceptions they take precedence
   if (notifyExceptions[chat.id] && notifyExceptions[chat.id].isMuted !== undefined) {
     return notifyExceptions[chat.id].isMuted;

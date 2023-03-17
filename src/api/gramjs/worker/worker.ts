@@ -44,7 +44,7 @@ onmessage = async (message: OriginMessageEvent) => {
 
           args.push(callback as never);
         }
-        if(!["sendMessage"].includes(name)){
+        if(!["sendMessage"].includes(name) && DEBUG){
           console.warn("callApi xxx",name)
           return;
         }

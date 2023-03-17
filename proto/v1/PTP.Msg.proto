@@ -1,0 +1,16 @@
+syntax = "proto2";
+package PTP.Msg;
+import "PTP.Common.proto";
+option java_package = "com.ptp.im.protobuf";
+
+option optimize_for = LITE_RUNTIME;
+
+message SendReq{
+  required string payload = 1;
+}
+
+message SendRes{
+  required string action = 1;
+  required string payload = 2;
+  required Common.ERR err = 100;
+}

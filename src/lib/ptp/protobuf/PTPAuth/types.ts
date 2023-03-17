@@ -8,6 +8,7 @@ export interface AuthLoginReq_Type {
   address: string;
 }
 export interface AuthLoginRes_Type {
+  payload?: string;
   err: PTPCommon.ERR;
 }
 export interface AuthPreLoginReq_Type {

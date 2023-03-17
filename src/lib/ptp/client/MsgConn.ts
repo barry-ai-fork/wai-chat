@@ -1,5 +1,5 @@
 import {SESSION_TOKEN, WS_URL} from '../../../config';
-import Account from "../../../worker/share/Account";
+import Account, {ISession} from "../../../worker/share/Account";
 import LocalStorage from "../../../worker/share/db/LocalStorage";
 import {Pdu} from "../protobuf/BaseMsg";
 import {ERR} from "../protobuf/PTPCommon";
@@ -146,23 +146,39 @@ export default class MsgConn {
     this.notifyState(MsgClientState.connected);
     this.authStep1().catch(console.error)
   }
-  async login(){
+  async login(sessionData?:ISession){
     const account = Account.getInstance(this.accountId)
-    const session = account.getSession()
-    if(session){
-      const pdu = await account.sendPduWithCallback(new AuthLoginReq({
+    let pdu:Pdu | undefined = undefined;
+    let session:ISession|undefined
+    if(sessionData){
+      session = sessionData;
+      pdu = await account.sendPduWithCallback(new AuthLoginReq({
         ...session
       }).pack());
-      const {err} = AuthLoginRes.parseMsg(pdu);
+
+    }else{
+      session = account.getSession()
+      if(session){
+        pdu = await account.sendPduWithCallback(new AuthLoginReq({
+          ...session
+        }).pack());
+      }
+    }
+    if(pdu != undefined){
+      const {err,payload} = AuthLoginRes.parseMsg(pdu);
       if(err === ERR.NO_ERROR){
-        account.setUid(session.uid);
-        console.log("login OK!",account.getUid())
+        // @ts-ignore
+        const {currentUser} = JSON.parse(payload)
+        account.setUid(session!.uid);
+        account.setUserInfo(currentUser);
+        account.setSession(session)
+        await account.saveSession()
+        console.log("login OK!",account.getUid(),currentUser)
+        this.notifyState(MsgClientState.logged);
         return account.getUid()
       }else{
         return false;
       }
-    }else{
-      return false;
     }
   }
   async authStep2(){
@@ -175,7 +191,7 @@ export default class MsgConn {
       address:await accountClient.getAccountAddress()
     }).pack());
     const authStep2Res = AuthStep2Res.parseMsg(pdu)
-    console.log("authStep2Res finished!",authStep2Res)
+    // console.log("authStep2Res finished!",authStep2Res)
     await this.login();
   }
   async authStep1(){
@@ -188,10 +204,10 @@ export default class MsgConn {
     const t = AuthStep1Req.parseMsg(req);
     const pdu = await accountClient.sendPduWithCallback(req);
     const {err,address,q,sign,ts} = AuthStep1Res.parseMsg(pdu)
-    console.log("AuthStep1Res",{err,p,q,address,sign})
+    // console.log("AuthStep1Res",{err,p,q,address,sign})
     if(err == ERR.NO_ERROR){
       const res = accountClient.recoverAddressAndPubKey(sign,ts+Buffer.concat([p,q]).toString("hex"))
-      console.log(res.address,address)
+      // console.log(res.address,address)
       if(res.address != address){
         console.error("invalid server address")
       }else{
@@ -215,15 +231,14 @@ export default class MsgConn {
         this.__rev_msg_map[seq_num] = pdu
         delete this.__sending_msg_map[seq_num];
       }else{
-        // if (this.__msgHandler) {
-        //   this.__msgHandler(msg);
-        //   this.notify([
-        //     {
-        //       action: MsgConnNotifyAction.onData,
-        //       payload: msg,
-        //     },
-        //   ]);
-        // }
+        if (this.__msgHandler) {
+          this.notify([
+            {
+              action: MsgConnNotifyAction.onData,
+              payload: pdu,
+            },
+          ]);
+        }
       }
     }
 

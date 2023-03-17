@@ -1132,7 +1132,6 @@ const Composer: FC<OwnProps & StateProps> = ({
         handleSend();
         break;
       case MainButtonState.Record: {
-        debugger
         if (areVoiceMessagesNotAllowed) {
           if (!canSendVoiceByPrivacy) {
             showNotification({

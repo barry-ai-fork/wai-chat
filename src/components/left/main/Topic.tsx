@@ -135,7 +135,6 @@ const Topic: FC<OwnProps & StateProps> = ({
   }, [openChat, chatId, topic.id, canScrollDown, focusLastMessage]);
 
   const contextActions = useTopicContextActions(topic, chat, wasTopicOpened, canDelete, handleOpenDeleteModal);
-
   return (
     <ListItem
       className={buildClassName(
