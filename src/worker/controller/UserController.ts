@@ -282,7 +282,7 @@ export async function getChats(user_id?:string){
   let byId:Record<string, any> = {}
 
   if(user_id){
-    listIds_active.push(user_id);
+    // listIds_active.push(user_id);
     const currentUserChat = await getChat(user_id);
     chats.push(currentUserChat)
     byId = {
@@ -304,7 +304,7 @@ export async function getChats(user_id?:string){
   }
   const chatGpt = ENV.USER_ID_CHATGPT;
   const botFather = ENV.USER_ID_BOT_FATHER;
-  const bots = [chatGpt,botFather]
+  const bots = [chatGpt]
   let totalCount_all = 1
 
   const ids = await getBotIds()
@@ -360,7 +360,6 @@ export async function getChatFolder(){
         "pinnedChatIds": [],
         "includedChatIds": [
           chatGpt,
-          botFather
         ],
         "excludedChatIds": []
       }

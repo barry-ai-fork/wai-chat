@@ -201,8 +201,6 @@ export async function invokeRequest<T extends GramJs.AnyRequest>(
   dcId?: number,
   shouldIgnoreErrors = false,
 ) {
-  console.log(MsgConn.getMsgClient())
-  debugger
   if (!isConnected) {
     if (DEBUG) {
       log('INVOKE ERROR', request.className, 'Client is not connected');
