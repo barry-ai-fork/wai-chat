@@ -324,7 +324,7 @@ const MessageContextMenu: FC<OwnProps> = ({
         {/*     {lang('Conversation.ContextViewReplies', repliesThreadInfo!.messagesCount, 'i')} */}
         {/*   </MenuItem> */}
         {/* )} */}
-        {/* {canEdit && <MenuItem icon="edit" onClick={onEdit}>{lang('Edit')}</MenuItem>} */}
+         {canEdit && <MenuItem icon="edit" onClick={onEdit}>{lang('Edit')}</MenuItem>}
         {/* {canFaveSticker && ( */}
         {/*   <MenuItem icon="favorite" onClick={onFaveSticker}>{lang('AddToFavorites')}</MenuItem> */}
         {/* )} */}
@@ -350,7 +350,7 @@ const MessageContextMenu: FC<OwnProps> = ({
         {/*   </MenuItem> */}
         {/* )} */}
         {/* {canForward && <MenuItem icon="forward" onClick={onForward}>{lang('Forward')}</MenuItem>} */}
-        {/* {canSelect && <MenuItem icon="select" onClick={onSelect}>{lang('Common.Select')}</MenuItem>} */}
+         {canSelect && <MenuItem icon="select" onClick={onSelect}>{lang('Common.Select')}</MenuItem>}
         {/* {canReport && <MenuItem icon="flag" onClick={onReport}>{lang('lng_context_report_msg')}</MenuItem>} */}
         {/* {(canShowSeenBy || canShowReactionsCount) && !isSponsoredMessage && ( */}
         {/*   <MenuItem */}
@@ -386,7 +386,7 @@ const MessageContextMenu: FC<OwnProps> = ({
         {/*     </div> */}
         {/*   </MenuItem> */}
         {/* )} */}
-        {/* {canDelete && <MenuItem destructive icon="delete" onClick={onDelete}>{lang('Delete')}</MenuItem>} */}
+         {canDelete && <MenuItem destructive icon="delete" onClick={onDelete}>{lang('Delete')}</MenuItem>}
         {/* {hasCustomEmoji && ( */}
         {/*   <> */}
         {/*     <MenuSeparator /> */}

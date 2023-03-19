@@ -68,7 +68,6 @@ const FloatingActionButtons: FC<OwnProps & StateProps> = ({
     if (!isShown) {
       return;
     }
-
     if (messageListType === 'thread') {
       focusNextReply();
     } else {

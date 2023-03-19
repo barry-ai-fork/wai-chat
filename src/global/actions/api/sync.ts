@@ -1,16 +1,14 @@
-import type { RequiredGlobalActions } from '../../index';
-import {
-  addActionHandler, getActions, getGlobal, setGlobal,
-} from '../../index';
-import { addCallback } from '../../../lib/teact/teactn';
+import type {RequiredGlobalActions} from '../../index';
+import {addActionHandler, getActions, getGlobal, setGlobal,} from '../../index';
+import {addCallback} from '../../../lib/teact/teactn';
 
-import type { ApiChat, ApiMessage } from '../../../api/types';
-import { MAIN_THREAD_ID } from '../../../api/types';
-import type { ActionReturnType, GlobalState, Thread } from '../../types';
+import type {ApiChat, ApiMessage} from '../../../api/types';
+import {MAIN_THREAD_ID} from '../../../api/types';
+import type {ActionReturnType, GlobalState, Thread} from '../../types';
 
-import { DEBUG, MESSAGE_LIST_SLICE, SERVICE_NOTIFICATIONS_USER_ID } from '../../../config';
-import { callApi } from '../../../api/gramjs';
-import { buildCollectionByKey } from '../../../util/iteratees';
+import {DEBUG, MESSAGE_LIST_SLICE, SERVICE_NOTIFICATIONS_USER_ID} from '../../../config';
+import {callApi} from '../../../api/gramjs';
+import {buildCollectionByKey} from '../../../util/iteratees';
 import {
   addChatMessagesById,
   safeReplaceViewportIds,
@@ -30,8 +28,8 @@ import {
   selectTabState,
   selectThreadInfo,
 } from '../../selectors';
-import { init as initFolderManager } from '../../../util/folderManager';
-import { updateTabState } from '../../reducers/tabs';
+import {init as initFolderManager} from '../../../util/folderManager';
+import {updateTabState} from '../../reducers/tabs';
 import MsgConn, {MsgClientState} from "../../../lib/ptp/client/MsgConn";
 
 const RELEASE_STATUS_TIMEOUT = 15000; // 15 sec;
@@ -65,8 +63,7 @@ addActionHandler('sync', (global, actions): ActionReturnType => {
     listType: 'active',
     shouldReplace: true,
     onReplace: async () => {
-      await loadAndReplaceMessages(global, actions);
-
+      // await loadAndReplaceMessages(global, actions);
       global = getGlobal();
       global = {
         ...global,
@@ -256,7 +253,9 @@ addCallback((global: GlobalState) => {
 
   if (connectionState === 'connectionStateReady' && authState === 'authorizationStateReady') {
     // eslint-disable-next-line eslint-multitab-tt/no-getactions-in-actions
-    getActions().sync();
+    if(msgConn?.getState() === MsgClientState.logged || msgConn?.getState() === MsgClientState.connected){
+      getActions().sync();
+    }
   }
   previousMsgClientState = msgConn?.getState();
   previousGlobal = global;

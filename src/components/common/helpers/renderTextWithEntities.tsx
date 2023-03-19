@@ -112,7 +112,6 @@ export function renderTextWithEntities(
         nestedIndex = nestedEntityEndIndex;
       });
     }
-
     // Render the entity itself
     const newEntity = shouldRenderAsHtml
       ? processEntityAsHtml(entity, entityContent, nestedEntityContent)
@@ -327,7 +326,6 @@ function processEntity(
   if (!entityText) {
     return renderNestedMessagePart();
   }
-
   if (isSimple) {
     const text = renderNestedMessagePart();
     if (entity.type === ApiMessageEntityTypes.Spoiler) {
@@ -354,6 +352,8 @@ function processEntity(
   }
 
   switch (entity.type) {
+    case ApiMessageEntityTypes.Typing:
+      return `${renderNestedMessagePart()}`;
     case ApiMessageEntityTypes.Bold:
       return <strong data-entity-type={entity.type}>{renderNestedMessagePart()}</strong>;
     case ApiMessageEntityTypes.Blockquote:
@@ -496,7 +496,6 @@ function processEntityAsHtml(
   if (!rawEntityText) {
     return renderedContent;
   }
-
   switch (entity.type) {
     case ApiMessageEntityTypes.Bold:
       return `<b>${renderedContent}</b>`;

@@ -110,10 +110,10 @@ const MessageListContent: FC<OwnProps> = ({
 
   const unreadDivider = (
     <div className={buildClassName(UNREAD_DIVIDER_CLASS, 'local-action-message')} key="unread-messages">
-      <span>{lang('UnreadMessages')}</span>
+      {/*<span>{lang('UnreadMessages')}</span>*/}
+      <span></span>
     </div>
   );
-
   const messageCountToAnimate = noAppearanceAnimation ? 0 : messageGroups.reduce((acc, messageGroup) => {
     return acc + messageGroup.senderGroups.flat().length;
   }, 0);

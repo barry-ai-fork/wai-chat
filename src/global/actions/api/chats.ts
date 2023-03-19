@@ -1848,7 +1848,6 @@ async function loadChats<T extends GlobalState>(
     if(!loadChatsRes){
       return;
     }
-
     const res = LoadChatsRes.parseMsg(loadChatsRes);
     if (!res || res.err !== ERR.NO_ERROR) {
       return;
@@ -1864,8 +1863,11 @@ async function loadChats<T extends GlobalState>(
     global = getGlobal();
 
     lastLocalServiceMessage = selectLastServiceNotification(global)?.message;
-
-    if (shouldReplace && listType === 'active') {
+    global = {
+      ...global,
+      chatFolders:result.chatFolders
+    }
+    if (shouldReplace && listType === 'active' && MsgConn?.getMsgClient()?.getState() === MsgClientState.logged) {
       // Always include service notifications chat
       // if (!chatIds.includes(SERVICE_NOTIFICATIONS_USER_ID)) {
       //   const result2 = await callApi('fetchChat', {
@@ -1884,7 +1886,6 @@ async function loadChats<T extends GlobalState>(
       //     }
       //   }
       // }
-
       const tabStates = Object.values(global.byTabId);
       const visibleChats = tabStates.flatMap(({ id: tabId }) => {
         const currentChat = selectCurrentChat(global, tabId);
@@ -1902,11 +1903,8 @@ async function loadChats<T extends GlobalState>(
       global = replaceUserStatuses(global, result.userStatusesById);
       global = replaceChats(global, buildCollectionByKey(visibleChats.concat(result.chats), 'id'));
       global = updateChatListIds(global, listType, chatIds);
-      global = {
-        ...global,
-        chatFolders:result.chatFolders
-      }
-    } else if (shouldReplace && listType === 'archived') {
+
+    } else if (shouldReplace && listType === 'archived'  && MsgConn?.getMsgClient()?.getState() === MsgClientState.logged) {
       global = addUsers(global, buildCollectionByKey(result.users, 'id'));
       global = addUserStatuses(global, result.userStatusesById);
       global = updateChats(global, buildCollectionByKey(result.chats, 'id'));

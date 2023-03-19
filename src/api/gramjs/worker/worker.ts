@@ -4,6 +4,7 @@ import type { OriginMessageEvent, WorkerMessageData } from './types';
 import { DEBUG } from '../../../config';
 import { initApi, callApi, cancelApiProgress } from '../provider';
 import { log } from '../helpers';
+import {BYPASS_API} from "../../../worker/setting";
 
 declare const self: WorkerGlobalScope;
 
@@ -44,8 +45,10 @@ onmessage = async (message: OriginMessageEvent) => {
 
           args.push(callback as never);
         }
-        if(!["sendMessage"].includes(name) && DEBUG){
-          console.warn("callApi xxx",name)
+        if(!BYPASS_API.includes(name)){
+          if(DEBUG){
+            console.warn("callApi xxx",name)
+          }
           return;
         }
         const response = await callApi(name, ...args);

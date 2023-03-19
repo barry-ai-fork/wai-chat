@@ -16,6 +16,8 @@ import Button from '../../ui/Button';
 import Spinner from '../../ui/Spinner';
 import ResponsiveHoverButton from '../../ui/ResponsiveHoverButton';
 import SymbolMenu from './SymbolMenu.async';
+import { BOTTOM_INPUT_LEFT_MARGIN } from '../../../worker/setting';
+import {IS_ANDROID, IS_IOS} from "../../../util/environment";
 
 const MOBILE_KEYBOARD_HIDE_DELAY_MS = 100;
 
@@ -156,7 +158,7 @@ const SymbolMenuButton: FC<OwnProps> = ({
 
   return (
     <>
-      <div style={{width:10}}></div>
+      <div style={(IS_ANDROID || IS_IOS) ? BOTTOM_INPUT_LEFT_MARGIN : ""}></div>
       {/* {isMobile ? ( */}
       {/*   <Button */}
       {/*     className={symbolMenuButtonClassName} */}

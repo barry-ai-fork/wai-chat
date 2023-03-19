@@ -155,6 +155,7 @@ import MessageText from '../../common/MessageText';
 import TopicChip from '../../common/TopicChip';
 
 import './Message.scss';
+import {TEXT_AI_THINKING} from "../../../worker/setting";
 
 type MessagePositionProperties = {
   isFirstInGroup: boolean;
@@ -611,7 +612,6 @@ const Message: FC<OwnProps & StateProps> = ({
   } else {
     reactionsPosition = 'none';
   }
-
   useEnsureMessage(
     isRepliesChat && message.replyToChatId ? message.replyToChatId : chatId,
     hasReply ? message.replyToMessageId : undefined,
@@ -735,6 +735,9 @@ const Message: FC<OwnProps & StateProps> = ({
   }
 
   function renderMessageText(isForAnimation?: boolean) {
+    if(message.content.text?.text === TEXT_AI_THINKING){
+      return <DotAnimation className="status" content={TEXT_AI_THINKING.replace("...","")} />
+    }
     return (
       <MessageText
         message={message}

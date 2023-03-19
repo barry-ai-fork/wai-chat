@@ -105,7 +105,6 @@ const MessageSelectToolbar: FC<OwnProps & StateProps> = ({
 
   const prevSelectedMessagesCount = usePrevious(selectedMessagesCount || undefined, true);
   const renderingSelectedMessagesCount = isActive ? selectedMessagesCount : prevSelectedMessagesCount;
-
   const formattedMessagesCount = lang('VoiceOver.Chat.MessagesSelected', renderingSelectedMessagesCount, 'i');
 
   const className = buildClassName(
@@ -150,23 +149,25 @@ const MessageSelectToolbar: FC<OwnProps & StateProps> = ({
 
         {Boolean(selectedMessagesCount) && (
           <div className="MessageSelectToolbar-actions">
-            {messageListType !== 'scheduled' && canForwardMessages && (
-              renderButton(
-                'forward', lang('Chat.ForwardActionHeader'), openForwardMenuForSelectedMessages,
-              )
-            )}
-            {canReportMessages && (
-              renderButton('flag', lang('Conversation.ReportMessages'), openReportModal)
-            )}
-            {canDownloadMessages && !hasProtectedMessage && (
-              renderButton('download', lang('lng_media_download'), handleDownload)
-            )}
-            {!hasProtectedMessage && (
-              renderButton('copy', lang('lng_context_copy_selected_items'), handleCopy)
-            )}
-            {canDeleteMessages && (
-              renderButton('delete', lang('EditAdminGroupDeleteMessages'), openDeleteModal, true)
-            )}
+            {/*{messageListType !== 'scheduled' && canForwardMessages && (*/}
+            {/*  renderButton(*/}
+            {/*    'forward', lang('Chat.ForwardActionHeader'), openForwardMenuForSelectedMessages,*/}
+            {/*  )*/}
+            {/*)}*/}
+            {/*{canReportMessages && (*/}
+            {/*  renderButton('flag', lang('Conversation.ReportMessages'), openReportModal)*/}
+            {/*)}*/}
+            {/*{canDownloadMessages && !hasProtectedMessage && (*/}
+            {/*  renderButton('download', lang('lng_media_download'), handleDownload)*/}
+            {/*)}*/}
+            {/*{!hasProtectedMessage && (*/}
+            {/*  renderButton('copy', lang('lng_context_copy_selected_items'), handleCopy)*/}
+            {/*)}*/}
+            {/*{canDeleteMessages && (*/}
+            {/*  renderButton('delete', lang('EditAdminGroupDeleteMessages'), openDeleteModal, true)*/}
+            {/*)}*/}
+            {renderButton('delete', lang('EditAdminGroupDeleteMessages'), openDeleteModal, true)}
+
           </div>
         )}
       </div>

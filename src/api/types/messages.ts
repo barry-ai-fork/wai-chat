@@ -346,6 +346,7 @@ ApiMessageEntityMentionName | ApiMessageEntityCustomEmoji;
 
 export enum ApiMessageEntityTypes {
   Bold = 'MessageEntityBold',
+  Typing = 'MessageEntityTyping',
   Blockquote = 'MessageEntityBlockquote',
   BotCommand = 'MessageEntityBotCommand',
   Cashtag = 'MessageEntityCashtag',

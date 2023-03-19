@@ -21,7 +21,7 @@ export const IS_TEST = process.env.APP_ENV === 'test';
 export const IS_PERF = process.env.APP_ENV === 'perf';
 export const IS_BETA = process.env.APP_ENV === 'staging';
 
-export const BETA_CHANGELOG_URL = 'https://github.com/barry-ai-fork/ai-chat/issues';
+export const BETA_CHANGELOG_URL = 'https://github.com/ptp-build/ptp-ai-chat/issues';
 
 export const DEBUG_ALERT_MSG = 'Shoot!\nSomething went wrong, please see the error details in Dev Tools Console.';
 export const DEBUG_GRAMJS = false;
@@ -274,7 +274,7 @@ export const SCHEDULED_WHEN_ONLINE = 0x7FFFFFFE;
 export const DEFAULT_LANG_CODE = 'en';
 export const DEFAULT_LANG_PACK = 'android';
 export const LANG_PACKS = ['android', 'ios', 'tdesktop', 'macos'] as const;
-export const FEEDBACK_URL = 'https://github.com/barry-ai-fork/ai-chat/issues';
+export const FEEDBACK_URL = 'https://github.com/ptp-build/ptp-ai-chat/issues';
 export const GENERAL_TOPIC_ID = 1;
 
 export const LIGHT_THEME_BG_COLOR = '#99BA92';

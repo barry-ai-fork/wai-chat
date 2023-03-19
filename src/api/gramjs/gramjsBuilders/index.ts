@@ -298,7 +298,6 @@ export function buildMtpMessageEntity(entity: ApiMessageEntity): GramJs.TypeMess
   } = entity;
 
   const user = 'userId' in entity ? localDb.users[entity.userId] : undefined;
-
   switch (type) {
     case ApiMessageEntityTypes.Bold:
       return new GramJs.MessageEntityBold({ offset, length });

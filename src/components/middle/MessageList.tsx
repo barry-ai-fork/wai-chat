@@ -165,7 +165,7 @@ const MessageList: FC<OwnProps & StateProps> = ({
 }) => {
   const {
     loadViewportMessages, setScrollOffset, loadSponsoredMessages, loadMessageReactions, copyMessagesByIds,
-    loadMessageViews,
+    loadMessageViews,focusMessage
   } = getActions();
 
   // eslint-disable-next-line no-null/no-null
@@ -197,7 +197,6 @@ const MessageList: FC<OwnProps & StateProps> = ({
     width: botInfoDimensions.width / DPR,
     height: botInfoDimensions.height / DPR,
   };
-
   const areMessagesLoaded = Boolean(messageIds);
 
   useSyncEffect(() => {

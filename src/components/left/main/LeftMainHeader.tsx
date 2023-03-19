@@ -339,12 +339,12 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
       >
         {lang('ReportBug')}
       </MenuItem>
-      <MenuItem
-        icon="logout"
-        onClick={handleSignOutClick}
-      >
-        {lang('SignOut')}
-      </MenuItem>
+      {/*<MenuItem*/}
+      {/*  icon="logout"*/}
+      {/*  onClick={handleSignOutClick}*/}
+      {/*>*/}
+      {/*  {lang('SignOut')}*/}
+      {/*</MenuItem>*/}
       {/* {IS_BETA && ( */}
       {/*   <MenuItem */}
       {/*     icon="permissions" */}

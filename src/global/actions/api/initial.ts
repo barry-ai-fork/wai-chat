@@ -34,11 +34,11 @@ import parseMessageInput from "../../../util/parseMessageInput";
 import Account from "../../../worker/share/Account";
 import {ApiUpdateConnectionStateType} from "../../../api/types";
 import LocalStorage from "../../../worker/share/db/LocalStorage";
-import {SHA1} from 'worktop/crypto';
 import {AuthPreLoginReq, AuthPreLoginRes} from "../../../lib/ptp/protobuf/PTPAuth";
 import {getCurrentTabId} from "../../../util/establishMultitabRole";
 import {SendRes} from "../../../lib/ptp/protobuf/PTPMsg";
 import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
+import {sha1} from '../../../worker/helpers/cryptoHelpers';
 
 addActionHandler('updateGlobal', (global,action,payload): ActionReturnType => {
   return {
@@ -50,6 +50,9 @@ addActionHandler('updateGlobal', (global,action,payload): ActionReturnType => {
 addActionHandler('updateMsg', (global,actions,payload:any): ActionReturnType => {
   try{
     const sendRes = SendRes.parseMsg(payload!)
+    if(!sendRes.payload){
+      return ;
+    }
     const payloadData = JSON.parse(sendRes.payload)
     switch (sendRes.action){
       case "newMessage":
@@ -72,18 +75,62 @@ addActionHandler('updateMsg', (global,actions,payload:any): ActionReturnType => 
 const handleRecvMsg = (global:any,actions:any,data:any)=>{
   let {msg,localMsgId} = data;
   const {chatId,content} = msg;
-  if(!content.text.entities){
+  if(!msg.isOutgoing && content.text && content.text.text){
     const { text, entities } = parseMessageInput(content.text.text);
-    msg = {
-      ...msg,
-      content:{
-        text:{
-          text,
-          entities
-        }
+    msg.content.text.text = text;
+    if(msg.content.text.entities){
+      msg.content.text.entities ={
+        ...msg.content.text.entities,
+        ...entities
       }
+    }else{
+      msg.content.text.entities =entities
     }
   }
+
+  // if(!msg.isOutgoing){
+  //   function output(text:string){
+  //     msg.content.text.text = text;
+  //     actions.apiUpdate({
+  //       '@type': 'updateMessageSendSucceeded',
+  //       localId: localMsgId,
+  //       chatId: chatId,
+  //       message: {
+  //         sendingState:undefined,
+  //         ...msg
+  //       },
+  //     });
+  //   }
+  //   function test1(text:string){
+  //     let speed = 20; // 打字速度，单位是毫秒
+  //     let j = 1;
+  //     for (let i = 0; i < text.length; i++) {
+  //       if (text[i] === ",") {
+  //         setTimeout(() => {
+  //           output(text.slice(0, i + 1));
+  //         }, i * speed * j);
+  //         j += 1;
+  //       } else if (text[i] === ".") {
+  //         setTimeout(() => {
+  //           output(text.slice(0, i + 1));
+  //         }, i * speed * j);
+  //         j += 2;
+  //       } else if (text.slice(i, i + 12) === "output") {
+  //         setTimeout(() => {
+  //           output(text.slice(i, i + 22) + " ...);");
+  //         }, i * speed);
+  //         i += 21;
+  //       } else {
+  //         setTimeout(() => {
+  //           output(text.slice(0, i + 1));
+  //         }, i * speed);
+  //       }
+  //     }
+  //   }
+  //   test1(msg.content.text.text)
+  // }else{
+  //
+  // }
 
   actions.apiUpdate({
     '@type': 'updateMessageSendSucceeded',
@@ -158,8 +205,15 @@ addActionHandler('initApi', async (global, actions): Promise<void> => {
             break
           case MsgConnNotifyAction.onData:
             const payload = notify.payload;
-            console.log("onData",payload)
             actions.updateMsg(payload);
+            break;
+          case MsgConnNotifyAction.onSendMsgError:
+            const pdu:any = new SendRes({
+              err:ERR.ERR_SYSTEM,
+              action:"updateMessageSendFailed",
+              payload:JSON.stringify(notify.payload)
+            }).pack();
+            actions.updateMsg(pdu);
             break;
         }
       }
@@ -209,7 +263,7 @@ addActionHandler('setAuthPassword', async (global, actions, payload): ActionRetu
     };
   }
   try {
-    const pwd = await SHA1(password);
+    const pwd = sha1(password);
     // console.log({pwd,password})
     const ts = +(new Date());
     const res1 = await account.signMessage(ts.toString());
@@ -260,6 +314,7 @@ addActionHandler('setAuthPassword', async (global, actions, payload): ActionRetu
       tabId:getCurrentTabId()
     });
   }catch (e){
+    console.error(e)
     setGlobal({
       ...getGlobal(),
       authIsLoading: false,

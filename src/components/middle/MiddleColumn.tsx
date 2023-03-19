@@ -229,7 +229,6 @@ const MiddleColumn: FC<OwnProps & StateProps> = ({
   const renderingIsChannel = usePrevDuringAnimation(isChannel, closeAnimationDuration);
   const renderingShouldJoinToSend = usePrevDuringAnimation(shouldJoinToSend, closeAnimationDuration);
   const renderingShouldSendJoinRequest = usePrevDuringAnimation(shouldSendJoinRequest, closeAnimationDuration);
-
   const prevTransitionKey = usePrevious(currentTransitionKey);
 
   const cleanupExceptionKey = (

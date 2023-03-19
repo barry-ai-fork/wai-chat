@@ -81,7 +81,6 @@ const Spoiler: FC<OwnProps> = ({
       actionsByMessageId.delete(messageId);
     };
   }, [conceal, getContentLength, handleClick, isRevealed, messageId, reveal]);
-
   return (
     <span
       className={buildClassName(

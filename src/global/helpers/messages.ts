@@ -80,7 +80,6 @@ export function getMessageCustomShape(message: ApiMessage): boolean {
     || location) {
     return false;
   }
-
   const hasOtherFormatting = text?.entities?.some((entity) => entity.type !== ApiMessageEntityTypes.CustomEmoji);
 
   return Boolean(message.emojiOnlyCount && !hasOtherFormatting);
