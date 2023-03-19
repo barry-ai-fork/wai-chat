@@ -16402,5 +16402,53 @@ export default {
   "lng_weekday7": {
     "key": "lng_weekday7",
     "value": "周日"
-  }
+  },
+  "Login.Header.Password": {
+    "key": "Login.Header.Password",
+    "value": "输入密码"
+  },
+  "NightMode": {
+    "key": "NightMode",
+    "value": "夜晚模式"
+  },
+  "Animations": {
+    "key": "Animations",
+    "value": "启用动画"
+  },
+  "ReportBug": {
+    "key": "ReportBug",
+    "value": "Report Bug"
+  },
+  "SignOut": {
+    "key": "SignOut",
+    "value": "退出登录"
+  },
+  "lng_info_bot_title": {
+    "key": "lng_info_bot_title",
+    "value": "机器人"
+  },
+  "lng_info_user_title": {
+    "key": "lng_info_user_title",
+    "value": "用户"
+  },
+  "lng_context_copy_text": {
+    "key": "lng_context_copy_text",
+    "value": "复制"
+  },
+  "lng_context_copy_selected": {
+    "key": "lng_context_copy_selected",
+    "value": "复制"
+  },
+  "Weekday.Today": {
+    "key": "Weekday.Today",
+    "value": "今天"
+  },
+  "VoiceOver.Chat.MessagesSelected": {
+    "key": "VoiceOver.Chat.MessagesSelected",
+    "value": "%1$s messages selected"
+  },
+  "Common.Select": {
+    "key": "Common.Select",
+    "value": "选择"
+  },
 } as ApiLangPack;
