@@ -1,4 +1,15 @@
 
+export enum AiChatRole {
+  NONE,
+  USER,
+  ASSISTANT
+}
+
+export type RequestForm = {
+  action:string,
+  payload:any,
+}
+
 export type AuthForm = {
   email:string,
   password:string

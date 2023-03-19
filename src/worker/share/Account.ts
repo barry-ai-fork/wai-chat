@@ -248,7 +248,10 @@ export default class Account {
     this.msgConn = msgConn
   }
 
-  sendPdu(pdu: Pdu){
+  sendPdu(pdu: Pdu,seq_num:number = 0){
+    if(seq_num > 0){
+      pdu.updateSeqNo(seq_num)
+    }
     console.log("[SEND]","seq_num",pdu.getSeqNum(),"cid:",getActionCommandsName(pdu.getCommandId()))
     this.msgConn?.send!(pdu.getPbData());
   }

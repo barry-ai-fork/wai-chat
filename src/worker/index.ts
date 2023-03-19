@@ -2,6 +2,8 @@ import WsController from "./controller/WsController";
 import {ENV, initEnv} from "./helpers/env";
 import {getCorsHeader, ResponseJson} from "./helpers/network";
 import TestController from "./controller/TestController";
+import TaskController from "./controller/TaskController";
+import {Msg} from "./share/Msg";
 
 addEventListener('fetch', async (event) => {
   initEnv(global);
@@ -10,6 +12,7 @@ addEventListener('fetch', async (event) => {
 });
 
 async function handleEvent(event:FetchEvent) {
+
   const {request} = event;
 	const url = new URL(request.url);
   if(request.method === "OPTIONS"){
@@ -25,6 +28,10 @@ async function handleEvent(event:FetchEvent) {
 	if(url.pathname === "/test" ){
 		return TestController(event.request);
 	}
+
+  if(url.pathname === "/task" ){
+    return TaskController(event.request);
+  }
 
   if(url.pathname.startsWith("/version")){
     return ResponseJson({

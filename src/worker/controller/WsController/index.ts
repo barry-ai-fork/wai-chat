@@ -1,13 +1,14 @@
 import {genUserId} from "../AuthController";
 import {randomize} from "worktop/utils";
-import {loadChats, getUser, initSystemBot} from "../UserController";
+import {getInitSystemBots, initSystemBot} from "../UserController";
 import {kv} from "../../helpers/env";
 import Account from "../../share/Account";
 import {ActionCommands, getActionCommandsName} from "../../../lib/ptp/protobuf/ActionCommands";
 import {Pdu} from "../../../lib/ptp/protobuf/BaseMsg";
 import {
   AuthLoginReq,
-  AuthLoginRes, AuthPreLoginReq,
+  AuthLoginRes,
+  AuthPreLoginReq,
   AuthPreLoginRes,
   AuthStep1Req,
   AuthStep1Res,
@@ -17,10 +18,12 @@ import {
 import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
 import {LoadChatsReq, LoadChatsRes} from "../../../lib/ptp/protobuf/PTPChats";
 import {OtherNotify} from "../../../lib/ptp/protobuf/PTPOther";
-import {sendMsg} from "../MsgController";
-
+import {msgHandler} from "../MsgController";
+import {User} from "../../share/User";
 
 const accountIdStart = +(new Date());
+export const UserIdAccountIdMap:Record<string, Account[]> = {}
+
 async function handleSession(websocket: WebSocket) {
   // @ts-ignore
   websocket.accept();
@@ -38,7 +41,7 @@ async function handleSession(websocket: WebSocket) {
         return
       }
       let pdu = new Pdu(Buffer.from(data));
-      console.log("[message]",
+      console.log("[MESSAGE]",
         pdu.getSeqNum(),
         pdu.getCommandId(),
         getActionCommandsName(pdu.getCommandId())
@@ -46,6 +49,7 @@ async function handleSession(websocket: WebSocket) {
       let pduRsp:Pdu|undefined = undefined;
       switch (pdu.getCommandId()){
         case ActionCommands.CID_AuthStep1Req:
+          await initSystemBot(getInitSystemBots());
           const authStep1Req = AuthStep1Req.parseMsg(pdu);
           p = Buffer.from(authStep1Req.p)
           captcha = Buffer.from(randomize(4))
@@ -143,7 +147,7 @@ async function handleSession(websocket: WebSocket) {
             break;
           }
           const uid_cache = await accountServer.getUidFromCacheByAddress(authLoginReq.address);
-          console.log("uid_cache => ",uid_cache,authLoginReq.uid)
+          // console.log("uid_cache => ",uid_cache,authLoginReq.uid)
           if(uid_cache && uid_cache !== authLoginReq.uid){
             pduRsp = new AuthLoginRes({
               err:ERR.ERR_AUTH_LOGIN
@@ -151,12 +155,22 @@ async function handleSession(websocket: WebSocket) {
             break;
           }
           await accountServer.afterServerLoginOk(authLoginReq);
+          const user_id = accountServer.getUid()!;
+          console.log("[LOGIN OK] ====>>>",user_id)
+          await User.init(user_id);
+          const userInfo = (await User.getFromCache(user_id))?.getUserInfo();
+          userInfo!.isSelf = true;
           pduRsp = new AuthLoginRes({
             err:ERR.NO_ERROR,
             payload:JSON.stringify({
-              currentUser:await getUser(authLoginReq.uid,true)
+              currentUser:userInfo
             })
           }).pack()
+
+          if(!UserIdAccountIdMap[user_id]){
+            UserIdAccountIdMap[user_id] = [];
+          }
+          UserIdAccountIdMap[user_id].push(accountServer)
           break
         default:
           await _ApiMsg(pdu,accountServer)
@@ -174,8 +188,13 @@ async function handleSession(websocket: WebSocket) {
     }
   });
 
-  websocket.addEventListener('close', async evt => {
-    console.log("[close]");
+  websocket.addEventListener('close', async () => {
+    console.log("[close]",{uid:accountServer.getUid()!,accountId:accountServer.getAccountId()});
+    if(UserIdAccountIdMap[accountServer.getUid()!]){
+      UserIdAccountIdMap[accountServer.getUid()!] = UserIdAccountIdMap[accountServer.getUid()!].filter(account=>{
+        return account.getAccountId() !== accountServer.getAccountId()
+      })
+    }
   });
 }
 
@@ -200,20 +219,20 @@ export default async function (event:FetchEvent){
 export async function _ApiMsg(pdu:Pdu,account:Account){
   let pduRsp:Pdu | undefined = undefined;
   switch (pdu.getCommandId()){
+    case ActionCommands.CID_MsgListReq:
+    case ActionCommands.CID_MsgDeleteReq:
+    case ActionCommands.CID_MsgUpdateReq:
     case ActionCommands.CID_SendReq:
-      if(!account.getUid()){
-        break
-      }
-      await sendMsg(pdu,account);
+      await msgHandler(pdu,account);
       break;
     case ActionCommands.CID_LoadChatsReq:
-      console.log("=====>>",account.getUid());
-      await initSystemBot();
+      await initSystemBot(getInitSystemBots());
       const loadChatsReq = LoadChatsReq.parseMsg(pdu);
+      // console.log(">>>loadChatsReq",loadChatsReq)
       let user_id = account.getUid() || undefined;
       pduRsp = new LoadChatsRes({
         err:ERR.NO_ERROR,
-        payload:JSON.stringify(await loadChats(user_id))
+        payload:JSON.stringify(await User.loadChats(user_id))
       }).pack();
       break
     default:

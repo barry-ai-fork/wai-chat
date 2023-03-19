@@ -5,7 +5,7 @@ import { SHA1 } from 'worktop/crypto';
 
 import * as utils from 'worktop/utils';
 import { reply } from 'worktop/response';
-import {generateRandomString} from "../helpers/buffer";
+import {generateRandomString} from "../helpers/cryptoHelpers";
 import {AuthForm, AuthResponse, AuthTokenForm, AuthUser} from "../types";
 
 import {kv, ENV, jwt} from "../helpers/env";

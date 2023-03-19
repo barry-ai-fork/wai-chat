@@ -1,264 +1,151 @@
-import {ENV, kv} from "../helpers/env";
+import {ENV} from "../helpers/env";
 import {sendMessageToChatGPT} from "../helpers/openai";
-import {USER_CONFIG} from "../helpers/context";
 import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
 import Account from "../share/Account";
-import {SendReq, SendRes} from "../../lib/ptp/protobuf/PTPMsg";
+import {
+  MsgDeleteReq,
+  MsgDeleteRes,
+  MsgListReq,
+  MsgListRes,
+  MsgUpdateReq,
+  MsgUpdateRes,
+  SendReq
+} from "../../lib/ptp/protobuf/PTPMsg";
+import {Msg} from "../share/Msg";
+import {AiChatRole} from "../types";
+import {User} from "../share/User";
+import {TEXT_AI_THINKING} from "../setting";
+import {ActionCommands} from "../../lib/ptp/protobuf/ActionCommands";
 import {ERR} from "../../lib/ptp/protobuf/PTPCommon";
-import {getBot} from "./UserController";
 
-export enum AiChatRole {
-  NONE,
-  USER,
-  ASSISTANT
-}
-
-export class ModelMsg{
-  public user_id: string;
-  public chatId: string;
-  public senderId: string;
-  public msg: any;
-  public aiRole?: AiChatRole;
-  constructor(user_id:string,chatId:string,senderId:string) {
-    this.user_id = user_id
-    this.chatId = chatId
-    this.senderId = senderId
-    this.aiRole = AiChatRole.NONE
-  }
-  async getAllKeys(){
-    const keys = await kv.list({
-      prefix:`MSG_${this.user_id}_${this.chatId}_`
-    });
-    return keys.map(key=>key.name);
-  }
-
-  async getAllMsgList(){
-    const keys = await this.getAllKeys();
-    const rows = [];
-    for (let i = 0; i < keys.length; i++) {
-      rows.push(JSON.parse(await kv.get(keys[i])))
-    }
-    return rows;
-  }
-  async clearAiMsgHistory() {
-    const keys = await this.getAllKeys();
-    for (let i = 0; i < keys.length; i++) {
-      const key = keys[i]
-      const json = JSON.parse(await kv.get(key));
-      if(json.aiRole !== AiChatRole.NONE){
-        json.aiRole = AiChatRole.NONE;
-        await await kv.put(key,JSON.stringify(json));
-      }
-    }
-  }
-  async getAiMsgHistory(){
-    const keys = await this.getAllKeys();
-    const history = [
-      {role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE},
-    ];
-
-    const msgIds = []
-    for (let i = 0; i < keys.length; i++) {
-      const key = keys[i]
-      const [prefix,user_id,chatId,msgId] = key.split("_");
-      msgIds.push(parseInt(msgId));
-    }
-    msgIds.sort((a,b)=>(a - b))
-    for (let i = 0; i < msgIds.length; i++) {
-      const msgId = msgIds[i]
-      const json = JSON.parse(await kv.get(`MSG_${this.user_id}_${this.chatId}_${msgId}`));
-      const obj = new ModelMsg(this.user_id,this.chatId,json.senderId);
-      obj.aiRole = json.aiRole;
-      obj.setMsg(json.msg)
-      if(obj.aiRole !== AiChatRole.NONE){
-        history.push({
-          role:obj.aiRole === AiChatRole.USER ? "user" : "assistant",
-          content:obj.getMsgText()
-        })
-      }
-    }
-    const MAX_TOKEN_LENGTH = 2000;
-    if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
-      // 历史记录超出长度需要裁剪
-      if (history.length > ENV.MAX_HISTORY_LENGTH) {
-        history.splice(history.length - ENV.MAX_HISTORY_LENGTH + 2);
-      }
-      // 处理token长度问题
-      let tokenLength = 0;
-      for (let i = history.length - 1; i >= 0; i--) {
-        const historyItem = history[i];
-        let length = 0;
-        if (historyItem.content) {
-          length = Array.from(historyItem.content).length;
-        } else {
-          historyItem.content = '';
+export async function msgHandler(pdu:Pdu,account:Account){
+  switch (pdu.getCommandId()){
+    case ActionCommands.CID_MsgListReq:
+      const handleMsgListReq = async (pdu:Pdu)=>{
+        const {payload} = MsgListReq.parseMsg(pdu);
+        // console.log(payload)
+        const  {chat,addOffset,limit,threadId} = JSON.parse(payload)
+        const {id:chatId} = chat
+        console.log("CID_MsgListReq",{chatId})
+        const user_id = account.getUid();
+        const res = {
+          users:[],
+          chats:[],
+          repliesThreadInfos:[],
+          messages:[]
         }
-        // 如果最大长度超过maxToken,裁剪history
-        tokenLength += length;
-        if (tokenLength > MAX_TOKEN_LENGTH) {
-          history.splice(i);
-          break;
+        if(user_id){
+          const msgObj = new Msg({chatId,user_id});
+          const rows = await msgObj.getAllMsgList();
+          // console.log(rows);
+          rows.forEach((msg:any)=>{
+            // @ts-ignore
+            return res.messages.push(msg.msg);
+          })
         }
+        account.sendPdu(new MsgListRes({
+          err:ERR.NO_ERROR,
+          payload:JSON.stringify(res)
+        }).pack(),pdu.getSeqNum())
       }
-    }
-    return history;
+      await handleMsgListReq(pdu);
+      return
+    default:
+      break
+  }
+  if(!account.getUid()){
+    return;
+  }
+  switch (pdu.getCommandId()){
+    case ActionCommands.CID_MsgUpdateReq:
+      const msgUpdateReq = MsgUpdateReq.parseMsg(pdu);
+      const msgUpdate = await Msg.getMsgFromCache(msgUpdateReq.user_id,msgUpdateReq.chat_id,msgUpdateReq.msg_id)
+      if(msgUpdate){
+        msgUpdate.setMsgText(msgUpdateReq.text)
+        await msgUpdate.save()
+      }
+      account.sendPdu(new MsgUpdateRes({
+        err:ERR.NO_ERROR
+      }).pack(),pdu.getSeqNum())
+      return
+    case ActionCommands.CID_MsgDeleteReq:
+      const msgDeleteReq = MsgDeleteReq.parseMsg(pdu);
+      await Msg.deleteMsg(msgDeleteReq.user_id,msgDeleteReq.chat_id,msgDeleteReq.msg_ids);
+      account.sendPdu(new MsgDeleteRes({
+        err:ERR.NO_ERROR
+      }).pack(),pdu.getSeqNum())
+      return
+    default:
+      break
   }
 
-  setMsg(msg:any){
-    this.msg = msg;
-  }
-  setMsgId(id:number){
-    this.msg.id = id;
-  }
-  getMsgText(){
-    if(this.msg && this.msg.content.text && this.msg.content.text.text){
-      return this.msg.content.text.text;
-    }else{
-      return "";
-    }
-  }
-  setMsgText(text:string){
-    this.msg.content.text.text = text;
-  }
-  async genMsgId(){
-    let msgId =  await kv.get(`MSG_INCR_${this.user_id}`);
-    if(!msgId){
-      msgId = 10000;
-    }else{
-      msgId = parseInt(msgId) + 1;
-    }
-    return msgId
-  }
-
-  async saveMsgId(msgId:number){
-    await kv.put(`MSG_INCR_${this.user_id}`,msgId.toString())
-    return msgId
-  }
-  async incrMsgId(){
-    return await this.saveMsgId(await this.genMsgId());
-  }
-  async save(){
-    if(this.msg){
-      await kv.put(`MSG_${this.user_id}_${this.chatId}_${this.msg.id}`,JSON.stringify({
-        aiRole:this.aiRole,
-        senderId:this.senderId,
-        msg:this.msg
-      }));
-    }
-  }
-}
-
-export async function sendMsg(pdu:Pdu,account:Account){
   const sendReq = SendReq.parseMsg(pdu);
+  const seq_num = pdu.getSeqNum();
   const {payload} = sendReq;
   const {msg} = JSON.parse(payload)
   const {chatId,id} = msg;
   const user_id = account.getUid()!;
-  const msgModel = new ModelMsg(user_id,chatId,user_id);
-  const msgId =await msgModel.incrMsgId();
+  const msgModel = new Msg({user_id,chatId,senderId:user_id});
   msgModel.setMsg({
     ...msg,
-    id:msgId
+    senderId:user_id,
+    isOutgoing:true,
+    id:await msgModel.incrMsgId()
   });
-  account.sendPdu(new SendRes({
-    err:ERR.NO_ERROR,
-    action:"updateMessageSendSucceeded",
-    payload:JSON.stringify({
-      localMsgId:id,
-      msg:msgModel.msg
-    })
-  }).pack())
-  const botInfo = await getBot(chatId)
 
+  await msgModel.send("updateMessageSendSucceeded",{localMsgId:id},seq_num)
+  const chatUser = await User.getFromCache(chatId);
+  const user = new User(User.format({id:user_id}))
+  const botInfo = chatUser?.isBot() ? chatUser?.getUserInfo()!.fullInfo?.botInfo! : null
 
   if(botInfo){
-    if(msgModel.getMsgText()){
-      if(msgModel.getMsgText().indexOf("/") === 0){
-        msgModel.save().catch(console.error)
-
-        const msgModelBotCmdReply = new ModelMsg(user_id,chatId,chatId);
-        msgModelBotCmdReply.setMsg({
-          ...msg,
-          senderId:chatId,
-          isOutgoing:false,
-          id:await msgModelBotCmdReply.incrMsgId(),
-          content:{
-            text:{
-              text:"..."
-            }
+    setTimeout(async ()=>{
+      if(msgModel.getMsgText()){
+        if(msgModel.getMsgText().indexOf("/") === 0){
+          msgModel.save().catch(console.error)
+          await user.updateChatId(chatId,msgModel.msg?.id!)
+          const msgModelBotCmdReply = new Msg({user_id,chatId,senderId:chatId});
+          switch (msgModel.getMsgText()){
+            case "/start":
+              await msgModelBotCmdReply.sendText(botInfo['description']!,"updateMessageSendSucceeded",{})
+              break
+            case "/clear":
+              await msgModel.clearAiMsgHistory();
+            case "/history":
+              const history = await msgModel.getAiMsgHistory();
+              await msgModelBotCmdReply.sendText(`===\nHistory\n==============\n\n${history.map(({role,content})=>{
+                return `${role === "user" ? "\n>" : "<"}:${content}`
+              }).join("\n")}`)
+              break
+            default:
+              return;
           }
-        });
-        switch (msgModel.getMsgText()){
-          case "/start":
-            msgModelBotCmdReply.setMsgText(botInfo['fullInfo']['botInfo']['description'])
-            break
-          case "/clear":
-            await msgModel.clearAiMsgHistory();
-          case "/history":
+          msgModelBotCmdReply.save().catch(console.error)
+          await user.updateChatId(chatId,msgModelBotCmdReply.msg?.id!)
+        }else{
+          if(chatId === ENV.USER_ID_CHATGPT){
             const history = await msgModel.getAiMsgHistory();
-            msgModelBotCmdReply.setMsgText(`==============\nHistory\n==============\n\n${history.map(({role,content})=>{
-              return `${role === "user" ? "\n>" : "<"}:${content}`
-            }).join("\n")}`)
-            break
-          default:
-            return;
-        }
-        msgModelBotCmdReply.save().catch(console.error)
-        account.sendPdu(new SendRes({
-          err:ERR.NO_ERROR,
-          action:"newMessage",
-          payload:JSON.stringify({
-            msg:msgModelBotCmdReply.msg
-          })
-        }).pack())
-
-      }else{
-        if(chatId === ENV.USER_ID_CHATGPT){
-          const history = await msgModel.getAiMsgHistory();
-          const msgModelBotReply = new ModelMsg(user_id,chatId,chatId);
-          msgModelBotReply.setMsg({
-            ...msg,
-            senderId:chatId,
-            isOutgoing:false,
-            id:await msgModelBotReply.incrMsgId(),
-            content:{
-              text:{
-                text:"..."
-              }
+            const msgModelBotReply = new Msg({user_id,chatId,senderId:chatId});
+            await msgModelBotReply.sendText(TEXT_AI_THINKING);
+            const [error,reply] = await sendMessageToChatGPT(msgModel.getMsgText(),history);
+            if(!error){
+              msgModelBotReply.aiRole = AiChatRole.ASSISTANT;
+              msgModel.aiRole = AiChatRole.USER;
             }
-          });
-          account.sendPdu(new SendRes({
-            err:ERR.NO_ERROR,
-            action:"newMessage",
-            payload:JSON.stringify({
-              msg:msgModelBotReply.msg
-            })
-          }).pack())
 
-          const [error,reply] = await sendMessageToChatGPT(msgModel.getMsgText(),history);
-          if(!error){
-            msgModelBotReply.aiRole = AiChatRole.ASSISTANT;
-            msgModel.aiRole = AiChatRole.USER;
+            msgModel.save().catch(console.error);
+            msgModelBotReply.sendText(reply,"updateMessageSendSucceeded",{},msgModelBotReply.msg?.id)
+            msgModelBotReply.save().catch(console.error)
+            await user.updateChatId(chatId,msgModelBotReply.msg?.id!)
+          }else{
+            msgModel.save().catch(console.error)
+            await user.updateChatId(chatId,msgModel.msg?.id!)
           }
-          msgModel.save().catch(console.error);
-          msgModelBotReply.setMsgText(reply)
-
-          account.sendPdu(new SendRes({
-            err:ERR.NO_ERROR,
-            action:"newMessage",
-            payload:JSON.stringify({
-              msg:msgModelBotReply.msg
-            })
-          }).pack())
-
-          msgModelBotReply.save().catch(console.error)
         }
-
       }
-
-    }
+    },500)
   }else{
     msgModel.save().catch(console.error)
+    await user.updateChatId(chatId,msgModel.msg?.id!)
   }
-  return {msg:msgModel.msg};
 }

@@ -1,5 +1,6 @@
 import {USER_CONFIG} from './context';
 import {ENV} from './env.js';
+import {fetchWithTimeout} from "../share/utils";
 
 // 发送消息到ChatGPT
 export async function sendMessageToChatGPT(message:string, history:{role:string,content:string}[]) {
