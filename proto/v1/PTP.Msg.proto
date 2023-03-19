@@ -14,3 +14,37 @@ message SendRes{
   required string payload = 2;
   required Common.ERR err = 100;
 }
+
+message MsgUpdateReq{
+  required string user_id = 1;
+  required string chat_id = 2;
+  required uint32 msg_id = 3;
+  required string text = 4;
+}
+
+message MsgUpdateRes{
+  required Common.ERR err = 100;
+}
+
+message MsgDeleteReq{
+  required string user_id = 1;
+  required string chat_id = 2;
+  repeated uint32 msg_ids = 3;
+  repeated bool revoke = 4;
+}
+
+message MsgDeleteRes{
+  required Common.ERR err = 100;
+}
+
+message MsgListReq{
+  required string payload = 1;
+}
+
+message MsgListRes{
+  required string payload = 1;
+  required Common.ERR err = 100;
+}
+
+
+

@@ -9,8 +9,14 @@ export enum ActionCommands {
   CID_AuthStep2Res = 1008,
   CID_LoadChatsReq = 2001,
   CID_LoadChatsRes = 2002,
-  CID_SendReq = 3001,
-  CID_SendRes = 3002,
+  CID_MsgDeleteReq = 3001,
+  CID_MsgDeleteRes = 3002,
+  CID_MsgListReq = 3003,
+  CID_MsgListRes = 3004,
+  CID_MsgUpdateReq = 3005,
+  CID_MsgUpdateRes = 3006,
+  CID_SendReq = 3007,
+  CID_SendRes = 3008,
   CID_OtherNotify = 4001,
 }
 
@@ -25,8 +31,14 @@ export const ActionCommandsName = {
   1008: "CID_AuthStep2Res",
   2001: "CID_LoadChatsReq",
   2002: "CID_LoadChatsRes",
-  3001: "CID_SendReq",
-  3002: "CID_SendRes",
+  3001: "CID_MsgDeleteReq",
+  3002: "CID_MsgDeleteRes",
+  3003: "CID_MsgListReq",
+  3004: "CID_MsgListRes",
+  3005: "CID_MsgUpdateReq",
+  3006: "CID_MsgUpdateRes",
+  3007: "CID_SendReq",
+  3008: "CID_SendRes",
   4001: "CID_OtherNotify",
 };
 

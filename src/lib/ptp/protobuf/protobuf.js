@@ -644,6 +644,24 @@ var $conv_message = $createConverter([
                 }
             },
             Msg: {
+                MsgDeleteReq: {
+                    '$': {"1":["user_id","string",""],"2":["chat_id","string",""],"3":["msg_ids","[uint32",null],"4":["revoke","[bool",null]}
+                },
+                MsgDeleteRes: {
+                    '$': {"100":["err","uint32",0]}
+                },
+                MsgListReq: {
+                    '$': {"1":["payload","string",""]}
+                },
+                MsgListRes: {
+                    '$': {"1":["payload","string",""],"100":["err","uint32",0]}
+                },
+                MsgUpdateReq: {
+                    '$': {"1":["user_id","string",""],"2":["chat_id","string",""],"3":["msg_id","uint32",0],"4":["text","string",""]}
+                },
+                MsgUpdateRes: {
+                    '$': {"100":["err","uint32",0]}
+                },
                 SendReq: {
                     '$': {"1":["payload","string",""]}
                 },
