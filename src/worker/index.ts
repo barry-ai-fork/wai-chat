@@ -3,7 +3,7 @@ import {ENV, initEnv} from "./helpers/env";
 import {getCorsHeader, ResponseJson} from "./helpers/network";
 import TestController from "./controller/TestController";
 import TaskController from "./controller/TaskController";
-import {Msg} from "./share/Msg";
+import {Upload,Download}  from "./controller/FileController";
 
 addEventListener('fetch', async (event) => {
   initEnv(global);
@@ -25,6 +25,14 @@ async function handleEvent(event:FetchEvent) {
   if(url.pathname === "/ws"){
     return WsController(event);
   }
+
+  if(url.pathname === "/upload" ){
+    return Upload(event.request);
+  }
+  if(url.pathname === "/download" ){
+    return Download(event.request);
+  }
+
 	if(url.pathname === "/test" ){
 		return TestController(event.request);
 	}

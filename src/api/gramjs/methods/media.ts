@@ -1,11 +1,10 @@
-import type { TelegramClient } from '../../../lib/gramjs';
-import { Api as GramJs } from '../../../lib/gramjs';
-import type { ApiOnProgress, ApiParsedMedia } from '../../types';
-import {
-  ApiMediaFormat,
-} from '../../types';
+import type {TelegramClient} from '../../../lib/gramjs';
+import {Api as GramJs} from '../../../lib/gramjs';
+import type {ApiOnProgress, ApiParsedMedia} from '../../types';
+import {ApiMediaFormat,} from '../../types';
 
 import {
+  BASE_API,
   DOWNLOAD_WORKERS,
   MEDIA_CACHE_DISABLED,
   MEDIA_CACHE_MAX_BYTES,
@@ -14,11 +13,31 @@ import {
 } from '../../../config';
 import localDb from '../localDb';
 import * as cacheApi from '../../../util/cacheApi';
-import { getEntityTypeById } from '../gramjsBuilders';
+import {getEntityTypeById} from '../gramjsBuilders';
+import {DownloadReq, DownloadRes} from "../../../lib/ptp/protobuf/PTPFile";
+import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
+import {Pdu} from "../../../lib/ptp/protobuf/BaseMsg";
 
 const MEDIA_ENTITY_TYPES = new Set([
   'msg', 'sticker', 'gif', 'wallpaper', 'photo', 'webDocument', 'document', 'videoAvatar',
 ]);
+
+
+async function fileToArrayBuffer(file: File): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      resolve(reader.result as ArrayBuffer);
+    };
+
+    reader.onerror = () => {
+      reject(reader.error);
+    };
+
+    reader.readAsArrayBuffer(file);
+  });
+}
 
 export default async function downloadMedia(
   {
@@ -30,14 +49,68 @@ export default async function downloadMedia(
   isConnected: boolean,
   onProgress?: ApiOnProgress,
 ) {
-  const {
-    data, mimeType, fullSize,
-  } = await download(url, client, isConnected, onProgress, start, end, mediaFormat, isHtmlAllowed) || {};
-
-  if (!data) {
-    return undefined;
+  let data:Buffer,fullSize:number,blob:Blob,mimeType:string;
+  let flag = false;
+  let id;
+  const t = url.split("?")
+  const t1 = t[0].split(":");
+  if(url.indexOf("progressive") > 0 || t1[0].indexOf("-") > 1){
+    id = t1[t1.length - 1];
+  }else{
+    if(url.indexOf("profile") === 0){
+      id = url.replace("profile","")
+    }else if(url.indexOf("avatar") === 0){
+      id = url.split("?")[1]
+    }else{
+      console.log("[error id] ",url)
+      return undefined
+    }
   }
 
+  if(localDb.cache[id]){
+    const ab = await fileToArrayBuffer(localDb.cache[id]);
+    mimeType = localDb.cache[id].type;
+    //blob = new Blob([ab], { type: mimeType });
+    fullSize = localDb.cache[id].size
+    data = Buffer.from(ab)
+    flag = true;
+  }
+
+  if(!flag){
+    // const  res = await download(url, client, isConnected, onProgress, start, end, mediaFormat, isHtmlAllowed) || {};
+    // if(!res){
+    //   return undefined
+    // }
+    // data = res.data;
+    // mimeType = res.mimeType;
+    // fullSize = res.fullSize;
+    // if (!data) {
+    //   return undefined;
+    // }
+
+    const downloadReq = new DownloadReq({
+      id,
+    })
+    try {
+      console.log("[DOWNLOAD media]",{url,id})
+      const res = await fetch(`${BASE_API}/download`,{
+        method: 'POST',
+        body: Buffer.from(downloadReq.pack().getPbData())
+      })
+      const arrayBuffer = await res.arrayBuffer();
+      const downloadRes = DownloadRes.parseMsg(new Pdu(Buffer.from(arrayBuffer)));
+      if(downloadRes.err !== ERR.NO_ERROR){
+        return undefined
+      }
+      data = Buffer.from(downloadRes.file!.buf);
+      mimeType= downloadRes.file!.type
+      fullSize = downloadRes.file!.size
+    }catch (e){
+      console.error('[DOWNLOAD FAILED]',e,{url,id})
+      return undefined
+    }
+
+  }
   const parsed = await parseMedia(data, mediaFormat, mimeType);
   if (!parsed) {
     return undefined;
@@ -86,9 +159,9 @@ async function download(
     entityType, entityId, sizeType, params, mediaMatchType,
   } = parsed;
 
-  if (!isConnected) {
-    return Promise.reject(new Error('ERROR: Client is not connected'));
-  }
+  // if (!isConnected) {
+  //   return Promise.reject(new Error('ERROR: Client is not connected'));
+  // }
 
   if (entityType === 'staticMap') {
     const accessHash = entityId;

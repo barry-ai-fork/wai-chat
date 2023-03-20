@@ -137,7 +137,7 @@ const Audio: FC<OwnProps> = ({
     setIsActivated(false);
   }, []);
 
-  const {
+  let {
     isBuffered, bufferedRanges, bufferingHandlers, checkBuffering,
   } = useBuffering();
 
@@ -335,7 +335,6 @@ const Audio: FC<OwnProps> = ({
       </div>
     );
   }
-
   return (
     <div className={fullClassName} dir={lang.isRtl ? 'rtl' : 'ltr'}>
       {isSelectable && (

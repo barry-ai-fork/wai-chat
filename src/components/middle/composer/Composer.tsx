@@ -134,6 +134,9 @@ import BotMenuButton from './BotMenuButton';
 import SymbolMenuButton from './SymbolMenuButton';
 
 import './Composer.scss';
+// import WebkitSpeechRecognition from "../../../worker/share/WebkitSpeechRecognition";
+
+// const recognition = new WebkitSpeechRecognition();
 
 type OwnProps = {
   chatId: string;
@@ -362,7 +365,6 @@ const Composer: FC<OwnProps & StateProps> = ({
   } = useMemo(() => getAllowedAttachmentOptions(chat, isChatWithBot), [chat, isChatWithBot]);
 
   const isComposerBlocked = !canSendPlainText && !editingMessage;
-
   const {
     shouldSuggestCompression,
     shouldForceCompression,
@@ -390,6 +392,8 @@ const Composer: FC<OwnProps & StateProps> = ({
   const [isSendAsMenuOpen, openSendAsMenu, closeSendAsMenu] = useFlag();
   const [isDeleteModalOpen, openDeleteModal, closeDeleteModal] = useFlag();
   const [isHoverDisabled, disableHover, enableHover] = useFlag();
+  const [speechRecognizing, setSpeechRecognizing] = useState(false);
+
 
   const {
     startRecordingVoice,
@@ -616,6 +620,9 @@ const Composer: FC<OwnProps & StateProps> = ({
   }, [currentUserId, lang, showNotification]);
 
   const mainButtonState = useDerivedState(() => {
+    // if(speechRecognizing){
+    //   return MainButtonState.Send;
+    // }
     if (editingMessage && shouldForceShowEditing) {
       return MainButtonState.Edit;
     }
@@ -630,7 +637,7 @@ const Composer: FC<OwnProps & StateProps> = ({
 
     return MainButtonState.Send;
   }, [
-    activeVoiceRecording, editingMessage, getHtml, hasAttachments, isForwarding, shouldForceShowEditing, shouldSchedule,
+    activeVoiceRecording, speechRecognizing,editingMessage, getHtml, hasAttachments, isForwarding, shouldForceShowEditing, shouldSchedule,
   ]);
   const canShowCustomSendMenu = !shouldSchedule;
 
@@ -776,7 +783,11 @@ const Composer: FC<OwnProps & StateProps> = ({
     }
 
     let currentAttachments = attachments;
-
+    // if(speechRecognizing){
+    //   recognition.stop();
+    //   setSpeechRecognizing(false);
+    //   return
+    // }
     if (activeVoiceRecording) {
       const record = await stopRecordingVoice();
       if (record) {
@@ -1141,6 +1152,13 @@ const Composer: FC<OwnProps & StateProps> = ({
             showAllowedMessageTypesNotification({ chatId });
           }
         } else {
+          // recognition.start().then((res:string)=>{
+          //   setHtml(res);
+          // }).catch((e)=>{
+          //   console.error(e)
+          //   // setSpeechRecognizing(false);
+          // });
+          // setSpeechRecognizing(true);
           startRecordingVoice();
         }
         break;
@@ -1388,7 +1406,7 @@ const Composer: FC<OwnProps & StateProps> = ({
             isActive={!hasAttachments}
             getHtml={getHtml}
             placeholder={
-              activeVoiceRecording && windowWidth <= SCREEN_WIDTH_TO_HIDE_PLACEHOLDER
+              (activeVoiceRecording )&& windowWidth <= SCREEN_WIDTH_TO_HIDE_PLACEHOLDER
                 ? ''
                 : (!isComposerBlocked
                   ? (botKeyboardPlaceholder || lang('Message'))
@@ -1429,7 +1447,7 @@ const Composer: FC<OwnProps & StateProps> = ({
               <i className="icon-bot-command" />
             </ResponsiveHoverButton>
           )}
-          {activeVoiceRecording && Boolean(currentRecordTime) && (
+          {(activeVoiceRecording ) && Boolean(currentRecordTime) && (
             <span className="recording-state">
               {formatVoiceRecordDuration(currentRecordTime - startRecordTimeRef.current!)}
             </span>
@@ -1491,12 +1509,16 @@ const Composer: FC<OwnProps & StateProps> = ({
           />
         </div>
       </div>
-      {activeVoiceRecording && (
+      {(activeVoiceRecording) && (
         <Button
           round
           color="danger"
           className="cancel"
-          onClick={stopRecordingVoice}
+          onClick={ ()=>{
+            // recognition.stop();
+            // setSpeechRecognizing(false)
+            stopRecordingVoice()
+          } }
           ariaLabel="Cancel voice recording"
         >
           <i className="icon-delete" />
@@ -1506,7 +1528,7 @@ const Composer: FC<OwnProps & StateProps> = ({
         ref={mainButtonRef}
         round
         color="secondary"
-        className={buildClassName(mainButtonState, !isReady && 'not-ready', activeVoiceRecording && 'recording')}
+        className={buildClassName(mainButtonState, !isReady && 'not-ready', ( activeVoiceRecording) && 'recording')}
         disabled={areVoiceMessagesNotAllowed}
         allowDisabledClick
         ariaLabel={lang(sendButtonAriaLabel)}

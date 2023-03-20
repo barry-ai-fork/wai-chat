@@ -8,7 +8,7 @@ import {UserIdAccountIdMap} from "../controller/WsController";
 import {ApiMessage} from "../../api/types";
 import {AiChatRole} from "../types";
 
-type MsgType = "newMessage" | "updateMessageSendSucceeded";
+type MsgType = "newMessage" | "updateMessageSendSucceeded" | 'updateMessage';
 
 export class Msg{
   public chatId: string;
@@ -49,6 +49,53 @@ export class Msg{
   }
   setMsg(msg:ApiMessage){
     this.msg = msg;
+  }
+
+
+  async sendPhoto(photo:{id:string,duration:number,waveform:number[]},msgType:MsgType = 'updateMessageSendSucceeded',other:Record<string, any> = {},msgId?:number){
+    this.setMsg({
+      id:msgId || await this.incrMsgId(),
+      ...this.formatMsg(),
+      content:{
+        "photo": {
+          "id": "6106888503989221795",
+          "thumbnail": {
+            "dataUri": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDACgcHiMeGSgjISMtKygwPGRBPDc3PHtYXUlkkYCZlo+AjIqgtObDoKrarYqMyP/L2u71////m8H////6/+b9//j/2wBDASstLTw1PHZBQXb4pYyl+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj/wAARCAAoACgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwCpHljtXknpSyFRjbnOOc+tMjYoN4PParRjW5G7BE7D7vQE03qKK5V6kA96OKuNYA/ut7ebjPT5ah2LajzMEzIPu9QDU2udDqqOkUVn3IDkYYdRRTd5fcWOSaKNibtpO4rDoOwFXrWS2kPO6KQjBIPHv+dZe8lcE8VbUrawneCZXH3f7o/xP6VRnJpvQvKbwzfdXGd3OMYqC5mtFJ275ZAMZPT8fpUYu0EYbC4x/q8DGaZIi3MW+MYlA6D+If4/zpA9UVz/AKrC9e9FMQ7csfpj1opMqykld2I80pZnYliSTRRVGYq4zzTy5XbsbBXnIoopdSk9GR5ooopkn//Z",
+            "width": 320,
+            "height": 320
+          },
+          "sizes": [
+            {
+              "width": 320,
+              "height": 320,
+              "type": "m"
+            },
+            {
+              "width": 640,
+              "height": 640,
+              "type": "x"
+            }
+          ],
+          "isSpoiler": false
+        }
+      },
+      ...other
+    });
+    await this.send(msgType);
+  }
+
+  async sendVoice(voice:{id:string,duration:number,waveform:number[]},msgType:MsgType = 'updateMessageSendSucceeded',other:Record<string, any> = {},msgId?:number){
+    this.setMsg({
+      id:msgId || await this.incrMsgId(),
+      ...this.formatMsg(),
+      content:{
+        "voice": {
+          ...voice,
+        }
+      },
+      ...other
+    });
+    await this.send(msgType);
   }
 
   async sendText(text:string,msgType:MsgType = 'updateMessageSendSucceeded',other:Record<string, any> = {},msgId?:number){

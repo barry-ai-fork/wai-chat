@@ -128,8 +128,21 @@ addActionHandler('editLastMessage', (global, actions, payload): ActionReturnType
   if (!lastOwnEditableMessageId) {
     return undefined;
   }
+  const messages = selectChatMessages(global,chatId);
+  const {content} = messages[lastOwnEditableMessageId]
+  if(content.text && content.text){
+    actions.saveDraft({
+      chatId, threadId,
+      draft:{
+        text:content.text.text,
+        entities:content.text.entities
+      }
+      , shouldForce:true,
+    })
+    // return replaceThreadParam(global, chatId, threadId, 'editingId', {text:lastOwnEditableMessageId.toString()});
+  }
 
-  return replaceThreadParam(global, chatId, threadId, 'editingId', lastOwnEditableMessageId);
+  // return replaceThreadParam(global, chatId, threadId, 'editingId', lastOwnEditableMessageId);
 });
 
 addActionHandler('replyToNextMessage', (global, actions, payload): ActionReturnType => {
@@ -182,7 +195,6 @@ addActionHandler('openAudioPlayer', (global, actions, payload): ActionReturnType
     chatId, threadId, messageId, origin, volume, playbackRate, isMuted,
     tabId = getCurrentTabId(),
   } = payload;
-
   const tabState = selectTabState(global, tabId);
   return updateTabState(global, {
     audioPlayer: {

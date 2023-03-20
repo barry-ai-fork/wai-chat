@@ -124,7 +124,33 @@ export class User{
         "noVoiceMessages": false,
         botInfo:bot ? bot:undefined
       },
-      "photos": [],
+      "avatarHash": "5942933258171459000",
+      "photos": [
+        {
+          "id": "5942933258171459000",
+          "thumbnail": {
+            "dataUri": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDACgcHiMeGSgjISMtKygwPGRBPDc3PHtYXUlkkYCZlo+AjIqgtObDoKrarYqMyP/L2u71////m8H////6/+b9//j/2wBDASstLTw1PHZBQXb4pYyl+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj/wAARCAAoACgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDMZyT/AIVLaQNcS46KOpquf0rQs/3YUHgdWqSy8tnaiMqkas3qcmoZrMJB5kPQfeUnpV23njfO09PalLoSSCCrdaGhHP7GlkYDqBRV6yhAvp0P8PFFLXoMzYVDyhTyPT1rR8xVn8koMd/estWKOGHUHIq55jXLLIBtZRz702JGtGsUTqiRnDL1AzSrBHHLsUnLZ71UhZGYE7t/oP8AGlSQS3LSq4YoccdhQMsW8ZF/OexOaKS2nM80uw46AEiimiTBlTa+PanQ72Gxfu98d6KKOgLc0rbTgzEz7wvZd1Q6iohul8oBAEGNtFFCBiWd40DH5QQevrRRRV2RFz//2Q==",            "width": 640,
+            "height": 640
+          },
+          "sizes": [
+            {
+              "width": 160,
+              "height": 160,
+              "type": "s"
+            },
+            {
+              "width": 320,
+              "height": 320,
+              "type": "m"
+            },
+            {
+              "width": 640,
+              "height": 640,
+              "type": "x"
+            }
+          ]
+        }
+      ]
     }
   }
   async save(){

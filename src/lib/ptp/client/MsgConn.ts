@@ -1,17 +1,17 @@
-import {SESSION_TOKEN, WS_URL} from '../../../config';
+import {WS_URL} from '../../../config';
 import Account, {ISession} from "../../../worker/share/Account";
-import LocalStorage from "../../../worker/share/db/LocalStorage";
 import {Pdu} from "../protobuf/BaseMsg";
 import {ERR} from "../protobuf/PTPCommon";
 import {AuthLoginReq, AuthLoginRes, AuthStep1Req, AuthStep1Res, AuthStep2Req, AuthStep2Res} from "../protobuf/PTPAuth";
 import {randomize} from "worktop/utils";
-import {getActions} from "../../../global";
+import {ActionCommands, getActionCommandsName} from "../protobuf/ActionCommands";
 
 export enum MsgConnNotifyAction{
   onInitAccount,
   onConnectionStateChanged,
   onLoginOk,
-  onData
+  onData,
+  onSendMsgError
 }
 
 export type MsgConnNotify = {
@@ -45,6 +45,7 @@ export default class MsgConn {
   private __msgHandler: any;
   private sendMsgTimer?: NodeJS.Timeout;
   constructor(accountId: number) {
+    currentMsgConn = this;
     this.accountId = accountId;
     this.autoConnect = true;
     this.sendMsgTimer = undefined;
@@ -142,7 +143,6 @@ export default class MsgConn {
     this.__msgHandler = msgHandler;
   }
   onConnected() {
-    currentMsgConn = this;
     this.notifyState(MsgClientState.connected);
     this.authStep1().catch(console.error)
   }
@@ -227,9 +227,19 @@ export default class MsgConn {
     if(e.data && e.data.byteLength && e.data.byteLength > 16){
       let pdu = new Pdu(Buffer.from(e.data));
       const seq_num = pdu.getSeqNum();
+      console.log("[onData]",seq_num,getActionCommandsName(pdu.getCommandId()))
+
       if(this.__sending_msg_map[seq_num]){
         this.__rev_msg_map[seq_num] = pdu
         delete this.__sending_msg_map[seq_num];
+        if(pdu.getCommandId() === ActionCommands.CID_SendRes){
+          this.notify([
+            {
+              action: MsgConnNotifyAction.onData,
+              payload: pdu,
+            },
+          ]);
+        }
       }else{
         if (this.__msgHandler) {
           this.notify([

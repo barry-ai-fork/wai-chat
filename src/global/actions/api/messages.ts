@@ -1,9 +1,7 @@
-import type { RequiredGlobalActions } from '../../index';
-import { addActionHandler, getGlobal, setGlobal } from '../../index';
+import type {RequiredGlobalActions} from '../../index';
+import {addActionHandler, getGlobal, setGlobal} from '../../index';
 
-import type {
-  ActionReturnType, ApiDraft, GlobalState, TabArgs,
-} from '../../types';
+import type {ActionReturnType, ApiDraft, GlobalState, TabArgs,} from '../../types';
 import type {
   ApiAttachment,
   ApiChat,
@@ -15,11 +13,8 @@ import type {
   ApiUser,
   ApiVideo,
 } from '../../../api/types';
-import {
-  MAIN_THREAD_ID,
-  MESSAGE_DELETED,
-} from '../../../api/types';
-import { LoadMoreDirection } from '../../../types';
+import {MAIN_THREAD_ID, MESSAGE_DELETED,} from '../../../api/types';
+import {LoadMoreDirection} from '../../../types';
 
 import {
   MAX_MEDIA_FILES_FOR_ALBUM,
@@ -32,74 +27,74 @@ import {
   SUPPORTED_IMAGE_CONTENT_TYPES,
   SUPPORTED_VIDEO_CONTENT_TYPES,
 } from '../../../config';
-import { IS_IOS } from '../../../util/environment';
-import { callApi, cancelApiProgress } from '../../../api/gramjs';
+import {IS_IOS} from '../../../util/environment';
+import {callApi, cancelApiProgress} from '../../../api/gramjs';
+import {areSortedArraysIntersecting, buildCollectionByKey, omit, split, unique,} from '../../../util/iteratees';
 import {
-  areSortedArraysIntersecting, buildCollectionByKey, omit, split, unique,
-} from '../../../util/iteratees';
-import {
-  addUsers,
   addChatMessagesById,
+  addChats,
+  addUsers,
+  removeRequestedMessageTranslation,
+  replaceScheduledMessages,
+  replaceTabThreadParam,
   replaceThreadParam,
   safeReplaceViewportIds,
-  updateChatMessage,
-  addChats,
-  updateListedIds,
-  updateOutlyingIds,
-  replaceScheduledMessages,
-  updateThreadInfos,
   updateChat,
-  updateThreadUnreadFromForwardedMessage,
-  updateSponsoredMessage,
-  updateTopic,
-  updateThreadInfo,
-  replaceTabThreadParam,
+  updateChatMessage,
+  updateListedIds,
+  updateMessageTranslation,
+  updateOutlyingIds,
   updateRequestedMessageTranslation,
-  removeRequestedMessageTranslation,
-  updateMessageTranslation, updateThread,
+  updateSponsoredMessage,
+  updateThreadInfo,
+  updateThreadInfos,
+  updateThreadUnreadFromForwardedMessage,
+  updateTopic,
 } from '../../reducers';
 import {
   selectChat,
   selectChatMessage,
-  selectCurrentMessageList,
-  selectFocusedMessageId,
   selectCurrentChat,
+  selectCurrentMessageList,
+  selectDraft,
+  selectEditingId,
+  selectEditingMessage,
+  selectEditingScheduledId,
+  selectFirstUnreadId,
+  selectFocusedMessageId,
+  selectForwardsCanBeSentToChat,
+  selectForwardsContainVoiceMessages,
+  selectIsCurrentUserPremium,
+  selectLanguageCode,
   selectListedIds,
+  selectNoWebPage,
   selectOutlyingIds,
-  selectViewportIds,
   selectRealLastReadId,
   selectReplyingToId,
-  selectEditingId,
-  selectDraft,
-  selectThreadTopMessageId,
-  selectEditingScheduledId,
-  selectEditingMessage,
   selectScheduledMessage,
-  selectNoWebPage,
-  selectFirstUnreadId,
-  selectUser,
   selectSendAs,
   selectSponsoredMessage,
-  selectIsCurrentUserPremium,
-  selectForwardsContainVoiceMessages,
   selectTabState,
   selectThreadIdFromMessage,
-  selectLanguageCode,
-  selectForwardsCanBeSentToChat,
+  selectThreadTopMessageId,
+  selectUser,
+  selectViewportIds,
 } from '../../selectors';
+import {debounce, onTickEnd, rafPromise,} from '../../../util/schedulers';
 import {
-  debounce, onTickEnd, rafPromise,
-} from '../../../util/schedulers';
-import {
-  getMessageOriginalId, getUserFullName, isDeletedUser, isServiceNotificationMessage, isUserBot,
+  getMessageOriginalId,
+  getUserFullName,
+  isDeletedUser,
+  isServiceNotificationMessage,
+  isUserBot,
 } from '../../helpers';
-import { translate } from '../../../util/langProvider';
-import { ensureProtocol } from '../../../util/ensureProtocol';
-import { updateTabState } from '../../reducers/tabs';
-import { getCurrentTabId } from '../../../util/establishMultitabRole';
-import {buildLocalMessage} from "../../../api/gramjs/apiBuilders/messages";
-import MsgConn from "../../../lib/ptp/client/MsgConn";
-import {SendReq} from "../../../lib/ptp/protobuf/PTPMsg";
+import {translate} from '../../../util/langProvider';
+import {ensureProtocol} from '../../../util/ensureProtocol';
+import {updateTabState} from '../../reducers/tabs';
+import {getCurrentTabId} from '../../../util/establishMultitabRole';
+import MsgConn, {MsgConnNotifyAction} from "../../../lib/ptp/client/MsgConn";
+import {MsgDeleteReq, MsgListReq, MsgListRes, MsgUpdateReq, SendReq} from "../../../lib/ptp/protobuf/PTPMsg";
+import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
 
 const AUTOLOGIN_TOKEN_KEY = 'autologin_token';
 
@@ -257,7 +252,7 @@ addActionHandler('sendMessage', (global, actions, payload): ActionReturnType => 
     replyingTo: replyingToId,
     replyingToTopId,
     noWebPage: selectNoWebPage(global, chatId, threadId),
-    sendAs: selectSendAs(global, chatId),
+    sendAs: selectUser(global, global.currentUserId!),
   };
 
   actions.setReplyingToId({ messageId: undefined, tabId });
@@ -330,7 +325,6 @@ addActionHandler('sendMessage', (global, actions, payload): ActionReturnType => 
 
 addActionHandler('editMessage', (global, actions, payload): ActionReturnType => {
   const { text, entities, tabId = getCurrentTabId() } = payload;
-
   const currentMessageList = selectCurrentMessageList(global, tabId);
   if (!currentMessageList) {
     return;
@@ -346,6 +340,12 @@ addActionHandler('editMessage', (global, actions, payload): ActionReturnType => 
   void callApi('editMessage', {
     chat, message, text, entities, noWebPage: selectNoWebPage(global, chatId, threadId),
   });
+  MsgConn.getMsgClient()?.send(new MsgUpdateReq({
+    msg_id:message.id,
+    chat_id:chat.id,
+    user_id:global.currentUserId!,
+    text
+  }).pack().getPbData())
 
   actions.setEditingId({ messageId: undefined, tabId });
 });
@@ -461,7 +461,7 @@ addActionHandler('unpinAllMessages', async (global, actions, payload): Promise<v
   setGlobal(global);
 });
 
-addActionHandler('deleteMessages', (global, actions, payload): ActionReturnType => {
+addActionHandler('deleteMessages', async (global, actions, payload): ActionReturnType => {
   const { messageIds, shouldDeleteForAll, tabId = getCurrentTabId() } = payload!;
   const currentMessageList = selectCurrentMessageList(global, tabId);
   if (!currentMessageList) {
@@ -470,12 +470,44 @@ addActionHandler('deleteMessages', (global, actions, payload): ActionReturnType 
   const { chatId, threadId } = currentMessageList;
   const chat = selectChat(global, chatId)!;
 
-  void callApi('deleteMessages', { chat, messageIds, shouldDeleteForAll });
+  try {
+    await MsgConn.getMsgClient()
+      ?.sendPduWithCallback(new MsgDeleteReq({
+        msg_ids:messageIds,
+        chat_id:chatId,
+        user_id:global.currentUserId!,
+        revoke:shouldDeleteForAll
+      }).pack());
+    void callApi('deleteMessages', { chat, messageIds, shouldDeleteForAll });
+    const {lastMessage} = global.chats.byId[chatId];
 
-  const editingId = selectEditingId(global, chatId, threadId);
-  if (editingId && messageIds.includes(editingId)) {
-    actions.setEditingId({ messageId: undefined, tabId });
+    if(lastMessage && lastMessage.id){
+      if(messageIds.includes(lastMessage.id)){
+        const t = getGlobal()
+        setGlobal({
+          ...t,
+          chats:{
+            ...t.chats,
+            byId:{
+              ...t.chats.byId,
+              [chatId]:{
+                ...t.chats.byId[chatId],
+                lastMessage:undefined
+              }
+            }
+          }
+        })
+      }
+    }
+
+    const editingId = selectEditingId(global, chatId, threadId);
+    if (editingId && messageIds.includes(editingId)) {
+      actions.setEditingId({ messageId: undefined, tabId });
+    }
+  }catch (e){
+    console.error(e)
   }
+
 });
 
 addActionHandler('deleteScheduledMessages', (global, actions, payload): ActionReturnType => {
@@ -956,17 +988,32 @@ async function loadViewportMessages<T extends GlobalState>(
     global = updateListedIds(global, chatId, threadId, [])
     flag = true;
   }
+
   if(flag){
     setGlobal(global)
   }
-  return;
-  const result = await callApi('fetchMessages', {
-    chat: selectChat(global, chatId)!,
-    offsetId,
-    addOffset,
-    limit: MESSAGE_LIST_SLICE,
-    threadId,
-  });
+  const pdu = await MsgConn.getMsgClient()?.sendPduWithCallback(new MsgListReq({
+    payload:JSON.stringify({
+      chat: selectChat(global, chatId)!,
+      offsetId,
+      addOffset,
+      limit: MESSAGE_LIST_SLICE,
+      threadId,
+    })
+  }).pack());
+  const res = MsgListRes.parseMsg(pdu!)
+  if(res.err !== ERR.NO_ERROR){
+    return;
+  }
+  const result = JSON.parse(res!.payload)
+  // console.log(result)
+  // const result = await callApi('fetchMessages', {
+  //   chat: selectChat(global, chatId)!,
+  //   offsetId,
+  //   addOffset,
+  //   limit: MESSAGE_LIST_SLICE,
+  //   threadId,
+  // });
 
   if (!result) {
     return;
@@ -1111,7 +1158,8 @@ async function sendMessage<T extends GlobalState>(global: T, params: {
 },
 ...[tabId = getCurrentTabId()]: TabArgs<T>) {
   let localId: number | undefined;
-  const progressCallback = params.attachment ? (progress: number, messageLocalId: number) => {
+  const progressCallback = params.attachment ? async (progress: number, localMessage: ApiMessage) => {
+    const messageLocalId = localMessage.id;
     if (!uploadProgressCallbacks.has(messageLocalId)) {
       localId = messageLocalId;
       uploadProgressCallbacks.set(messageLocalId, progressCallback!);
@@ -1129,14 +1177,51 @@ async function sendMessage<T extends GlobalState>(global: T, params: {
       },
     };
     setGlobal(global);
+    if(progress === 2){
+      try{
+        await MsgConn.getMsgClient()
+          ?.sendPduWithCallback(new SendReq({
+            payload:JSON.stringify({
+              msg:localMessage
+            })
+          }).pack());
+      }catch (error){
+        console.error("send Msg error")
+        MsgConn.getMsgClient()?.notify([
+          {
+            action: MsgConnNotifyAction.onSendMsgError,
+            payload: {
+              chatId: localMessage.chatId,
+              localId: localMessage.id,
+              error: "send MSG error",
+            },
+          },
+        ]);
+      }
+    }
+
   } : async (progress: number, localMessage: any)=>{
-    await MsgConn.getMsgClient()
-      ?.sendPduWithCallback(new SendReq({
-        payload:JSON.stringify({
-          msg:localMessage
-        })
-      }).pack());
-  };
+    try{
+      await MsgConn.getMsgClient()
+        ?.sendPduWithCallback(new SendReq({
+          payload:JSON.stringify({
+            msg:localMessage
+          })
+        }).pack());
+    }catch (error){
+      console.error("send Msg error")
+      MsgConn.getMsgClient()?.notify([
+        {
+          action: MsgConnNotifyAction.onSendMsgError,
+          payload: {
+            chatId: localMessage.chatId,
+            localId: localMessage.id,
+            error: "send MSG error",
+          },
+        },
+      ]);
+    }
+  }
 
   // @optimization
   if (params.replyingTo || IS_IOS) {

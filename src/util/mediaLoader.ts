@@ -43,11 +43,12 @@ export function fetch<T extends ApiMediaFormat>(
   callbackUniqueId?: string,
 ): Promise<ApiPreparedMedia> {
   if (mediaFormat === ApiMediaFormat.Progressive) {
-    return (
-      IS_PROGRESSIVE_SUPPORTED
-        ? getProgressive(url)
-        : fetch(url, ApiMediaFormat.BlobUrl, isHtmlAllowed, onProgress, callbackUniqueId)
-    ) as Promise<ApiPreparedMedia>;
+    if(IS_PROGRESSIVE_SUPPORTED){
+      return (getProgressive(url))as Promise<ApiPreparedMedia>;;
+    }else{
+      return (fetch(url, ApiMediaFormat.BlobUrl, isHtmlAllowed, onProgress, callbackUniqueId))as Promise<ApiPreparedMedia>;
+    }
+
   }
 
   if (mediaFormat === ApiMediaFormat.DownloadUrl) {

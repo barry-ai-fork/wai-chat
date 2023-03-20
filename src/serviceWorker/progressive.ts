@@ -29,6 +29,7 @@ const PART_TIMEOUT = 60000;
 const requestStates = new Map<string, RequestStates>();
 
 export async function respondForProgressive(e: FetchEvent) {
+  // debugger
   const { url } = e.request;
   const range = e.request.headers.get('range');
   const bytes = /^bytes=(\d+)-(\d+)?$/g.exec(range || '')!;
@@ -100,6 +101,7 @@ export async function respondForProgressive(e: FetchEvent) {
   const partSize = Math.min(end - start + 1, arrayBuffer.byteLength);
   end = start + partSize - 1;
   const arrayBufferPart = arrayBuffer.slice(0, partSize);
+
   const headers: [string, string][] = [
     ['Content-Range', `bytes ${start}-${end}/${fullSize}`],
     ['Accept-Ranges', 'bytes'],
@@ -120,6 +122,7 @@ export async function respondForProgressive(e: FetchEvent) {
 
 // We can not cache 206 responses: https://github.com/GoogleChrome/workbox/issues/1644#issuecomment-638741359
 async function fetchFromCache(cacheKey: string) {
+  // debugger
   const cache = await self.caches.open(MEDIA_PROGRESSIVE_CACHE_NAME);
 
   return Promise.all([
@@ -129,6 +132,7 @@ async function fetchFromCache(cacheKey: string) {
 }
 
 async function saveToCache(cacheKey: string, arrayBuffer: ArrayBuffer, headers: HeadersInit) {
+  // debugger
   const cache = await self.caches.open(MEDIA_PROGRESSIVE_CACHE_NAME);
 
   return Promise.all([
@@ -141,6 +145,7 @@ export async function requestPart(
   e: FetchEvent,
   params: { url: string; start: number; end: number },
 ): Promise<PartInfo | undefined> {
+  // debugger
   const isDownload = params.url.includes('/download/');
   const client = isDownload ? (await self.clients.matchAll())
     .find((c) => c.type === 'window' && c.frameType === 'top-level')
@@ -167,7 +172,7 @@ export async function requestPart(
       requestStates.delete(messageId);
       isResolved = true;
     });
-
+  // debugger
   client.postMessage({
     type: 'requestPart',
     messageId,
@@ -185,6 +190,7 @@ self.addEventListener('message', (e) => {
   };
 
   if (type === 'partResponse') {
+    // debugger
     const requestState = requestStates.get(messageId);
     if (requestState) {
       requestState.resolve(result);

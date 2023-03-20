@@ -189,7 +189,6 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
 
     case 'updateMessage': {
       const { chatId, id, message } = update;
-
       const currentMessage = selectChatMessage(global, chatId, id);
       const chat = selectChat(global, chatId);
 
@@ -246,7 +245,6 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
 
     case 'updateMessageSendSucceeded': {
       const { chatId, localId, message } = update;
-
       global = updateListedAndViewportIds(global, actions, message as ApiMessage);
 
       const currentMessage = selectChatMessage(global, chatId, localId);

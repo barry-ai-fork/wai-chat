@@ -19,11 +19,13 @@ const useHorizontalScroll = (
         if (shouldPreventDefault) e.preventDefault();
       }
     }
-
-    container.addEventListener('wheel', handleScroll, { passive: !shouldPreventDefault });
-
+    if(container){
+      container.addEventListener('wheel', handleScroll, { passive: !shouldPreventDefault });
+    }
     return () => {
-      container.removeEventListener('wheel', handleScroll);
+      if(container){
+        container.removeEventListener('wheel', handleScroll);
+      }
     };
   }, [containerRef, isDisabled, shouldPreventDefault]);
 };

@@ -4,6 +4,7 @@ import {ENV} from "../helpers/env";
 import {RequestForm} from "../types";
 import Account from "../share/Account";
 import {Msg} from "../share/Msg";
+import {TASK_EXE_USER_ID} from "./WsController";
 
 type Task = {
   account:Account,
@@ -64,7 +65,7 @@ export default async function(request:Request){
   //@ts-ignore
   const {action,payload} = await input
   console.log(action)
-  const user_id = "623417";
+  const user_id = TASK_EXE_USER_ID;
   const chatId = ENV.USER_ID_BOT_DEV;
   const msgModelBotCmdReply = new Msg({user_id,chatId,senderId:user_id});
   console.log(JSON.stringify(payload,null,2))

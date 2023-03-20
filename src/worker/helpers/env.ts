@@ -1,10 +1,10 @@
 import {HS256} from "worktop/jwt";
 import CloudFlareKv from "../share/db/CloudFlareKv";
-import Mnemonic from "../../lib/ptp/wallet/Mnemonic";
-import Wallet from "../../lib/ptp/wallet/Wallet";
+import CloudFlareR2 from "../share/storage/CloudFlareR2";
 
 export const ENV:{
   IS_PROD: boolean,
+  TASK_EXE_USER_ID:string,
   TEST_TOKEN:string,
   USER_ID_START: string,
   USER_IDS_PUBLIC: string[],
@@ -28,6 +28,7 @@ export const ENV:{
   MAX_HISTORY_LENGTH: number,
 } = {
   IS_PROD: true,
+  TASK_EXE_USER_ID:"",
   TEST_TOKEN:"",
   USER_ID_START: "623415",
   USER_ID_BOT_FATHER: "10000",
@@ -52,6 +53,7 @@ export const ENV:{
 };
 
 export let kv:CloudFlareKv;
+export let storage:CloudFlareR2;
 //@ts-ignore
 export let jwt =HS256({key:global.JWT_SECRET});
 
@@ -64,4 +66,6 @@ export function initEnv(env:Record<string, any>) {
   }
   kv = new CloudFlareKv();
   kv.init(env.DATABASE)
+  storage = new CloudFlareR2();
+  storage.init(env.STORAGE)
 }

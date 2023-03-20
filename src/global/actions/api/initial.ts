@@ -56,8 +56,9 @@ addActionHandler('updateMsg', (global,actions,payload:any): ActionReturnType => 
     const payloadData = JSON.parse(sendRes.payload)
     switch (sendRes.action){
       case "newMessage":
+      case "updateMessage":
       case "updateMessageSendSucceeded":
-        handleRecvMsg(global,actions,payloadData)
+        handleRecvMsg(global,actions,sendRes.action,payloadData)
         break
       default:
         const {action,...data} = payload;
@@ -72,7 +73,7 @@ addActionHandler('updateMsg', (global,actions,payload:any): ActionReturnType => 
   }
 });
 
-const handleRecvMsg = (global:any,actions:any,data:any)=>{
+const handleRecvMsg = (global:any,actions:any,action:string,data:any)=>{
   let {msg,localMsgId} = data;
   const {chatId,content} = msg;
   if(!msg.isOutgoing && content.text && content.text.text){
@@ -133,7 +134,7 @@ const handleRecvMsg = (global:any,actions:any,data:any)=>{
   // }
 
   actions.apiUpdate({
-    '@type': 'updateMessageSendSucceeded',
+    '@type': action,
     localId: localMsgId,
     chatId: chatId,
     message: {

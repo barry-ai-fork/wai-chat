@@ -1,6 +1,6 @@
 syntax = "proto2";
 package PTP.Common;
-option java_package = "com.ptp.im.protobuf";
+option java_package = "chat.wai.protobuf";
 
 option optimize_for = LITE_RUNTIME;
 
@@ -14,4 +14,13 @@ enum AUTH_TYPE{
   AUTH_TYPE_USERNAME = 0;
   AUTH_TYPE_EMAIL = 1;
   AUTH_TYPE_MOBILE = 2;
+}
+
+message FileInfo{
+  required string id = 1;
+  required uint64 size = 2;
+  required uint32 part = 3;
+  optional uint32 part_total = 4;
+  required bytes buf = 5;
+  required string type = 6;
 }

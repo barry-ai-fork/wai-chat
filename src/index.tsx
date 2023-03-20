@@ -72,20 +72,17 @@ async function init() {
     // @ts-ignore
     window['init'] = ()=>{
       getActions().updateGlobal({
-        users:{},
         chats:{},
         messages:{}
       })
       localStorage.removeItem("tt-global-state");
-
     }
+
     document.addEventListener('dblclick', () => {
       // eslint-disable-next-line no-console
       console.warn('TAB STATE', selectTabState(getGlobal()));
       // eslint-disable-next-line no-console
-      console.warn({
-        chatIds:getGlobal().chats.listIds.active
-      })
+      console.warn(getGlobal())
     });
   }
 }

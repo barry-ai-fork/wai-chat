@@ -641,6 +641,23 @@ var $conv_message = $createConverter([
                 },
                 ERR: {
                     '@': {"NO_ERROR":0,"ERR_SYSTEM":1,"ERR_AUTH_LOGIN":2}
+                },
+                FileInfo: {
+                    '$': {"1":["id","string",""],"2":["size","uint64",{"low":0,"high":0,"unsigned":true}],"3":["part","uint32",0],"4":["part_total","uint32",0],"5":["buf","bytes",[]],"6":["type","string",""]}
+                }
+            },
+            File: {
+                DownloadReq: {
+                    '$': {"1":["id","string",""]}
+                },
+                DownloadRes: {
+                    '$': {"1":["file","default.PTP.Common.FileInfo",null],"100":["err","uint32",0]}
+                },
+                UploadReq: {
+                    '$': {"1":["file","default.PTP.Common.FileInfo",null]}
+                },
+                UploadRes: {
+                    '$': {"100":["err","uint32",0]}
                 }
             },
             Msg: {

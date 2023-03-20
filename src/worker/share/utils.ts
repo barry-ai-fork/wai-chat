@@ -1,4 +1,4 @@
-export function fetchWithTimeout(url, options, timeout = 10000) {
+export function fetchWithTimeout(url: RequestInfo | URL, options: RequestInit | undefined, timeout = 10000) {
   return Promise.race([
     fetch(url, options),
     new Promise((_, reject) =>

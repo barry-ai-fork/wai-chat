@@ -254,18 +254,18 @@ const HeaderActions: FC<OwnProps & StateProps> = ({
           {/*     <i className="icon-search" /> */}
           {/*   </Button> */}
           {/* )} */}
-          {canCall && (
-            <Button
-              round
-              color="translucent"
-              size="smaller"
-              // eslint-disable-next-line react/jsx-no-bind
-              onClick={handleRequestCall}
-              ariaLabel="Call"
-            >
-              <i className="icon-phone" />
-            </Button>
-          )}
+          {/*{canCall && (*/}
+          {/*  <Button*/}
+          {/*    round*/}
+          {/*    color="translucent"*/}
+          {/*    size="smaller"*/}
+          {/*    // eslint-disable-next-line react/jsx-no-bind*/}
+          {/*    onClick={handleRequestCall}*/}
+          {/*    ariaLabel="Call"*/}
+          {/*  >*/}
+          {/*    <i className="icon-phone" />*/}
+          {/*  </Button>*/}
+          {/*)}*/}
         </>
       )}
       {!withForumActions && Boolean(pendingJoinRequests) && (

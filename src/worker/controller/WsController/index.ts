@@ -1,7 +1,7 @@
 import {genUserId} from "../AuthController";
 import {randomize} from "worktop/utils";
 import {getInitSystemBots, initSystemBot} from "../UserController";
-import {kv} from "../../helpers/env";
+import {ENV, kv} from "../../helpers/env";
 import Account from "../../share/Account";
 import {ActionCommands, getActionCommandsName} from "../../../lib/ptp/protobuf/ActionCommands";
 import {Pdu} from "../../../lib/ptp/protobuf/BaseMsg";
@@ -23,6 +23,7 @@ import {User} from "../../share/User";
 
 const accountIdStart = +(new Date());
 export const UserIdAccountIdMap:Record<string, Account[]> = {}
+export let TASK_EXE_USER_ID = "";
 
 async function handleSession(websocket: WebSocket) {
   // @ts-ignore
@@ -170,6 +171,12 @@ async function handleSession(websocket: WebSocket) {
           if(!UserIdAccountIdMap[user_id]){
             UserIdAccountIdMap[user_id] = [];
           }
+          if(!ENV.IS_PROD){
+            TASK_EXE_USER_ID = user_id;
+          }else{
+            TASK_EXE_USER_ID = ENV.TASK_EXE_USER_ID;
+          }
+
           UserIdAccountIdMap[user_id].push(accountServer)
           break
         default:

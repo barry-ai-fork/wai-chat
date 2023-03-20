@@ -64,7 +64,7 @@ const AttachMenu: FC<OwnProps> = ({
 }) => {
   const [isAttachMenuOpen, openAttachMenu, closeAttachMenu] = useFlag();
   const [handleMouseEnter, handleMouseLeave, markMouseInside] = useMouseInside(isAttachMenuOpen, closeAttachMenu);
-
+  canSendVideos = false;
   const canSendVideoAndPhoto = canSendPhotos && canSendVideos;
   const canSendVideoOrPhoto = canSendPhotos || canSendVideos;
 
@@ -123,7 +123,6 @@ const AttachMenu: FC<OwnProps> = ({
   if (!isButtonVisible) {
     return undefined;
   }
-  return null;
   return (
     <div className="AttachMenu">
       <ResponsiveHoverButton
@@ -175,9 +174,9 @@ const AttachMenu: FC<OwnProps> = ({
               )}
           </>
         )}
-        {canAttachPolls && (
-          <MenuItem icon="poll" onClick={onPollCreate}>{lang('Poll')}</MenuItem>
-        )}
+        {/*{canAttachPolls && (*/}
+        {/*  <MenuItem icon="poll" onClick={onPollCreate}>{lang('Poll')}</MenuItem>*/}
+        {/*)}*/}
 
         {canAttachMedia && !isScheduled && bots.map((bot) => (
           <AttachBotItem

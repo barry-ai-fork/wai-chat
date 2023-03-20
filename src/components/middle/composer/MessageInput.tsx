@@ -335,33 +335,41 @@ const MessageInput: FC<OwnProps & StateProps> = ({
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     // https://levelup.gitconnected.com/javascript-events-handlers-keyboard-and-load-events-1b3e46a6b0c3#1960
     const { isComposing } = e;
-
     const html = getHtml();
 
     if (!isComposing && !html && (e.metaKey || e.ctrlKey)) {
       const targetIndexDelta = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : undefined;
       if (targetIndexDelta) {
         e.preventDefault();
-
         replyToNextMessage({ targetIndexDelta });
         return;
       }
     }
-
+    // let isFirstEditPos = false;
+    // if(window.getSelection()){
+      // const {startOffset,endOffset} = window.getSelection()!.getRangeAt(0);
+      // isFirstEditPos= (startOffset === endOffset) && startOffset === 0;
+    // }
     if (!isComposing && e.key === 'Enter' && !e.shiftKey) {
-      if (
-        !(IS_IOS || IS_ANDROID)
-        && (
-          (messageSendKeyCombo === 'enter' && !e.shiftKey)
-          || (messageSendKeyCombo === 'ctrl-enter' && (e.ctrlKey || e.metaKey))
-        )
-      ) {
-        e.preventDefault();
+      if(e.metaKey){
 
+      }else{
+        e.preventDefault();
         closeTextFormatter();
         onSend();
+        // if (
+        //   !(IS_IOS || IS_ANDROID)
+        //   && (
+        //     (messageSendKeyCombo === 'enter' && !e.shiftKey)
+        //     || (messageSendKeyCombo === 'ctrl-enter' && (e.ctrlKey || e.metaKey))
+        //   )
+        // ) {
+        //   e.preventDefault();
+        //   closeTextFormatter();
+        //   onSend();
+        // }
       }
-    } else if (!isComposing && e.key === 'ArrowUp' && !html && !e.metaKey && !e.ctrlKey && !e.altKey) {
+    } else if (!isComposing && e.key === 'ArrowUp' && (!html) && !e.metaKey && !e.ctrlKey && !e.altKey) {
       e.preventDefault();
       editLastMessage();
     } else {
@@ -448,7 +456,6 @@ const MessageInput: FC<OwnProps & StateProps> = ({
 
       const input = inputRef.current!;
       const isSelectionCollapsed = document.getSelection()?.isCollapsed;
-
       if (
         ((key.startsWith('Arrow') || (e.shiftKey && key === 'Shift')) && !isSelectionCollapsed)
         || (e.code === 'KeyC' && (e.ctrlKey || e.metaKey) && target.tagName !== 'INPUT')

@@ -1,74 +1,77 @@
-import { Api as GramJs } from '../../../lib/gramjs';
+import {Api, Api as GramJs} from '../../../lib/gramjs';
 import type {
   ApiAttachment,
   ApiChat,
+  ApiContact,
+  ApiFormattedText,
   ApiGlobalMessageSearchType,
   ApiMessage,
   ApiMessageEntity,
   ApiMessageSearchType,
   ApiNewPoll,
   ApiOnProgress,
+  ApiPoll,
   ApiReportReason,
+  ApiSendMessageAction,
   ApiSticker,
   ApiUser,
   ApiVideo,
   OnApiUpdate,
-  ApiSendMessageAction,
-  ApiContact,
-  ApiPoll,
-  ApiFormattedText,
 } from '../../types';
-import {
-  MAIN_THREAD_ID,
-  MESSAGE_DELETED,
-} from '../../types';
+import {MAIN_THREAD_ID, MESSAGE_DELETED,} from '../../types';
 
 import {
-  ALL_FOLDER_ID,
-  DEBUG, GIF_MIME_TYPE, MAX_INT_32, MENTION_UNREAD_SLICE,
-  PINNED_MESSAGES_LIMIT, REACTION_UNREAD_SLICE,
+  ALL_FOLDER_ID, BASE_API,
+  DEBUG,
+  GIF_MIME_TYPE,
+  MAX_INT_32,
+  MENTION_UNREAD_SLICE,
+  PINNED_MESSAGES_LIMIT,
+  REACTION_UNREAD_SLICE,
   SUPPORTED_IMAGE_CONTENT_TYPES,
-  SUPPORTED_VIDEO_CONTENT_TYPES,
+  SUPPORTED_VIDEO_CONTENT_TYPES, UPLOAD_WORKERS,
 } from '../../../config';
-import { invokeRequest, uploadFile } from './client';
+import {invokeRequest, uploadFile} from './client';
 import {
+  buildApiFormattedText,
   buildApiMessage,
+  buildApiSponsoredMessage,
   buildLocalForwardedMessage,
   buildLocalMessage,
   buildWebPage,
-  buildApiSponsoredMessage,
-  buildApiFormattedText,
 } from '../apiBuilders/messages';
-import { buildApiUser } from '../apiBuilders/users';
+import {buildApiUser} from '../apiBuilders/users';
 import {
   buildInputEntity,
   buildInputMediaDocument,
   buildInputPeer,
   buildInputPoll,
+  buildInputPollFromExisting,
   buildInputReportReason,
+  buildInputTextWithEntities,
   buildMtpMessageEntity,
+  buildSendMessageAction,
   generateRandomBigInt,
   getEntityTypeById,
   isMessageWithMedia,
   isServiceMessageWithMedia,
-  buildSendMessageAction,
-  buildInputPollFromExisting,
-  buildInputTextWithEntities,
 } from '../gramjsBuilders';
 import localDb from '../localDb';
-import { buildApiChatFromPreview, buildApiSendAsPeerId } from '../apiBuilders/chats';
-import { fetchFile } from '../../../util/files';
+import {buildApiChatFromPreview, buildApiSendAsPeerId} from '../apiBuilders/chats';
+import {fetchFile} from '../../../util/files';
 import {
   addEntitiesWithPhotosToLocalDb,
   addMessageToLocalDb,
   deserializeBytes,
   resolveMessageApiChatId,
 } from '../helpers';
-import { interpolateArray } from '../../../util/waveform';
-import { requestChatUpdate } from './chats';
-import { getEmojiOnlyCountForMessage } from '../../../global/helpers/getEmojiOnlyCountForMessage';
-import { getServerTimeOffset } from '../../../util/serverTime';
-import MsgConn from "../../../lib/ptp/client/MsgConn";
+import {interpolateArray} from '../../../util/waveform';
+import {requestChatUpdate} from './chats';
+import {getEmojiOnlyCountForMessage} from '../../../global/helpers/getEmojiOnlyCountForMessage';
+import {getServerTimeOffset} from '../../../util/serverTime';
+import {generateRandomBytes, readBigIntFromBuffer} from "../../../lib/gramjs/Helpers";
+import {uploadFileV1} from "../../../lib/gramjs/client/uploadFile";
+import {UploadReq} from "../../../lib/ptp/protobuf/PTPFile";
 
 const FAST_SEND_TIMEOUT = 1000;
 const INPUT_WAVEFORM_LENGTH = 63;
@@ -276,18 +279,6 @@ export function sendMessage(
     },
   });
 
-  // This is expected to arrive after `updateMessageSendSucceeded` which replaces the local ID,
-  // so in most cases this will be simply ignored
-  const timeout = setTimeout(() => {
-    // onUpdate({
-    //   '@type': localMessage.isScheduled ? 'updateScheduledMessage' : 'updateMessage',
-    //   id: localMessage.id,
-    //   chatId: chat.id,
-    //   message: {
-    //     sendingState: 'messageSendingStatePending',
-    //   },
-    // });
-  }, FAST_SEND_TIMEOUT);
 
   const randomId = generateRandomBigInt();
   localDb.localMessages[String(randomId)] = localMessage;
@@ -317,9 +308,7 @@ export function sendMessage(
           // eslint-disable-next-line no-console
           console.warn(err);
         }
-
         await prevQueue;
-
         return;
       }
     } else if (sticker) {
@@ -339,7 +328,48 @@ export function sendMessage(
     await prevQueue;
     try {
       if(onProgress){
-        await onProgress(1,localMessage)
+        if(attachment){
+          if(localMessage.content.voice){
+            //@ts-ignore
+            localMessage.content.voice.id = media!.file.id.toString()
+          }
+          if(localMessage.content.document){
+            localMessage.content.document.id = media!.file.id.toString()
+
+            if(localMessage.content.document.mimeType.split("/")[0] === "image"){
+              localMessage.content.document.mediaType = "photo";
+              localMessage.content.document.previewBlobUrl = undefined;
+            }
+          }
+          if(localMessage.content.photo){
+            //@ts-ignore
+            const id = media!.file!.id.toString();
+            const photo = localMessage.content.photo;
+            debugger
+            const size = {
+              "width": photo.thumbnail.width,
+              "height":  photo.thumbnail.height,
+            }
+            //@ts-ignore
+            localMessage.content.photo = {
+              id,
+              "thumbnail": {
+                ...size,
+                "dataUri": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDACgcHiMeGSgjISMtKygwPGRBPDc3PHtYXUlkkYCZlo+AjIqgtObDoKrarYqMyP/L2u71////m8H////6/+b9//j/2wBDASstLTw1PHZBQXb4pYyl+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj/wAARCAAXACgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwAisIjbo+5txGc8EfSg2SH/AJbBfqg49vrVDe2wLk7euM8U007AWzaqMn7TFx7CkECkZ8+IcdCoqtxjGBTePagCzJboEL+ehOM4BFFVj0ooEL0H4UmRRRQAmR60ZHrRRQMOMdaKKKBH/9k="
+              },
+              "sizes": [
+                {
+                  ...size,
+                  "type": "y"
+                }
+              ],
+            }
+          }
+          await onProgress(2,localMessage)
+        }else{
+          await onProgress(2,localMessage)
+        }
+
       }
     } catch (error: any) {
       onUpdate({
@@ -348,7 +378,6 @@ export function sendMessage(
         localId: localMessage.id,
         error: error.message,
       });
-      clearTimeout(timeout);
     }
   })();
 
@@ -533,7 +562,6 @@ export async function editMessage({
     ...messageUpdate,
     emojiOnlyCount,
   };
-
   onUpdate({
     '@type': isScheduled ? 'updateScheduledMessage' : 'updateMessage',
     id: message.id,
@@ -546,14 +574,14 @@ export async function editMessage({
 
   const mtpEntities = entities && entities.map(buildMtpMessageEntity);
 
-  await invokeRequest(new GramJs.messages.EditMessage({
-    message: text || '',
-    entities: mtpEntities,
-    peer: buildInputPeer(chat.id, chat.accessHash),
-    id: message.id,
-    ...(isScheduled && { scheduleDate: message.date }),
-    ...(noWebPage && { noWebpage: noWebPage }),
-  }), true);
+  // await invokeRequest(new GramJs.messages.EditMessage({
+  //   message: text || '',
+  //   entities: mtpEntities,
+  //   peer: buildInputPeer(chat.id, chat.accessHash),
+  //   id: message.id,
+  //   ...(isScheduled && { scheduleDate: message.date }),
+  //   ...(noWebPage && { noWebpage: noWebPage }),
+  // }), true);
 }
 
 export async function rescheduleMessage({
@@ -581,16 +609,13 @@ async function uploadMedia(localMessage: ApiMessage, attachment: ApiAttachment, 
     if (onProgress.isCanceled) {
       patchedOnProgress.isCanceled = true;
     } else {
-      onProgress(progress, localMessage.id);
+      onProgress(progress, localMessage);
     }
   };
-
   const file = await fetchFile(blobUrl, filename);
-  const inputFile = await uploadFile(file, patchedOnProgress);
-
+  const inputFile = await uploadFileV1({file, onProgress:patchedOnProgress,workers: UPLOAD_WORKERS});
   const thumbFile = previewBlobUrl && await fetchFile(previewBlobUrl, filename);
-  const thumb = thumbFile ? await uploadFile(thumbFile) : undefined;
-
+  const thumb = thumbFile ? await uploadFileV1({file:thumbFile,workers: UPLOAD_WORKERS}) : undefined;
   const attributes: GramJs.TypeDocumentAttribute[] = [new GramJs.DocumentAttributeFilename({ fileName: filename })];
   if (!shouldSendAsFile) {
     if (quick) {
@@ -669,23 +694,21 @@ export async function deleteMessages({
   chat: ApiChat; messageIds: number[]; shouldDeleteForAll?: boolean;
 }) {
   const isChannel = getEntityTypeById(chat.id) === 'channel';
-
-  const result = await invokeRequest(
-    isChannel
-      ? new GramJs.channels.DeleteMessages({
-        channel: buildInputEntity(chat.id, chat.accessHash) as GramJs.InputChannel,
-        id: messageIds,
-      })
-      : new GramJs.messages.DeleteMessages({
-        id: messageIds,
-        ...(shouldDeleteForAll && { revoke: true }),
-      }),
-  );
-
-  if (!result) {
-    return;
-  }
-
+  // const result = await invokeRequest(
+  //   isChannel
+  //     ? new GramJs.channels.DeleteMessages({
+  //       channel: buildInputEntity(chat.id, chat.accessHash) as GramJs.InputChannel,
+  //       id: messageIds,
+  //     })
+  //     : new GramJs.messages.DeleteMessages({
+  //       id: messageIds,
+  //       ...(shouldDeleteForAll && { revoke: true }),
+  //     }),
+  // );
+  //
+  // if (!result) {
+  //   return;
+  // }
   onUpdate({
     '@type': 'deleteMessages',
     ids: messageIds,

@@ -215,15 +215,13 @@ async function fetchRemote(langCode: string): Promise<ApiLangPack | undefined> {
       langPack:null
     }
     switch (langCode){
-      case "en":
-      case "zh-rCN":
+      // case "en":
+        // remote.langPack = (await import('./LangPack-cn')).default;
+        // break;
+      // case "zh-rCN":
+      default:
         // @ts-ignore
         remote.langPack = (await import('./LangPack-zh-rCN')).default;
-        break;
-      default:
-      // case "en":
-        // @ts-ignore
-        remote.langPack = (await import('./LangPack-en')).default;
         break;
     }
   }else{

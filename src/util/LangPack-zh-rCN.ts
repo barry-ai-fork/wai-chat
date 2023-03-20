@@ -16431,13 +16431,17 @@ export default {
     "key": "lng_info_user_title",
     "value": "用户"
   },
-  "lng_context_copy_text": {
-    "key": "lng_context_copy_text",
-    "value": "复制"
-  },
   "lng_context_copy_selected": {
     "key": "lng_context_copy_selected",
     "value": "复制"
+  },
+  "lng_context_copy_text": {
+    "key": "lng_context_copy_text",
+    "value": "复制文本"
+  },
+  "lng_context_copy_image": {
+    "key": "lng_context_copy_image",
+    "value": "复制图像"
   },
   "Weekday.Today": {
     "key": "Weekday.Today",
@@ -16450,5 +16454,13 @@ export default {
   "Common.Select": {
     "key": "Common.Select",
     "value": "选择"
+  },
+  "Share.Link.Copied": {
+    "key": "Share.Link.Copied",
+    "value": "已复制"
+  },
+  "InputAttach.Popover.Photo": {
+    "key": "InputAttach.Popover.Photo",
+    "value": "上传图像"
   },
 } as ApiLangPack;

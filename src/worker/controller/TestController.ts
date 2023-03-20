@@ -1,6 +1,6 @@
 import {ResponseJson} from "../helpers/network";
 import * as utils from "worktop/utils";
-import {ENV, kv} from "../helpers/env";
+import {ENV, kv, storage} from "../helpers/env";
 import {RequestForm} from "../types";
 import {Msg} from "../share/Msg";
 import {getInitSystemBots, initSystemBot, initSystemBot_down} from "./UserController";
@@ -30,6 +30,11 @@ export default async function(request:Request){
   const {action,payload} = await input
   const {auth_uid} = payload;
   switch (action){
+    case "upload":
+      const blob = new Blob([payload.body], { type: "text/plain" });
+      payload.put = await storage.put("test/t.jpg",blob);
+      payload.get = await storage.get("test/t.jpg");
+      break
     case "msg":
       const msgObj = new Msg({
         chatId: "3", senderId: "1", user_id: "2"

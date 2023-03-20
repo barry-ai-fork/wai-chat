@@ -19,6 +19,7 @@ export interface LocalDb {
   stickerSets: Record<string, GramJs.StickerSet>;
   photos: Record<string, GramJs.Photo>;
   webDocuments: Record<string, GramJs.TypeWebDocument>;
+  cache: Record<string,any>;
 }
 
 const channel = IS_MULTITAB_SUPPORTED ? new BroadcastChannel(DATA_BROADCAST_CHANNEL_NAME) : undefined;
@@ -78,7 +79,7 @@ function convertToVirtualClass(value: any): any {
 
 function createLocalDbInitial(initial?: LocalDb): LocalDb {
   return [
-    'localMessages', 'chats', 'users', 'messages', 'documents', 'stickerSets', 'photos', 'webDocuments',
+    'localMessages', 'chats', 'users', 'messages', 'documents', 'stickerSets', 'photos', 'webDocuments','cache',
   ]
     .reduce((acc: Record<string, any>, key) => {
       const value = initial?.[key as keyof LocalDb] ?? {};
