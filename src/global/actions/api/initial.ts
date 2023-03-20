@@ -3,7 +3,7 @@ import {addActionHandler, getGlobal, setGlobal,} from '../../index';
 import {callApi, callApiLocal, initApi} from '../../../api/gramjs';
 
 import {
-  CUSTOM_BG_CACHE_NAME,
+  CUSTOM_BG_CACHE_NAME, GLOBAL_STATE_CACHE_KEY,
   IS_TEST,
   LANG_CACHE_NAME,
   LOCK_SCREEN_ANIMATION_DURATION_MS,
@@ -385,6 +385,25 @@ addActionHandler('saveSession', (global, actions, payload): ActionReturnType => 
 });
 
 addActionHandler('signOut', async (global, actions, payload): Promise<void> => {
+  setGlobal({
+    ...global,
+    currentUserId:undefined,
+    chats:{
+      ...global.chats,
+      byId:{},
+      listIds:{
+        active:[]
+      }
+    },
+    messages:{
+      byChatId:{}
+    }
+  })
+  MsgConn.getMsgClient()?.close()
+  const account_id = Account.getCurrentAccountId();
+  Account.getInstance(account_id).delSession();
+  window.localStorage.removeItem(GLOBAL_STATE_CACHE_KEY)
+
   // if ('hangUp' in actions) actions.hangUp({ tabId: getCurrentTabId() });
   // if ('leaveGroupCall' in actions) actions.leaveGroupCall({ tabId: getCurrentTabId() });
   //
@@ -401,12 +420,11 @@ addActionHandler('signOut', async (global, actions, payload): Promise<void> => {
   // if (payload?.forceInitApi) {
   //   actions.initApi();
   // }
-  window.localStorage.removeItem(SESSION_TOKEN);
-  setGlobal({
-    ...global,
-    currentUserId:"",
-    authState:"authorizationStateWaitRegistration",
-  })
+  // setGlobal({
+  //   ...global,
+  //   currentUserId:"",
+  //   authState:"authorizationStateWaitRegistration",
+  // })
 });
 
 addActionHandler('reset', (global, actions): ActionReturnType => {

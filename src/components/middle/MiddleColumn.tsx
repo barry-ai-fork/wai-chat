@@ -84,6 +84,7 @@ import MessageLanguageModal from './MessageLanguageModal.async';
 
 import './MiddleColumn.scss';
 import styles from './MiddleColumn.module.scss';
+import Account from "../../worker/share/Account";
 
 interface OwnProps {
   isMobile?: boolean;
@@ -340,7 +341,19 @@ const MiddleColumn: FC<OwnProps & StateProps> = ({
   }, [joinChannel, chatId, renderingShouldSendJoinRequest, showNotification, isChannel, lang]);
 
   const handleStartBot = useCallback(() => {
-    sendBotCommand({ command: '/start' });
+    if(!Account.getCurrentAccount()?.getSession()){
+      getActions().updateGlobal({
+        authState:"authorizationStateWaitSignPassword"
+      })
+    }else{
+      if(Account.getCurrentAccount()?.getUid()){
+        sendBotCommand({ command: '/start' });
+      }else{
+        getActions().showNotification({
+          message:"正在登录请稍后再试"
+        })
+      }
+    }
   }, [sendBotCommand]);
 
   const handleRestartBot = useCallback(() => {

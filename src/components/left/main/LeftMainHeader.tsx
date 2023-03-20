@@ -339,12 +339,6 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
       >
         {lang('ReportBug')}
       </MenuItem>
-      {/*<MenuItem*/}
-      {/*  icon="logout"*/}
-      {/*  onClick={handleSignOutClick}*/}
-      {/*>*/}
-      {/*  {lang('SignOut')}*/}
-      {/*</MenuItem>*/}
       {/* {IS_BETA && ( */}
       {/*   <MenuItem */}
       {/*     icon="permissions" */}
@@ -370,6 +364,13 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
           Install App
         </MenuItem>
       )}
+
+      <MenuItem
+        icon="logout"
+        onClick={handleSignOutClick}
+      >
+        {lang('SignOut')}
+      </MenuItem>
     </>
   ), [
     animationLevel, archivedUnreadChatsCount, canInstall, handleAnimationLevelChange, handleBugReportClick, lang,
