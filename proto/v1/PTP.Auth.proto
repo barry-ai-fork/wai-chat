@@ -54,3 +54,32 @@ message AuthLoginRes{
 }
 
 
+message UploadProfilePhotoReq{
+  required string id = 1;
+  required bool is_video = 2;
+  required string thumbnail = 3;
+}
+
+message UploadProfilePhotoRes{
+  optional string payload = 1;
+  required Common.ERR err = 100;
+}
+
+message UpdateProfileReq{
+  optional string firstName = 1;
+  optional string lastName = 2;
+  optional string about = 3;
+}
+
+message UpdateProfileRes{
+  required Common.ERR err = 100;
+}
+
+message UpdateUsernameReq{
+  required string username = 1;
+}
+
+message UpdateUsernameRes{
+  required Common.ERR err = 100;
+}
+

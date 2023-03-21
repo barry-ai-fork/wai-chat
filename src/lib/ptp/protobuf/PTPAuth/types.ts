@@ -41,3 +41,26 @@ export interface AuthStep2Req_Type {
 export interface AuthStep2Res_Type {
   err: PTPCommon.ERR;
 }
+export interface UpdateProfileReq_Type {
+  firstName?: string;
+  lastName?: string;
+  about?: string;
+}
+export interface UpdateProfileRes_Type {
+  err: PTPCommon.ERR;
+}
+export interface UpdateUsernameReq_Type {
+  username: string;
+}
+export interface UpdateUsernameRes_Type {
+  err: PTPCommon.ERR;
+}
+export interface UploadProfilePhotoReq_Type {
+  id: string;
+  is_video: boolean;
+  thumbnail: string;
+}
+export interface UploadProfilePhotoRes_Type {
+  payload?: string;
+  err: PTPCommon.ERR;
+}

@@ -12,7 +12,7 @@ import type {
 import type { ApiPrivacyKey, InputPrivacyRules, LangCode } from '../../../types';
 import type { LANG_PACKS } from '../../../config';
 
-import { BLOCKED_LIST_LIMIT, DEFAULT_LANG_PACK, MAX_INT_32 } from '../../../config';
+import {BLOCKED_LIST_LIMIT, DEFAULT_LANG_PACK, MAX_INT_32, UPLOAD_WORKERS} from '../../../config';
 import { ACCEPTABLE_USERNAME_ERRORS } from './management';
 import {
   buildApiConfig,
@@ -38,6 +38,7 @@ import { buildCollectionByKey } from '../../../util/iteratees';
 import { getServerTime } from '../../../util/serverTime';
 import { addEntitiesWithPhotosToLocalDb, addPhotoToLocalDb } from '../helpers';
 import localDb from '../localDb';
+import {uploadFileV1} from "../../../lib/gramjs/client/uploadFile";
 
 const BETA_LANG_CODES = ['ar', 'fa', 'id', 'ko', 'uz', 'en'];
 
@@ -102,23 +103,29 @@ export async function updateProfilePhoto(photo?: ApiPhoto, isFallback?: boolean)
 }
 
 export async function uploadProfilePhoto(file: File, isFallback?: boolean, isVideo = false, videoTs = 0) {
-  const inputFile = await uploadFile(file);
-  const result = await invokeRequest(new GramJs.photos.UploadProfilePhoto({
-    ...(isVideo ? { video: inputFile, videoStartTs: videoTs } : { file: inputFile }),
-    ...(isFallback ? { fallback: true } : undefined),
-  }));
-
-  if (!result) return undefined;
-
-  addEntitiesWithPhotosToLocalDb(result.users);
-  if (result.photo instanceof GramJs.Photo) {
-    addPhotoToLocalDb(result.photo);
-    return {
-      users: result.users.map(buildApiUser).filter(Boolean),
-      photo: buildApiPhoto(result.photo),
-    };
+  const inputFile = await uploadFileV1({file,workers: UPLOAD_WORKERS});
+  return  {
+    id:inputFile.id.toString(),
+    is_video:false
   }
-  return undefined;
+
+  // const params = {
+  //   ...(isVideo ? { video: inputFile, videoStartTs: videoTs } : { file: inputFile }),
+  //   ...(isFallback ? { fallback: true } : undefined),
+  // }
+  // const result = await invokeRequest(new GramJs.photos.UploadProfilePhoto(params));
+  //
+  // if (!result) return undefined;
+  //
+  // addEntitiesWithPhotosToLocalDb(result.users);
+  // if (result.photo instanceof GramJs.Photo) {
+  //   addPhotoToLocalDb(result.photo);
+  //   return {
+  //     users: result.users.map(buildApiUser).filter(Boolean),
+  //     photo: buildApiPhoto(result.photo),
+  //   };
+  // }
+  // return undefined;
 }
 
 export async function uploadContactProfilePhoto({

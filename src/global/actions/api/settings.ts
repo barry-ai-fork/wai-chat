@@ -1,37 +1,48 @@
-import { addActionHandler, getGlobal, setGlobal } from '../../index';
+import {addActionHandler, getGlobal, setGlobal} from '../../index';
 
-import type { ActionReturnType, GlobalState } from '../../types';
-import type {
-  PrivacyVisibility, InputPrivacyRules, InputPrivacyContact, ApiPrivacySettings,
-} from '../../../types';
-import type { ApiUser, ApiUsername } from '../../../api/types';
-import {
-  ProfileEditProgress,
-  UPLOADING_WALLPAPER_SLUG,
-} from '../../../types';
+import type {ActionReturnType, GlobalState} from '../../types';
+import type {ApiPrivacySettings, InputPrivacyContact, InputPrivacyRules, PrivacyVisibility,} from '../../../types';
+import {ProfileEditProgress, UPLOADING_WALLPAPER_SLUG,} from '../../../types';
+import type {ApiUser, ApiUsername} from '../../../api/types';
 
-import { APP_CONFIG_REFETCH_INTERVAL, COUNTRIES_WITH_12H_TIME_FORMAT } from '../../../config';
-import { callApi } from '../../../api/gramjs';
-import { buildCollectionByKey } from '../../../util/iteratees';
-import { subscribe, unsubscribe } from '../../../util/notifications';
-import { setTimeFormat } from '../../../util/langProvider';
+import {APP_CONFIG_REFETCH_INTERVAL, COUNTRIES_WITH_12H_TIME_FORMAT} from '../../../config';
+import {callApi} from '../../../api/gramjs';
+import {buildCollectionByKey} from '../../../util/iteratees';
+import {subscribe, unsubscribe} from '../../../util/notifications';
+import {setTimeFormat} from '../../../util/langProvider';
 import requestActionTimeout from '../../../util/requestActionTimeout';
-import { getServerTime } from '../../../util/serverTime';
-import { selectChat, selectUser, selectTabState } from '../../selectors';
+import {getServerTime} from '../../../util/serverTime';
+import {selectChat, selectTabState, selectUser} from '../../selectors';
 import {
-  addUsers, addBlockedContact, updateChats, updateUser, removeBlockedContact, replaceSettings, updateNotifySettings,
-  addNotifyExceptions, updateChat,
+  addBlockedContact,
+  addNotifyExceptions,
+  addUsers,
+  removeBlockedContact,
+  replaceSettings,
+  updateChat,
+  updateChats,
+  updateNotifySettings,
+  updateUser,
 } from '../../reducers';
-import { isUserId } from '../../helpers';
-import { updateTabState } from '../../reducers/tabs';
-import { getCurrentTabId } from '../../../util/establishMultitabRole';
+import {isUserId} from '../../helpers';
+import {updateTabState} from '../../reducers/tabs';
+import {getCurrentTabId} from '../../../util/establishMultitabRole';
+import MsgConn from "../../../lib/ptp/client/MsgConn";
+import {
+  UpdateProfileReq,
+  UpdateProfileRes,
+  UploadProfilePhotoReq,
+  UploadProfilePhotoRes
+} from "../../../lib/ptp/protobuf/PTPAuth";
+import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
+import {blobToDataUri, fetchBlob, imgToBlob} from "../../../util/files";
+import {resizeImage} from "../../../util/imageResize";
 
 addActionHandler('updateProfile', async (global, actions, payload): Promise<void> => {
   const {
     photo, firstName, lastName, bio: about, username,
     tabId = getCurrentTabId(),
   } = payload;
-
   const { currentUserId } = global;
   if (!currentUserId) {
     return;
@@ -43,53 +54,87 @@ addActionHandler('updateProfile', async (global, actions, payload): Promise<void
     },
   }, tabId);
   setGlobal(global);
-
   if (photo) {
     const result = await callApi('uploadProfilePhoto', photo);
-    if (result) {
-      global = getGlobal();
-      global = addUsers(global, buildCollectionByKey(result.users, 'id'));
-      setGlobal(global);
-      actions.loadProfilePhotos({ profileId: currentUserId });
+    const blob = await imgToBlob(photo);
+    const thumbnailUrl = await resizeImage(blob,40,40,photo.type,0.1);
+    const thumbnail = await blobToDataUri(await fetchBlob(thumbnailUrl));
+    if(result){
+      let pdu = await MsgConn.getMsgClient()?.sendPduWithCallback(new UploadProfilePhotoReq({
+        ...result,
+        thumbnail
+      }).pack())
+      if (pdu) {
+        const {payload,err} = UploadProfilePhotoRes.parseMsg(pdu);
+        if(err === ERR.NO_ERROR && payload){
+          global = getGlobal();
+          const currentUser = currentUserId && selectUser(global, currentUserId);
+          if(currentUser){
+            global = updateUser(
+              global,
+              currentUser.id,
+              {
+                ...JSON.parse(payload)
+              },
+            );
+            setGlobal(global);
+            // actions.loadProfilePhotos({ profileId: currentUserId });
+          }
+        }
+
+      }
     }
   }
 
   if (firstName || lastName || about) {
-    const result = await callApi('updateProfile', { firstName, lastName, about });
-    if (result) {
-      global = getGlobal();
-      const currentUser = currentUserId && selectUser(global, currentUserId);
+    // const result = await callApi('updateProfile', { firstName, lastName, about });
+    let pdu = await MsgConn.getMsgClient()?.sendPduWithCallback(new UpdateProfileReq({
+      firstName, lastName, about
+    }).pack())
+    if (pdu) {
+      const {err} = UpdateProfileRes.parseMsg(pdu);
+      if (err === ERR.NO_ERROR) {
+        const currentUser = currentUserId && selectUser(global, currentUserId);
 
-      if (currentUser) {
-        global = updateUser(
-          global,
-          currentUser.id,
-          {
-            firstName,
-            lastName,
-            fullInfo: {
-              ...currentUser.fullInfo,
-              bio: about,
+        if (currentUser) {
+          global = getGlobal()
+          global = updateUser(
+            global,
+            currentUser.id,
+            {
+              firstName,
+              lastName,
+              fullInfo: {
+                ...currentUser.fullInfo,
+                bio: about,
+              },
             },
-          },
-        );
-        setGlobal(global);
+          );
+          setGlobal(global);
+        }
       }
     }
   }
 
   if (username !== undefined) {
-    const result = await callApi('updateUsername', username);
-    global = getGlobal();
-    const currentUser = currentUserId && selectUser(global, currentUserId);
-
-    if (result && currentUser) {
-      const shouldUsernameUpdate = currentUser.usernames?.find((u) => u.isEditable);
-      const usernames = shouldUsernameUpdate
-        ? currentUser.usernames?.map((u) => (u.isEditable ? { ...u, username } : u))
-        : [{ username, isEditable: true, isActive: true } as ApiUsername, ...currentUser.usernames || []];
-      global = updateUser(global, currentUserId, { usernames });
-      setGlobal(global);
+    // const result = await callApi('updateUsername', username);
+    let pdu = await MsgConn.getMsgClient()?.sendPduWithCallback(new UpdateProfileReq({
+      firstName, lastName, about
+    }).pack())
+    if (pdu) {
+      const {err} = UpdateProfileRes.parseMsg(pdu);
+      if (err === ERR.NO_ERROR) {
+        const currentUser = currentUserId && selectUser(global, currentUserId);
+        if(currentUser){
+          const shouldUsernameUpdate = currentUser.usernames?.find((u) => u.isEditable);
+          const usernames = shouldUsernameUpdate
+            ? currentUser.usernames?.map((u) => (u.isEditable ? { ...u, username } : u))
+            : [{ username, isEditable: true, isActive: true } as ApiUsername, ...currentUser.usernames || []];
+          global = getGlobal()
+          global = updateUser(global, currentUserId, { usernames });
+          setGlobal(global);
+        }
+      }
     }
   }
 

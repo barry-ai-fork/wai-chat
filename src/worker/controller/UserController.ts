@@ -1,7 +1,13 @@
 import {ENV} from "../helpers/env";
-import { User } from "../share/User";
+import {User} from "../share/User";
 import {Bot} from "../share/Bot";
 import {Chat} from "../share/Chat";
+import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
+import Account from "../share/Account";
+import UploadProfilePhotoReq from "../../lib/ptp/protobuf/PTPAuth/UploadProfilePhotoReq";
+import UploadProfilePhotoRes from "../../lib/ptp/protobuf/PTPAuth/UploadProfilePhotoRes";
+import { ERR } from "../../lib/ptp/protobuf/PTPCommon";
+import {UpdateProfileReq, UpdateUsernameReq} from "../../lib/ptp/protobuf/PTPAuth";
 
 export function getInitSystemBots(){
   const {USER_ID_CHATGPT,USER_ID_BOT_FATHER,USER_ID_BOT_DEV} = ENV;
@@ -103,4 +109,92 @@ export async function initSystemBot(bots:any[],force?:boolean){
   }
 }
 
+export async function uploadProfilePhotoReq(pdu:Pdu,account:Account){
+  const {id,is_video,thumbnail} = UploadProfilePhotoReq.parseMsg(pdu);
+  console.log("uploadProfilePhotoReq",{id,is_video})
 
+  const user = await User.getFromCache(account.getUid()!);
+  const currentUser = user?.getUserInfo();
+  if(!is_video){
+    const payload = {
+      "avatarHash": id,
+      "photos": [
+        {
+          "id": id,
+          "thumbnail": {
+            "dataUri": thumbnail,
+            "width": 640,
+            "height": 640
+          },
+          "sizes": [
+            {
+              "width": 160,
+              "height": 160,
+              "type": "s"
+            },
+            {
+              "width": 320,
+              "height": 320,
+              "type": "m"
+            },
+            {
+              "width": 640,
+              "height": 640,
+              "type": "x"
+            }
+          ]
+        }
+      ]
+    }
+    // @ts-ignore
+    user?.setUserInfo({
+      ...user?.getUserInfo()!,
+      ...payload
+    })
+    await user?.save()
+    account.sendPdu(new UploadProfilePhotoRes({
+      err:ERR.NO_ERROR,
+      payload:JSON.stringify(payload)
+    }).pack(),pdu.getSeqNum())
+  }
+}
+
+export async function updateUsername(pdu:Pdu,account:Account){
+  const {username} = UpdateUsernameReq.parseMsg(pdu);
+  console.log("updateUsername",{username})
+  const user = await User.getFromCache(account.getUid()!);
+  user?.setUserInfo({
+    ...user?.getUserInfo(),
+    usernames:[
+      {
+        username,
+        "isActive": true,
+        "isEditable": true
+      }
+    ]
+  })
+  await user?.save()
+  account.sendPdu(new UploadProfilePhotoRes({
+    err:ERR.NO_ERROR,
+  }).pack(),pdu.getSeqNum())
+}
+
+export async function updateProfile(pdu:Pdu,account:Account){
+  const {about,firstName,lastName} = UpdateProfileReq.parseMsg(pdu);
+  console.log("updateProfile",{about,firstName,lastName});
+  const user = await User.getFromCache(account.getUid()!);
+  const currentUser = user?.getUserInfo();
+  user?.setUserInfo({
+    ...user?.getUserInfo(),
+    firstName,
+    lastName,
+    fullInfo: {
+      ...currentUser!.fullInfo,
+      bio: about,
+    },
+  })
+  await user?.save()
+  account.sendPdu(new UploadProfilePhotoRes({
+    err:ERR.NO_ERROR,
+  }).pack(),pdu.getSeqNum())
+}

@@ -240,7 +240,6 @@ const SettingsHeader: FC<OwnProps> = ({
             <h3 onClick={handleMultiClick}>
               {lang('SETTINGS')}
             </h3>
-
             <Button
               round
               ripple={!isMobile}
@@ -252,13 +251,13 @@ const SettingsHeader: FC<OwnProps> = ({
             >
               <i className="icon-edit" />
             </Button>
-            <DropdownMenu
-              className="settings-more-menu"
-              trigger={SettingsMenuButton}
-              positionX="right"
-            >
-              <MenuItem icon="logout" onClick={openSignOutConfirmation}>{lang('LogOutTitle')}</MenuItem>
-            </DropdownMenu>
+            {/*<DropdownMenu*/}
+            {/*  className="settings-more-menu"*/}
+            {/*  trigger={SettingsMenuButton}*/}
+            {/*  positionX="right"*/}
+            {/*>*/}
+            {/*  <MenuItem icon="logout" onClick={openSignOutConfirmation}>{lang('LogOutTitle')}</MenuItem>*/}
+            {/*</DropdownMenu>*/}
           </div>
         );
     }

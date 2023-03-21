@@ -275,12 +275,24 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
 
   const menuItems = useMemo(() => (
     <>
-      {/* <MenuItem */}
-      {/*   icon="saved-messages" */}
-      {/*   onClick={handleSelectSaved} */}
-      {/* > */}
-      {/*   {lang('SavedMessages')} */}
-      {/* </MenuItem> */}
+      {
+        currentUserId &&
+        <MenuItem
+          icon="settings"
+          onClick={onSelectSettings}
+        >
+          {lang('Settings')}
+        </MenuItem>
+      }
+      {
+        currentUserId &&
+        <MenuItem
+          icon="saved-messages"
+          onClick={handleSelectSaved}
+        >
+          {lang('SavedMessages')}
+        </MenuItem>
+      }
       {/* {archiveSettings.isHidden && ( */}
       {/*   <MenuItem */}
       {/*     icon="archive" */}
@@ -298,12 +310,7 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
       {/* > */}
       {/*   {lang('Contacts')} */}
       {/* </MenuItem> */}
-      {/* <MenuItem */}
-      {/*   icon="settings" */}
-      {/*   onClick={onSelectSettings} */}
-      {/* > */}
-      {/*   {lang('Settings')} */}
-      {/* </MenuItem> */}
+
       <MenuItem
         icon="darkmode"
         onClick={handleDarkModeToggle}
@@ -364,13 +371,17 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
           Install App
         </MenuItem>
       )}
+      {
+        currentUserId &&
 
-      <MenuItem
-        icon="logout"
-        onClick={handleSignOutClick}
-      >
-        {lang('SignOut')}
-      </MenuItem>
+        <MenuItem
+          icon="logout"
+          onClick={handleSignOutClick}
+        >
+          {lang('SignOut')}
+        </MenuItem>
+
+      }
     </>
   ), [
     animationLevel, archivedUnreadChatsCount, canInstall, handleAnimationLevelChange, handleBugReportClick, lang,

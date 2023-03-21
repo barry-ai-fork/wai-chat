@@ -23,10 +23,10 @@ const {
 
 dotenv.config();
 
-const DEFAULT_APP_TITLE = `AiChat${APP_ENV !== 'production' ? ' Beta' : ''}`;
+const DEFAULT_APP_TITLE = `WAI${APP_ENV !== 'production' ? ' Beta' : ''}`;
 
 const {
-  BASE_URL = 'https://web.telegram.org/z/',
+  BASE_URL = 'https://wai.chat/',
   APP_TITLE = DEFAULT_APP_TITLE,
 } = process.env;
 

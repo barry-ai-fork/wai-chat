@@ -58,7 +58,7 @@ import {
 } from '../gramjsBuilders';
 import localDb from '../localDb';
 import {buildApiChatFromPreview, buildApiSendAsPeerId} from '../apiBuilders/chats';
-import {fetchFile} from '../../../util/files';
+import {blobToDataUri, dataUriToBlob, fetchBlob, fetchFile} from '../../../util/files';
 import {
   addEntitiesWithPhotosToLocalDb,
   addMessageToLocalDb,
@@ -72,6 +72,7 @@ import {getServerTimeOffset} from '../../../util/serverTime';
 import {generateRandomBytes, readBigIntFromBuffer} from "../../../lib/gramjs/Helpers";
 import {uploadFileV1} from "../../../lib/gramjs/client/uploadFile";
 import {UploadReq} from "../../../lib/ptp/protobuf/PTPFile";
+import {resizeImage} from "../../../util/imageResize";
 
 const FAST_SEND_TIMEOUT = 1000;
 const INPUT_WAVEFORM_LENGTH = 63;
@@ -329,41 +330,61 @@ export function sendMessage(
     try {
       if(onProgress){
         if(attachment){
-          if(localMessage.content.voice){
+          let fileId;
+          //@ts-ignore
+          if(media && media!.file && media.file.id) {
             //@ts-ignore
-            localMessage.content.voice.id = media!.file.id.toString()
+            fileId = media!.file.id.toString()
           }
-          if(localMessage.content.document){
-            localMessage.content.document.id = media!.file.id.toString()
 
-            if(localMessage.content.document.mimeType.split("/")[0] === "image"){
-              localMessage.content.document.mediaType = "photo";
-              localMessage.content.document.previewBlobUrl = undefined;
+          if(localMessage.content.photo || localMessage.content.document){
+
+            const getPhotoInfo = async (attachment:ApiAttachment)=>{
+              const dataUri = await blobToDataUri(await fetchBlob(attachment.thumbBlobUrl! ));
+              const size = {
+                "width": attachment.quick!.width,
+                "height":  attachment.quick!.height,
+              }
+              return{
+                dataUri,size
+              }
+            }
+
+            if(localMessage.content.document){
+              localMessage.content.document.id = fileId
+
+              if(localMessage.content.document.mimeType.split("/")[0] === "image"){
+                const {size,dataUri} = await getPhotoInfo(attachment);
+                localMessage.content.document.mediaType = "photo";
+                localMessage.content.document.previewBlobUrl = undefined;
+                localMessage.content.document.thumbnail = {
+                  ...size,
+                  dataUri
+                }
+                localMessage.content.document.mediaSize = size;
+              }
+            }
+
+            if(localMessage.content.photo){
+              const {size,dataUri} = await getPhotoInfo(attachment);
+              localMessage.content.photo = {
+                id:fileId,
+                "thumbnail": {
+                  ...size,
+                  dataUri
+                },
+                "sizes": [
+                  {
+                    ...size,
+                    "type": "y"
+                  }
+                ],
+              }
             }
           }
-          if(localMessage.content.photo){
-            //@ts-ignore
-            const id = media!.file!.id.toString();
-            const photo = localMessage.content.photo;
-            debugger
-            const size = {
-              "width": photo.thumbnail.width,
-              "height":  photo.thumbnail.height,
-            }
-            //@ts-ignore
-            localMessage.content.photo = {
-              id,
-              "thumbnail": {
-                ...size,
-                "dataUri": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDACgcHiMeGSgjISMtKygwPGRBPDc3PHtYXUlkkYCZlo+AjIqgtObDoKrarYqMyP/L2u71////m8H////6/+b9//j/2wBDASstLTw1PHZBQXb4pYyl+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj/wAARCAAXACgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwAisIjbo+5txGc8EfSg2SH/AJbBfqg49vrVDe2wLk7euM8U007AWzaqMn7TFx7CkECkZ8+IcdCoqtxjGBTePagCzJboEL+ehOM4BFFVj0ooEL0H4UmRRRQAmR60ZHrRRQMOMdaKKKBH/9k="
-              },
-              "sizes": [
-                {
-                  ...size,
-                  "type": "y"
-                }
-              ],
-            }
+
+          if(localMessage.content.voice){
+            localMessage.content.voice.id = fileId
           }
           await onProgress(2,localMessage)
         }else{
@@ -614,8 +635,9 @@ async function uploadMedia(localMessage: ApiMessage, attachment: ApiAttachment, 
   };
   const file = await fetchFile(blobUrl, filename);
   const inputFile = await uploadFileV1({file, onProgress:patchedOnProgress,workers: UPLOAD_WORKERS});
-  const thumbFile = previewBlobUrl && await fetchFile(previewBlobUrl, filename);
-  const thumb = thumbFile ? await uploadFileV1({file:thumbFile,workers: UPLOAD_WORKERS}) : undefined;
+  // const thumbFile = previewBlobUrl && await fetchFile(previewBlobUrl, filename);
+  //const thumb = thumbFile ? await uploadFileV1({file:thumbFile,workers: UPLOAD_WORKERS}) : undefined;
+  const thumb = undefined;
   const attributes: GramJs.TypeDocumentAttribute[] = [new GramJs.DocumentAttributeFilename({ fileName: filename })];
   if (!shouldSendAsFile) {
     if (quick) {

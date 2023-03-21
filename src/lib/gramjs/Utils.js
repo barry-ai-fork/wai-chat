@@ -246,8 +246,7 @@ function getInputMessage(message) {
 
 /**
  * Adds the JPG header and footer to a stripped image.
- * Ported from https://github.com/telegramdesktop/
- * tdesktop/blob/bec39d89e19670eb436dc794a8f20b657cb87c71/Telegram/SourceFiles/ui/image/image.cpp#L225
+ * Ported from https://github.com/telegramdesktop/tdesktop/blob/bec39d89e19670eb436dc794a8f20b657cb87c71/Telegram/SourceFiles/ui/image/image.cpp#L225
 
  * @param stripped{Buffer}
  * @returns {Buffer}

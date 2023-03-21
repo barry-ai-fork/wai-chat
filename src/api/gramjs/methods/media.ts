@@ -93,7 +93,7 @@ export default async function downloadMedia(
     })
     try {
       console.log("[DOWNLOAD media]",{url,id})
-      const res = await fetch(`${BASE_API}/download`,{
+      const res = await fetch(`${BASE_API}/proto`,{
         method: 'POST',
         body: Buffer.from(downloadReq.pack().getPbData())
       })

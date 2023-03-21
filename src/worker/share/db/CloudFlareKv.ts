@@ -5,14 +5,14 @@ export default class CloudFlareKv{
     this.db = db;
   }
   async put(key:string,value:any){
-    console.log("[kv put]",key,value)
+    // console.log("[kv put]",key,value)
     this.cache[key] = value;
     return this.db.put(key,value)
   }
 
   async get(key:string){
     if(this.cache[key]!== undefined){
-      console.log("from cache",key)
+      // console.log("from cache",key)
       return this.cache[key]
     }else{
       const res = await this.db.get(key)
@@ -22,7 +22,7 @@ export default class CloudFlareKv{
   }
 
   async delete(key:string){
-    console.log("[delete]",key)
+    // console.log("[delete]",key)
     delete this.cache[key];
     return this.db.delete(key)
   }

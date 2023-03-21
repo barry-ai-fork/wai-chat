@@ -4,15 +4,11 @@ import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
 import {storage} from "../helpers/env";
 import {ERR, FileInfo} from "../../lib/ptp/protobuf/PTPCommon";
 
-export async function Upload(request:Request){
-  const arrayBuffer = await request.arrayBuffer();
-  let pdu = new Pdu(Buffer.from(arrayBuffer));
+export async function Upload(pdu:Pdu){
   const req = UploadReq.parseMsg(pdu)
-  const {id,part,part_total,size,type,buf} = req.file
-  console.log("[UPLOAD]",id,size,type)
-  const t = new FileInfo(req.file).encode();
-  const tt = new FileInfo().decode(t)
-  await storage.put(`media/${id}`,new FileInfo(req.file).encode())
+  const {id,part,part_total,size,type} = req.file
+  console.log("[UPLOAD]",{id,part,part_total,size,type})
+  await storage.put(`media/${id}_${part+1}`,new FileInfo(req.file).encode())
   return new Response("",{
     status:200,
     headers:{
@@ -21,17 +17,41 @@ export async function Upload(request:Request){
   })
 }
 
-export async function Download(request:Request){
-  const arrayBuffer = await request.arrayBuffer();
-  let pdu = new Pdu(Buffer.from(arrayBuffer));
+export async function Download(pdu:Pdu){
   const req = DownloadReq.parseMsg(pdu)
   console.log("[Download]",req)
-  const res = await storage.get(`media/${req.id}`)
-  const fileInfo = new FileInfo().decode(Uint8Array.from(res!))
-  const body = Buffer.from(new DownloadRes({
-    file:fileInfo,
-    err:ERR.NO_ERROR
-  }).pack().getPbData());
+  let body;
+  try {
+    let i = 1;
+    let fileInfo;
+    while (true){
+      const res = await storage.get(`media/${req.id}_${i}`)
+      const fileInfo1 = new FileInfo().decode(Uint8Array.from(res!))
+      if(!fileInfo){
+        fileInfo = fileInfo1;
+      }else{
+        fileInfo.buf = Buffer.concat([Buffer.from(fileInfo.buf),Buffer.from(fileInfo1.buf)])
+      }
+      if(fileInfo1.part_total && fileInfo1.part_total > 1){
+        if(fileInfo1.part_total === i){
+          break
+        }
+        i++;
+      }else{
+        break
+      }
+    }
+
+    body = Buffer.from(new DownloadRes({
+      file:fileInfo,
+      err:ERR.NO_ERROR
+    }).pack().getPbData());
+
+  }catch (e){
+    body = Buffer.from(new DownloadRes({
+      err:ERR.ERR_SYSTEM
+    }).pack().getPbData());
+  }
   return new Response(
     body,{
     status:200,

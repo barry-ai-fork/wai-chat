@@ -24,13 +24,13 @@ export function scaleImage(image: string | Blob, ratio: number, outputType: stri
 }
 
 export function resizeImage(
-  image: string | Blob, width: number, height: number, outputType: string = 'image/png',
+  image: string | Blob, width: number, height: number, outputType: string = 'image/png',quality?:number
 ): Promise<string> {
   const url = image instanceof Blob ? URL.createObjectURL(image) : image;
   const img = new Image();
   return new Promise((resolve) => {
     img.onload = () => {
-      scale(img, width, height, outputType)
+      scale(img, width, height, outputType,quality)
         .then((blob) => {
           if (!blob) throw new Error('Image resize failed!');
           return URL.createObjectURL(blob);
@@ -46,8 +46,8 @@ export function resizeImage(
   });
 }
 
-async function scale(
-  img: HTMLImageElement, width: number, height: number, outputType: string = 'image/png',
+export async function scale(
+  img: HTMLImageElement, width: number, height: number, outputType: string = 'image/png',quality?:number
 ): Promise<Blob | null> {
   // Safari does not have built-in resize method with quality control
   if ('createImageBitmap' in window) {
@@ -72,19 +72,23 @@ async function scale(
         } else {
           ctx2D.drawImage(bitmap, 0, 0);
         }
-        canvas.toBlob(res, outputType);
+        if(quality){
+          canvas.toBlob(res, outputType,quality);
+        }else{
+          canvas.toBlob(res, outputType);
+        }
       });
     } catch (e) {
       // Fallback. Firefox below 93 does not recognize `createImageBitmap` with 2 parameters
-      return steppedScale(img, width, height, undefined, outputType);
+      return steppedScale(img, width, height, undefined, outputType,quality);
     }
   } else {
-    return steppedScale(img, width, height, undefined, outputType);
+    return steppedScale(img, width, height, undefined, outputType,quality);
   }
 }
 
 async function steppedScale(
-  img: HTMLImageElement, width: number, height: number, step: number = 0.5, outputType: string = 'image/png',
+  img: HTMLImageElement, width: number, height: number, step: number = 0.5, outputType: string = 'image/png',quality?:number
 ): Promise<Blob | null> {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d')!;
@@ -125,6 +129,10 @@ async function steppedScale(
   ctx.globalCompositeOperation = 'destination-over';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   return new Promise((resolve) => {
-    canvas.toBlob(resolve, outputType);
+    if(quality){
+      canvas.toBlob(resolve, outputType,quality);
+    }else{
+      canvas.toBlob(resolve, outputType);
+    }
   });
 }

@@ -5,11 +5,11 @@ import type { ApiLangPack } from '../api/types';
 export default {
   "AppName": {
     "key": "AppName",
-    "value": "AiChat"
+    "value": "WAI"
   },
   "AppNameBeta": {
     "key": "AppName Beta",
-    "value": "AiChat"
+    "value": "WAI"
   },
   "LanguageName": {
     "key": "LanguageName",
@@ -97,11 +97,11 @@ export default {
   },
   "SentAppCode": {
     "key": "SentAppCode",
-    "value": "我们已向您其他设备上的 **BitPal** 应用发送了一条验证码消息。"
+    "value": "我们已向您其他设备上的 **WAI** 应用发送了一条验证码消息。"
   },
   "SentAppCodeTitle": {
     "key": "SentAppCodeTitle",
-    "value": "查看您的 BitPal 消息"
+    "value": "查看您的 WAI 消息"
   },
   "SentSmsCodeTitle": {
     "key": "SentSmsCodeTitle",
@@ -109,7 +109,7 @@ export default {
   },
   "SentCallCode": {
     "key": "SentCallCode",
-    "value": "我们正在呼叫您的手机 **%1$s**。\\n\\n请不要接听，BitPal 将会自动处理接下来的事情。"
+    "value": "我们正在呼叫您的手机 **%1$s**。\\n\\n请不要接听，WAI 将会自动处理接下来的事情。"
   },
   "SentCallOnly": {
     "key": "SentCallOnly",
@@ -117,7 +117,7 @@ export default {
   },
   "CallText": {
     "key": "CallText",
-    "value": "BitPal 会在 %1$d:%2$02d 后改用电话语音播报验证码"
+    "value": "WAI 会在 %1$d:%2$02d 后改用电话语音播报验证码"
   },
   "SmsText": {
     "key": "SmsText",
@@ -185,7 +185,7 @@ export default {
   },
   "OtherLoginCode": {
     "key": "OtherLoginCode",
-    "value": "您的登录验证码是**%1$s**。在您尝试登录 BitPal 应用程序时输入它。 \\n\\n不要将此验证码透露给任何人。"
+    "value": "您的登录验证码是**%1$s**。在您尝试登录 WAI 应用程序时输入它。 \\n\\n不要将此验证码透露给任何人。"
   },
   "YourName": {
     "key": "YourName",
@@ -401,7 +401,7 @@ export default {
   },
   "PaymentWarningText": {
     "key": "PaymentWarningText",
-    "value": "无论是 BitPal 还是 %1$s 都无法获取您的信用卡信息。信用卡信息将仅由支付平台 %2$s 处理。\\n\\n款项将会直接发送给 %1$s 的开发者。BitPal 无法提供任何形式的担保，继续付款所带来的风险将由您自己承担。如果遇到问题，请联系 %1$s 的开发者或者您的银行。"
+    "value": "无论是 WAI 还是 %1$s 都无法获取您的信用卡信息。信用卡信息将仅由支付平台 %2$s 处理。\\n\\n款项将会直接发送给 %1$s 的开发者。WAI 无法提供任何形式的担保，继续付款所带来的风险将由您自己承担。如果遇到问题，请联系 %1$s 的开发者或者您的银行。"
   },
   "PaymentPassword": {
     "key": "PaymentPassword",
@@ -477,7 +477,7 @@ export default {
   },
   "NoChats": {
     "key": "NoChats",
-    "value": "欢迎来到 BitPal"
+    "value": "欢迎来到 WAI"
   },
   "RecentlyViewed": {
     "key": "RecentlyViewed",
@@ -693,7 +693,7 @@ export default {
   },
   "CompatibilityChat": {
     "key": "CompatibilityChat",
-    "value": "%1$s 正在使用旧版 BitPal，因此图片会以兼容模式显示。\\n\\n当 %2$s 更新 BitPal 后，阅后即焚计时器设为1分钟以内时，图片会使用“长按预览”的模式显示；对方截屏时，您也会收到通知。"
+    "value": "%1$s 正在使用旧版 WAI，因此图片会以兼容模式显示。\\n\\n当 %2$s 更新 WAI 后，阅后即焚计时器设为1分钟以内时，图片会使用“长按预览”的模式显示；对方截屏时，您也会收到通知。"
   },
   "SearchMessages": {
     "key": "SearchMessages",
@@ -845,7 +845,7 @@ export default {
   },
   "ContactsPermissionAlert": {
     "key": "ContactsPermissionAlert",
-    "value": "BitPal 需要访问您的通讯录才能使您在任何设备上联系您的朋友。您的联系人将会被即时同步至高度加密的 BitPal 云服务器。"
+    "value": "WAI 需要访问您的通讯录才能使您在任何设备上联系您的朋友。您的联系人将会被即时同步至高度加密的 WAI 云服务器。"
   },
   "ContactsPermissionAlertNotNow": {
     "key": "ContactsPermissionAlertNotNow",
@@ -857,7 +857,7 @@ export default {
   },
   "YourContacts": {
     "key": "YourContacts",
-    "value": "您在 BitPal 上的联系人"
+    "value": "您在 WAI 上的联系人"
   },
   "ArchiveHintHeader1": {
     "key": "ArchiveHintHeader1",
@@ -1061,7 +1061,7 @@ export default {
   },
   "GroupUserLeftError": {
     "key": "GroupUserLeftError",
-    "value": "抱歉，如果某人退出了群组，您必须是他的 BitPal 联系人才能将其加回。\\n\\n请注意，只要他不在黑名单中，他仍然可以通过群组的邀请链接加入。"
+    "value": "抱歉，如果某人退出了群组，您必须是他的 WAI 联系人才能将其加回。\\n\\n请注意，只要他不在黑名单中，他仍然可以通过群组的邀请链接加入。"
   },
   "GroupUserCantAdmin": {
     "key": "GroupUserCantAdmin",
@@ -1533,7 +1533,7 @@ export default {
   },
   "ChannelLinkInfo": {
     "key": "ChannelLinkInfo",
-    "value": "任何 BitPal 用户都能够通过此链接加入您的频道。"
+    "value": "任何 WAI 用户都能够通过此链接加入您的频道。"
   },
   "ChannelAdminsInfo": {
     "key": "ChannelAdminsInfo",
@@ -1565,7 +1565,7 @@ export default {
   },
   "ChannelUserLeftError": {
     "key": "ChannelUserLeftError",
-    "value": "抱歉，如果某人退出了频道，您必须是他的 BitPal 联系人才能将其加回。\\n\\n请注意，只要他不在黑名单中，他仍然可以通过频道的邀请链接加入。"
+    "value": "抱歉，如果某人退出了频道，您必须是他的 WAI 联系人才能将其加回。\\n\\n请注意，只要他不在黑名单中，他仍然可以通过频道的邀请链接加入。"
   },
   "ChannelUserCantAdd": {
     "key": "ChannelUserCantAdd",
@@ -3265,7 +3265,7 @@ export default {
   },
   "GotAQuestion": {
     "key": "GotAQuestion",
-    "value": "对 BitPal 有疑问？"
+    "value": "对 WAI 有疑问？"
   },
   "ChatGallery": {
     "key": "ChatGallery",
@@ -3485,7 +3485,7 @@ export default {
   },
   "BotPermissionGameAlert": {
     "key": "BotPermissionGameAlert",
-    "value": "是否允许 %1$s 传送您的 BitPal 昵称及 ID（不是您的手机号码）到通过机器人打开的网页中呢？"
+    "value": "是否允许 %1$s 传送您的 WAI 昵称及 ID（不是您的手机号码）到通过机器人打开的网页中呢？"
   },
   "ReportSpamLocation": {
     "key": "ReportSpamLocation",
@@ -3989,7 +3989,7 @@ export default {
   },
   "MapPreviewProviderTelegram": {
     "key": "MapPreviewProviderTelegram",
-    "value": "BitPal"
+    "value": "WAI"
   },
   "MapPreviewProviderGoogle": {
     "key": "MapPreviewProviderGoogle",
@@ -4565,11 +4565,11 @@ export default {
   },
   "NotificationContactJoined": {
     "key": "NotificationContactJoined",
-    "value": "%1$s 加入了 BitPal！"
+    "value": "%1$s 加入了 WAI！"
   },
   "NotificationUnrecognizedDevice": {
     "key": "NotificationUnrecognizedDevice",
-    "value": "%1$s，\\n我们发现您的帐号在 %2$s 从新的设备登录\\n\\n设备：%3$s\\n位置：%4$s\\n\\n如果这不是您本人，您可以在「设置 - 隐私和安全 - 活动会话」中将该对话注销。\\n\\n如果您认为其他人在您不知情的情况下登录了您的帐号，您可以在「设置 - 隐私和安全」中开启「两步验证」。\\n\\n此致，\\nBitPal 团队"
+    "value": "%1$s，\\n我们发现您的帐号在 %2$s 从新的设备登录\\n\\n设备：%3$s\\n位置：%4$s\\n\\n如果这不是您本人，您可以在「设置 - 隐私和安全 - 活动会话」中将该对话注销。\\n\\n如果您认为其他人在您不知情的情况下登录了您的帐号，您可以在「设置 - 隐私和安全」中开启「两步验证」。\\n\\n此致，\\nWAI 团队"
   },
   "NotificationContactNewPhoto": {
     "key": "NotificationContactNewPhoto",
@@ -4593,11 +4593,11 @@ export default {
   },
   "NotificationHiddenName": {
     "key": "NotificationHiddenName",
-    "value": "BitPal"
+    "value": "WAI"
   },
   "NotificationHiddenChatName": {
     "key": "NotificationHiddenChatName",
-    "value": "BitPal"
+    "value": "WAI"
   },
   "NotificationHiddenChatUserName": {
     "key": "NotificationHiddenChatUserName",
@@ -4857,7 +4857,7 @@ export default {
   },
   "SecretChatName": {
     "key": "SecretChatName",
-    "value": "BitPal"
+    "value": "WAI"
   },
   "SelectContact": {
     "key": "SelectContact",
@@ -4885,7 +4885,7 @@ export default {
   },
   "InviteText2": {
     "key": "InviteText2",
-    "value": "嗨，我在使用 BitPal 聊天。加入我们吧！从这里下载：%1$s"
+    "value": "嗨，我在使用 WAI 聊天。加入我们吧！从这里下载：%1$s"
   },
   "TodayAt": {
     "key": "TodayAt",
@@ -4961,7 +4961,7 @@ export default {
   },
   "InviteFriendsHelp": {
     "key": "InviteFriendsHelp",
-    "value": "选择要邀请到 BitPal 的联系人"
+    "value": "选择要邀请到 WAI 的联系人"
   },
   "InviteToTelegram": {
     "key": "InviteToTelegram",
@@ -4969,7 +4969,7 @@ export default {
   },
   "ShareTelegram": {
     "key": "ShareTelegram",
-    "value": "分享 BitPal..."
+    "value": "分享 WAI..."
   },
   "UpdateContactsTitle": {
     "key": "UpdateContactsTitle",
@@ -4977,7 +4977,7 @@ export default {
   },
   "UpdateContactsMessage": {
     "key": "UpdateContactsMessage",
-    "value": "BitPal 检测到很多未同步的联系人，您想现在将其同步吗？如果您在使用自己的设备、SIM 卡和 Google 帐户，请选择‘确定’。"
+    "value": "WAI 检测到很多未同步的联系人，您想现在将其同步吗？如果您在使用自己的设备、SIM 卡和 Google 帐户，请选择‘确定’。"
   },
   "SortedByName": {
     "key": "SortedByName",
@@ -5133,7 +5133,7 @@ export default {
   },
   "LinkInfo": {
     "key": "LinkInfo",
-    "value": "任何已安装 BitPal 的用户都将可以通过此链接加入您的群组。"
+    "value": "任何已安装 WAI 的用户都将可以通过此链接加入您的群组。"
   },
   "SearchForPeople": {
     "key": "SearchForPeople",
@@ -5237,11 +5237,11 @@ export default {
   },
   "ContactNotRegisteredTitle": {
     "key": "ContactNotRegisteredTitle",
-    "value": "邀请好友使用 BitPal"
+    "value": "邀请好友使用 WAI"
   },
   "ContactNotRegistered": {
     "key": "ContactNotRegistered",
-    "value": "%1$s 尚未使用 BitPal，是否邀请他加入？"
+    "value": "%1$s 尚未使用 WAI，是否邀请他加入？"
   },
   "Invite": {
     "key": "Invite",
@@ -5269,11 +5269,11 @@ export default {
   },
   "BlockUserMessage": {
     "key": "BlockUserMessage",
-    "value": "您要屏蔽 %1$s 在 BitPal 上给您发送的消息与拨打的电话吗？"
+    "value": "您要屏蔽 %1$s 在 WAI 上给您发送的消息与拨打的电话吗？"
   },
   "BlockUsersMessage": {
     "key": "BlockUsersMessage",
-    "value": "您要屏蔽 %1$s 在 BitPal 上给您发送的消息与拨打的电话吗？"
+    "value": "您要屏蔽 %1$s 在 WAI 上给您发送的消息与拨打的电话吗？"
   },
   "UserBlocked": {
     "key": "UserBlocked",
@@ -5489,7 +5489,7 @@ export default {
   },
   "UsernameHelp": {
     "key": "UsernameHelp",
-    "value": "您可以在 **BitPal** 上设置一个用户名。设置后，别人将能够在不知道您的手机号码的情况下，通过此用户名找到您并与您联系。\\n\\n您可以使用 **a–z**、**0–9** 及下划线。最小长度为 **5** 个字符。"
+    "value": "您可以在 **WAI** 上设置一个用户名。设置后，别人将能够在不知道您的手机号码的情况下，通过此用户名找到您并与您联系。\\n\\n您可以使用 **a–z**、**0–9** 及下划线。最小长度为 **5** 个字符。"
   },
   "UsernameHelpLink": {
     "key": "UsernameHelpLink",
@@ -5693,7 +5693,7 @@ export default {
   },
   "EmojiSuggestionsInfo": {
     "key": "EmojiSuggestionsInfo",
-    "value": "**BitPal** 让你可以通过成千上万的关键字找到 emoji，但总是会缺失一些。如果您想建议新的 emoji 替换，您可以访问："
+    "value": "**WAI** 让你可以通过成千上万的关键字找到 emoji，但总是会缺失一些。如果您想建议新的 emoji 替换，您可以访问："
   },
   "EmojiSuggestionsUrl": {
     "key": "EmojiSuggestionsUrl",
@@ -5733,7 +5733,7 @@ export default {
   },
   "FeaturedStickersInfo": {
     "key": "FeaturedStickersInfo",
-    "value": "这些是当前 BitPal 的热门贴纸，您可以通过机器人 @stickers 添加自定义贴纸。"
+    "value": "这些是当前 WAI 的热门贴纸，您可以通过机器人 @stickers 添加自定义贴纸。"
   },
   "StickersBotInfo": {
     "key": "StickersBotInfo",
@@ -6013,7 +6013,7 @@ export default {
   },
   "CreateNewThemeAlert": {
     "key": "CreateNewThemeAlert",
-    "value": "您可以通过更改应用中的颜色来创建自己的主题。\\n\\n您可以随时切换回默认的 BitPal 主题。"
+    "value": "您可以通过更改应用中的颜色来创建自己的主题。\\n\\n您可以随时切换回默认的 WAI 主题。"
   },
   "ThemeSetUrlHelp": {
     "key": "ThemeSetUrlHelp",
@@ -6397,7 +6397,7 @@ export default {
   },
   "ProfilePopupNotificationInfo": {
     "key": "ProfilePopupNotificationInfo",
-    "value": "当您没有打开 BitPal 时，来自此联系人的新消息也会出现在您的屏幕上。"
+    "value": "当您没有打开 WAI 时，来自此联系人的新消息也会出现在您的屏幕上。"
   },
   "NotificationsLed": {
     "key": "NotificationsLed",
@@ -6749,7 +6749,7 @@ export default {
   },
   "ContactJoined": {
     "key": "ContactJoined",
-    "value": "联系人加入 BitPal"
+    "value": "联系人加入 WAI"
   },
   "PinnedMessages": {
     "key": "PinnedMessages",
@@ -6793,11 +6793,11 @@ export default {
   },
   "LanguageUnknownCustomAlert": {
     "key": "LanguageUnknownCustomAlert",
-    "value": "很遗憾，此自定义语言包（**%1$s**）不包含 BitPal Android 版所需的数据。"
+    "value": "很遗憾，此自定义语言包（**%1$s**）不包含 WAI Android 版所需的数据。"
   },
   "AskAQuestionInfo": {
     "key": "AskAQuestionInfo",
-    "value": "请注意，BitPal 的支持服务由全球志愿者提供，反馈时请使用英文。我们会尽快回复，但仍然需要一点时间。\\n\\n请前往 "
+    "value": "请注意，WAI 的支持服务由全球志愿者提供，反馈时请使用英文。我们会尽快回复，但仍然需要一点时间。\\n\\n请前往 "
   },
   "AskButton": {
     "key": "AskButton",
@@ -6865,7 +6865,7 @@ export default {
   },
   "NotificationsServiceConnectionInfo": {
     "key": "NotificationsServiceConnectionInfo",
-    "value": "保持一个与 BitPal 的低功耗后台网络连接以获得可靠的通知。"
+    "value": "保持一个与 WAI 的低功耗后台网络连接以获得可靠的通知。"
   },
   "SortBy": {
     "key": "SortBy",
@@ -7201,7 +7201,7 @@ export default {
   },
   "PhoneNumberHelp": {
     "key": "PhoneNumberHelp",
-    "value": "你可以在此更换当前与 BitPal 帐号绑定的电话号码。此帐号的一切资料，包括云端储存的消息，文件，联系人都会被迁移到新号码下。"
+    "value": "你可以在此更换当前与 WAI 帐号绑定的电话号码。此帐号的一切资料，包括云端储存的消息，文件，联系人都会被迁移到新号码下。"
   },
   "PhoneNumberAlert": {
     "key": "PhoneNumberAlert",
@@ -7225,7 +7225,7 @@ export default {
   },
   "ChangePhoneNumberOccupied": {
     "key": "ChangePhoneNumberOccupied",
-    "value": "手机号码 %1$s 已经和一个 BitPal 帐号绑定。请先删除该帐号再迁移到此新号码。"
+    "value": "手机号码 %1$s 已经和一个 WAI 帐号绑定。请先删除该帐号再迁移到此新号码。"
   },
   "NotificationsOther": {
     "key": "NotificationsOther",
@@ -7337,7 +7337,7 @@ export default {
   },
   "SecretWebPageInfo": {
     "key": "SecretWebPageInfo",
-    "value": "链接预览将在 BitPal 服务器上生成，我们不会储存与您所发送的链接有关的数据。"
+    "value": "链接预览将在 WAI 服务器上生成，我们不会储存与您所发送的链接有关的数据。"
   },
   "SecretChat": {
     "key": "SecretChat",
@@ -7373,7 +7373,7 @@ export default {
   },
   "TelegramVersion": {
     "key": "TelegramVersion",
-    "value": "BitPal Android 客户端 %1$s"
+    "value": "WAI Android 客户端 %1$s"
   },
   "DebugMenu": {
     "key": "DebugMenu",
@@ -7529,7 +7529,7 @@ export default {
   },
   "UseProxySponsorInfo": {
     "key": "UseProxySponsorInfo",
-    "value": "这个频道是由您的代理服务器所展示的。若要从您的对话列表中移除此频道，在 BitPal 设置中禁用代理即可。"
+    "value": "这个频道是由您的代理服务器所展示的。若要从您的对话列表中移除此频道，在 WAI 设置中禁用代理即可。"
   },
   "UseProxyInfo": {
     "key": "UseProxyInfo",
@@ -7541,7 +7541,7 @@ export default {
   },
   "UseProxyTelegramInfo2": {
     "key": "UseProxyTelegramInfo2",
-    "value": "这个代理可能会在您的对话列表中显示其赞助频道。代理服务器无法泄露任何您的 BitPal 内容。"
+    "value": "这个代理可能会在您的对话列表中显示其赞助频道。代理服务器无法泄露任何您的 WAI 内容。"
   },
   "UseProxyForCalls": {
     "key": "UseProxyForCalls",
@@ -7561,7 +7561,7 @@ export default {
   },
   "LowDiskSpaceMessage": {
     "key": "LowDiskSpaceMessage",
-    "value": "您的设备存储空间快满了。您可以将 BitPal 设置为仅缓存近期的媒体文件以释放空间。"
+    "value": "您的设备存储空间快满了。您可以将 WAI 设置为仅缓存近期的媒体文件以释放空间。"
   },
   "LowDiskSpaceTitle2": {
     "key": "LowDiskSpaceTitle2",
@@ -7605,7 +7605,7 @@ export default {
   },
   "EnableAllStreamingInfo": {
     "key": "EnableAllStreamingInfo",
-    "value": "一些视频不能被在线播放——例如所有从 BitPal 4.7 或更早版本的 Android 客户端发送的视频。\\n"
+    "value": "一些视频不能被在线播放——例如所有从 WAI 4.7 或更早版本的 Android 客户端发送的视频。\\n"
   },
   "TapToChangePhone": {
     "key": "TapToChangePhone",
@@ -7689,7 +7689,7 @@ export default {
   },
   "AddAnotherAccountInfo": {
     "key": "AddAnotherAccountInfo",
-    "value": "登录其他 BitPal 帐号并在它们之间轻松切换。"
+    "value": "登录其他 WAI 帐号并在它们之间轻松切换。"
   },
   "SetPasscode": {
     "key": "SetPasscode",
@@ -7801,11 +7801,11 @@ export default {
   },
   "AuthAnotherClientInfo1": {
     "key": "AuthAnotherClientInfo1",
-    "value": "从 *desktop.telegram.org* 下载 BitPal 到您的计算机上。"
+    "value": "从 *desktop.telegram.org* 下载 WAI 到您的计算机上。"
   },
   "AuthAnotherClientInfo2": {
     "key": "AuthAnotherClientInfo2",
-    "value": "运行 BitPal Desktop 以获取二维码。"
+    "value": "运行 WAI Desktop 以获取二维码。"
   },
   "AuthAnotherClientInfo3": {
     "key": "AuthAnotherClientInfo3",
@@ -7813,11 +7813,11 @@ export default {
   },
   "AuthAnotherClientUrl": {
     "key": "AuthAnotherClientUrl",
-    "value": "此二维码可登录到您的 BitPal 帐号。\\n\\n要确认Telegram登录，请转到 **设置**>**设备**>**扫一扫**。"
+    "value": "此二维码可登录到您的 WAI 帐号。\\n\\n要确认Telegram登录，请转到 **设置**>**设备**>**扫一扫**。"
   },
   "QRCodePermissionNoCamera": {
     "key": "QRCodePermissionNoCamera",
-    "value": "BitPal 需要访问您的相机，以便您可以扫描二维码。"
+    "value": "WAI 需要访问您的相机，以便您可以扫描二维码。"
   },
   "SetProfilePhoto": {
     "key": "SetProfilePhoto",
@@ -7837,7 +7837,7 @@ export default {
   },
   "LocalDatabaseInfo": {
     "key": "LocalDatabaseInfo",
-    "value": "清除本地数据库将删除缓存在本地的聊天记录并压缩数据库以节省存储空间。BitPal 需要一些数据来维持正常工作，所以数据库大小不会完全归零。\\n\\n此操作需要一些时间来完成。"
+    "value": "清除本地数据库将删除缓存在本地的聊天记录并压缩数据库以节省存储空间。WAI 需要一些数据来维持正常工作，所以数据库大小不会完全归零。\\n\\n此操作需要一些时间来完成。"
   },
   "ClearMediaCache": {
     "key": "ClearMediaCache",
@@ -7889,7 +7889,7 @@ export default {
   },
   "KeepMediaInfo": {
     "key": "KeepMediaInfo",
-    "value": "为节省储存空间，此期限内您没有使用过的缓存文件都会被删除。这包括你消息记录中的图片、视频或其他文件。\\n\\n但这些文件都会保留在 BitPal 云端，您需要时可再次下载。"
+    "value": "为节省储存空间，此期限内您没有使用过的缓存文件都会被删除。这包括你消息记录中的图片、视频或其他文件。\\n\\n但这些文件都会保留在 WAI 云端，您需要时可再次下载。"
   },
   "KeepMediaForever": {
     "key": "KeepMediaForever",
@@ -7905,7 +7905,7 @@ export default {
   },
   "TelegramPassport": {
     "key": "TelegramPassport",
-    "value": "BitPal Passport"
+    "value": "WAI Passport"
   },
   "PassportRequestedInformation": {
     "key": "PassportRequestedInformation",
@@ -7917,11 +7917,11 @@ export default {
   },
   "PassportInfoTitle": {
     "key": "PassportInfoTitle",
-    "value": "什么是 BitPal Passport？"
+    "value": "什么是 WAI Passport？"
   },
   "PassportInfo2": {
     "key": "PassportInfo2",
-    "value": "使用 BitPal Passport，您可以轻松注册需要身份验证的网站和服务。\\n\\n您的信息、个人数据和文档受端到端加密保护。包括 BitPal 在内所有人，都无法在未经您许可的情况下访问它们。\\n\\n您可以访问我们的*常见问题*了解更多信息。"
+    "value": "使用 WAI Passport，您可以轻松注册需要身份验证的网站和服务。\\n\\n您的信息、个人数据和文档受端到端加密保护。包括 WAI 在内所有人，都无法在未经您许可的情况下访问它们。\\n\\n您可以访问我们的*常见问题*了解更多信息。"
   },
   "PassportInfoUrl": {
     "key": "PassportInfoUrl",
@@ -7929,7 +7929,7 @@ export default {
   },
   "TelegramPassportCreatePasswordInfo": {
     "key": "TelegramPassportCreatePasswordInfo",
-    "value": "请设置一个密码用于通过端对端保护您的数据。\\n\\n此密码也将用于登录 BitPal。"
+    "value": "请设置一个密码用于通过端对端保护您的数据。\\n\\n此密码也将用于登录 WAI。"
   },
   "TelegramPassportCreatePassword": {
     "key": "TelegramPassportCreatePassword",
@@ -7937,15 +7937,15 @@ export default {
   },
   "TelegramPassportDelete": {
     "key": "TelegramPassportDelete",
-    "value": "删除 BitPal Passport"
+    "value": "删除 WAI Passport"
   },
   "TelegramPassportDeleteTitle": {
     "key": "TelegramPassportDeleteTitle",
-    "value": "删除 BitPal passport"
+    "value": "删除 WAI passport"
   },
   "TelegramPassportDeleteAlert": {
     "key": "TelegramPassportDeleteAlert",
-    "value": "您确定要删除您的 BitPal Passport 吗？"
+    "value": "您确定要删除您的 WAI Passport 吗？"
   },
   "PassportUseLatinOnly": {
     "key": "PassportUseLatinOnly",
@@ -8089,11 +8089,11 @@ export default {
   },
   "PassportPhoneUseSameInfo": {
     "key": "PassportPhoneUseSameInfo",
-    "value": "使用当前 BitPal 帐号绑定的手机号码。"
+    "value": "使用当前 WAI 帐号绑定的手机号码。"
   },
   "PassportPhoneUseSameEmailInfo": {
     "key": "PassportPhoneUseSameEmailInfo",
-    "value": "使用您登记在 BitPal 上的邮件地址。"
+    "value": "使用您登记在 WAI 上的邮件地址。"
   },
   "PassportPhoneUseOther": {
     "key": "PassportPhoneUseOther",
@@ -8661,7 +8661,7 @@ export default {
   },
   "NoOtherSessionsInfo": {
     "key": "NoOtherSessionsInfo",
-    "value": "您可以用同一个手机号码在其它手机、平板和桌面设备上登录 BitPal，所有数据会即时同步。"
+    "value": "您可以用同一个手机号码在其它手机、平板和桌面设备上登录 WAI，所有数据会即时同步。"
   },
   "OtherSessions": {
     "key": "OtherSessions",
@@ -8717,7 +8717,7 @@ export default {
   },
   "NoOtherWebSessionsInfo": {
     "key": "NoOtherWebSessionsInfo",
-    "value": "您可以在在支持的网站上使用 BitPal 登录。"
+    "value": "您可以在在支持的网站上使用 WAI 登录。"
   },
   "OtherWebSessions": {
     "key": "OtherWebSessions",
@@ -8725,11 +8725,11 @@ export default {
   },
   "WebSessionsTitle": {
     "key": "WebSessionsTitle",
-    "value": "使用 BitPal 登录的网站"
+    "value": "使用 WAI 登录的网站"
   },
   "TerminateWebSessionInfo": {
     "key": "TerminateWebSessionInfo",
-    "value": "轻触以取消该网站与您 BitPal 帐号的关联"
+    "value": "轻触以取消该网站与您 WAI 帐号的关联"
   },
   "TerminateWebSessionText": {
     "key": "TerminateWebSessionText",
@@ -8757,11 +8757,11 @@ export default {
   },
   "AreYouSureWebSessions": {
     "key": "AreYouSureWebSessions",
-    "value": "是否取消与所有使用 BitPal 登录的网站的关联？"
+    "value": "是否取消与所有使用 WAI 登录的网站的关联？"
   },
   "ClearOtherWebSessionsHelp": {
     "key": "ClearOtherWebSessionsHelp",
-    "value": "您可以在支持的网站上使用 BitPal 登录。"
+    "value": "您可以在支持的网站上使用 WAI 登录。"
   },
   "LoginAttempts": {
     "key": "LoginAttempts",
@@ -9113,7 +9113,7 @@ export default {
   },
   "ChangePasscodeInfo": {
     "key": "ChangePasscodeInfo",
-    "value": "当您设置好一个锁定码后，聊天列表上方会出现一个锁形图标。点击它来锁定或解锁 BitPal 应用。\\n\\n注意：如果您忘记了锁定码，您将只能卸载然后重新安装 BitPal。重装之后您将丢失所有的加密对话。"
+    "value": "当您设置好一个锁定码后，聊天列表上方会出现一个锁形图标。点击它来锁定或解锁 WAI 应用。\\n\\n注意：如果您忘记了锁定码，您将只能卸载然后重新安装 WAI。重装之后您将丢失所有的加密对话。"
   },
   "PasscodePIN": {
     "key": "PasscodePIN",
@@ -9189,7 +9189,7 @@ export default {
   },
   "ScreenCaptureAlert": {
     "key": "ScreenCaptureAlert",
-    "value": "这将在最近任务界面中隐藏聊天或聊天列表的内容，但您将无法在 BitPal 上截取屏幕截图。\\n\\n您可能需要重新启动应用才能生效。"
+    "value": "这将在最近任务界面中隐藏聊天或聊天列表的内容，但您将无法在 WAI 上截取屏幕截图。\\n\\n您可能需要重新启动应用才能生效。"
   },
   "TooManyTries": {
     "key": "TooManyTries",
@@ -10361,7 +10361,7 @@ export default {
   },
   "YourEmailSkipWarningText": {
     "key": "YourEmailSkipWarningText",
-    "value": "您确定不设置密码恢复邮箱？\\n\\n一旦您忘记了密码，您将无法再访问您的 BitPal 帐号，并且我们没有任何恢复帐号数据的方法。"
+    "value": "您确定不设置密码恢复邮箱？\\n\\n一旦您忘记了密码，您将无法再访问您的 WAI 帐号，并且我们没有任何恢复帐号数据的方法。"
   },
   "YourEmailAlmostThere": {
     "key": "YourEmailAlmostThere",
@@ -10429,7 +10429,7 @@ export default {
   },
   "TurnPasswordOffPassport": {
     "key": "TurnPasswordOffPassport",
-    "value": "警告！所有储存在 BitPal Passport 中的数据都将丢失！"
+    "value": "警告！所有储存在 WAI Passport 中的数据都将丢失！"
   },
   "PasswordHint": {
     "key": "PasswordHint",
@@ -10717,7 +10717,7 @@ export default {
   },
   "PrivacyPhoneInfo": {
     "key": "PrivacyPhoneInfo",
-    "value": "已将您的手机号码保存在其通讯录中的用户将可关联到你在 BitPal 的身份。"
+    "value": "已将您的手机号码保存在其通讯录中的用户将可关联到你在 WAI 的身份。"
   },
   "PrivacyPhoneInfo3": {
     "key": "PrivacyPhoneInfo3",
@@ -10789,11 +10789,11 @@ export default {
   },
   "PrivacyPaymentsClearAlert": {
     "key": "PrivacyPaymentsClearAlert",
-    "value": "是否删除您的配送信息，并使所有的付款提供商清除您保存的信用卡？请注意 BitPal 从来不会存储您的信用卡数据。"
+    "value": "是否删除您的配送信息，并使所有的付款提供商清除您保存的信用卡？请注意 WAI 从来不会存储您的信用卡数据。"
   },
   "PrivacyBotsInfo": {
     "key": "PrivacyBotsInfo",
-    "value": "您使用 BitPal 登录的网站。"
+    "value": "您使用 WAI 登录的网站。"
   },
   "PrivacyClearShipping": {
     "key": "PrivacyClearShipping",
@@ -11001,7 +11001,7 @@ export default {
   },
   "PrivacyCallsP2PHelp": {
     "key": "PrivacyCallsP2PHelp",
-    "value": "禁用端到端连接后，所有通话流量都将通过 BitPal 服务器中转以避免泄露您的 IP 地址，但这可能会轻微降低音质。"
+    "value": "禁用端到端连接后，所有通话流量都将通过 WAI 服务器中转以避免泄露您的 IP 地址，但这可能会轻微降低音质。"
   },
   "SyncContactsDelete": {
     "key": "SyncContactsDelete",
@@ -11041,7 +11041,7 @@ export default {
   },
   "SyncContactsDeleteText": {
     "key": "SyncContactsDeleteText",
-    "value": "这将清空 BitPal 服务器上的所有通讯录资料。\\n\\n如果 **同步通讯录** 选项是开启的，这些通讯录资料会被重新同步。"
+    "value": "这将清空 WAI 服务器上的所有通讯录资料。\\n\\n如果 **同步通讯录** 选项是开启的，这些通讯录资料会被重新同步。"
   },
   "SendingVideo": {
     "key": "SendingVideo",
@@ -11469,7 +11469,7 @@ export default {
   },
   "UnsupportedMedia": {
     "key": "UnsupportedMedia",
-    "value": "您当前的 BitPal 版本无法查看这条消息。请前往这里下载新版：https://telegram.org/update"
+    "value": "您当前的 WAI 版本无法查看这条消息。请前往这里下载新版：https://telegram.org/update"
   },
   "AttachPhoto": {
     "key": "AttachPhoto",
@@ -11601,11 +11601,11 @@ export default {
   },
   "UpdateTelegram": {
     "key": "UpdateTelegram",
-    "value": "更新 BitPal"
+    "value": "更新 WAI"
   },
   "UpdateAppAlert": {
     "key": "UpdateAppAlert",
-    "value": "很抱歉，您的 BitPal 程序已经过时，无法处理这个请求。请升级 BitPal。"
+    "value": "很抱歉，您的 WAI 程序已经过时，无法处理这个请求。请升级 WAI。"
   },
   "InvalidPhoneNumber": {
     "key": "InvalidPhoneNumber",
@@ -11613,7 +11613,7 @@ export default {
   },
   "PleaseLoginPassport": {
     "key": "PleaseLoginPassport",
-    "value": "请登陆到 BitPal 来使用 BitPal Passport"
+    "value": "请登陆到 WAI 来使用 WAI Passport"
   },
   "BannedPhoneNumber": {
     "key": "BannedPhoneNumber",
@@ -11665,7 +11665,7 @@ export default {
   },
   "InviteUser": {
     "key": "InviteUser",
-    "value": "此用户还未加入 BitPal ，是否发送邀请？"
+    "value": "此用户还未加入 WAI ，是否发送邀请？"
   },
   "AreYouSure": {
     "key": "AreYouSure",
@@ -11725,7 +11725,7 @@ export default {
   },
   "AreYouSureLogout": {
     "key": "AreYouSureLogout",
-    "value": "您确定要退出当前帐号吗？\\n\\n请注意，您可以同时在所有设备上无缝地使用 BitPal。\\n\\n请记住，这将会清除所有的加密聊天记录。"
+    "value": "您确定要退出当前帐号吗？\\n\\n请注意，您可以同时在所有设备上无缝地使用 WAI。\\n\\n请记住，这将会清除所有的加密聊天记录。"
   },
   "DeleteFewChatsTitle": {
     "key": "DeleteFewChatsTitle",
@@ -11949,7 +11949,7 @@ export default {
   },
   "NoUsernameFound": {
     "key": "NoUsernameFound",
-    "value": "没有 BitPal 帐号使用此用户名。"
+    "value": "没有 WAI 帐号使用此用户名。"
   },
   "BotCantJoinGroups": {
     "key": "BotCantJoinGroups",
@@ -11957,7 +11957,7 @@ export default {
   },
   "SecretLinkPreviewAlert": {
     "key": "SecretLinkPreviewAlert",
-    "value": "您要启用加密对话中的链接预览功能吗？注意，所有的链接预览均在 BitPal 的服务器上生成。"
+    "value": "您要启用加密对话中的链接预览功能吗？注意，所有的链接预览均在 WAI 的服务器上生成。"
   },
   "SecretChatContextBotAlert": {
     "key": "SecretChatContextBotAlert",
@@ -11969,19 +11969,19 @@ export default {
   },
   "AllowReadCall": {
     "key": "AllowReadCall",
-    "value": "请授予 BitPal 电话权限以便我们自动读取验证码。"
+    "value": "请授予 WAI 电话权限以便我们自动读取验证码。"
   },
   "AllowReadCallAndLog": {
     "key": "AllowReadCallAndLog",
-    "value": "请允许 BitPal 接听电话与读取通话记录，以便我们自动为您输入验证码。"
+    "value": "请允许 WAI 接听电话与读取通话记录，以便我们自动为您输入验证码。"
   },
   "AllowReadCallLog": {
     "key": "AllowReadCallLog",
-    "value": "请允许 BitPal 读取通话记录，以便为您自动填写验证码。"
+    "value": "请允许 WAI 读取通话记录，以便为您自动填写验证码。"
   },
   "AllowFillNumber": {
     "key": "AllowFillNumber",
-    "value": "请允许 BitPal 接收来电，以便自动验证您的手机号码。"
+    "value": "请允许 WAI 接收来电，以便自动验证您的手机号码。"
   },
   "UserRestricted": {
     "key": "UserRestricted",
@@ -12037,7 +12037,7 @@ export default {
   },
   "TosDecline": {
     "key": "TosDecline",
-    "value": "我们对此感到非常抱歉，但这也意味着您现在无法注册 BitPal。\\n\\n与其它软件不同，我们不会利用您的个人数据来导向广告或其它商业目的。BitPal 储存的所有文件都是为了给您创造一个功能丰富的云服务体验。 您可以在「设置」—「隐私和安全」 里调整我们使用您数据的方式（例如：删除已同步的联系人）。\\n\\n但若您完全无法接受 BitPal 的云数据政策，我们将无法为您提供服务。"
+    "value": "我们对此感到非常抱歉，但这也意味着您现在无法注册 WAI。\\n\\n与其它软件不同，我们不会利用您的个人数据来导向广告或其它商业目的。WAI 储存的所有文件都是为了给您创造一个功能丰富的云服务体验。 您可以在「设置」—「隐私和安全」 里调整我们使用您数据的方式（例如：删除已同步的联系人）。\\n\\n但若您完全无法接受 WAI 的云数据政策，我们将无法为您提供服务。"
   },
   "TosAgeTitle": {
     "key": "TosAgeTitle",
@@ -12053,47 +12053,47 @@ export default {
   },
   "TosUpdateDecline": {
     "key": "TosUpdateDecline",
-    "value": "我们感到非常抱歉，但这意味着我们必须分道扬镳了。与其他产品不同，我们并不将您的数据用于广告定位或其他商业目的。BitPal 只储存用于提供功能丰富的云服务所需的信息。您可以在“隐私和安全”设置中调整我们使用您的数据的方式。\\n\\n但如果您拒绝满足 BitPal 对基本数据的需求，我们就无法提供此项服务。您可以现在就删除您的账号；或是再看看，直到您觉得我们使用您的数据的方式不满意时再删除。"
+    "value": "我们感到非常抱歉，但这意味着我们必须分道扬镳了。与其他产品不同，我们并不将您的数据用于广告定位或其他商业目的。WAI 只储存用于提供功能丰富的云服务所需的信息。您可以在“隐私和安全”设置中调整我们使用您的数据的方式。\\n\\n但如果您拒绝满足 WAI 对基本数据的需求，我们就无法提供此项服务。您可以现在就删除您的账号；或是再看看，直到您觉得我们使用您的数据的方式不满意时再删除。"
   },
   "TosDeclineDeleteAccount": {
     "key": "TosDeclineDeleteAccount",
-    "value": "警告，这将不可逆转地删除您的 BitPal 帐号，以及您存储在 BitPal 云中的所有数据。\\n\\n请注意：您现在可以取消删除操作，并在删除您的帐号前下载您的数据以免损失。（为了下载您的数据，请使用最新版 BitPal Desktop，并打开 设置 > 高级 > 导出 BitPal 数据。）"
+    "value": "警告，这将不可逆转地删除您的 WAI 帐号，以及您存储在 WAI 云中的所有数据。\\n\\n请注意：您现在可以取消删除操作，并在删除您的帐号前下载您的数据以免损失。（为了下载您的数据，请使用最新版 WAI Desktop，并打开 设置 > 高级 > 导出 WAI 数据。）"
   },
   "PermissionContacts": {
     "key": "PermissionContacts",
-    "value": "为了让您能在任意设备上和朋友联系，您的联系人将会被即时同步至高度加密的 BitPal 云服务器。"
+    "value": "为了让您能在任意设备上和朋友联系，您的联系人将会被即时同步至高度加密的 WAI 云服务器。"
   },
   "PermissionStorage": {
     "key": "PermissionStorage",
-    "value": "BitPal 需要访问您的本地存储才能发送和保存照片，视频，音乐和其他媒体文件。"
+    "value": "WAI 需要访问您的本地存储才能发送和保存照片，视频，音乐和其他媒体文件。"
   },
   "PermissionNoAudio": {
     "key": "PermissionNoAudio",
-    "value": "BitPal 需要访问您的麦克风来录制语音留言。"
+    "value": "WAI 需要访问您的麦克风来录制语音留言。"
   },
   "PermissionNoAudioVideo": {
     "key": "PermissionNoAudioVideo",
-    "value": "BitPal 需要访问您的麦克风来录制视频。"
+    "value": "WAI 需要访问您的麦克风来录制视频。"
   },
   "PermissionNoCamera": {
     "key": "PermissionNoCamera",
-    "value": "BitPal 需要访问您的相机来拍照或录像。请在设置授予权限。"
+    "value": "WAI 需要访问您的相机来拍照或录像。请在设置授予权限。"
   },
   "PermissionNoLocation": {
     "key": "PermissionNoLocation",
-    "value": "BitPal 需要使用定位服务才能获取您的地址并分享给您的朋友。"
+    "value": "WAI 需要使用定位服务才能获取您的地址并分享给您的朋友。"
   },
   "PermissionNoLocationPosition": {
     "key": "PermissionNoLocationPosition",
-    "value": "BitPal 需要获取您的定位服务权限"
+    "value": "WAI 需要获取您的定位服务权限"
   },
   "PermissionDrawAboveOtherApps": {
     "key": "PermissionDrawAboveOtherApps",
-    "value": "BitPal 需要使用出现在其他应用上的权限以在画中画模式中播放视频。"
+    "value": "WAI 需要使用出现在其他应用上的权限以在画中画模式中播放视频。"
   },
   "PermissionDrawAboveOtherAppsGroupCall": {
     "key": "PermissionDrawAboveOtherAppsGroupCall",
-    "value": "Overlay mode lets you use push-to-talk and see who is talking even when you are outside of BitPal."
+    "value": "Overlay mode lets you use push-to-talk and see who is talking even when you are outside of WAI."
   },
   "PermissionOpenSettings": {
     "key": "PermissionOpenSettings",
@@ -12101,11 +12101,11 @@ export default {
   },
   "PermissionXiaomiLockscreen": {
     "key": "PermissionXiaomiLockscreen",
-    "value": "请授予 BitPal 在锁屏界面显示的权限以确保通话正常工作。"
+    "value": "请授予 WAI 在锁屏界面显示的权限以确保通话正常工作。"
   },
   "PermissionBackgroundLocation": {
     "key": "PermissionBackgroundLocation",
-    "value": "为了能够在此聊天共享您的实时位置，BitPal 需要随时访问您的位置权限，包括应用在后台运行时。\\n\\n我们将会在您设定时间范围内访问您的位置权限，您随时可以终止位置共享。除了位置分享之外，我们不会把您的位置权限用于其它目的。"
+    "value": "为了能够在此聊天共享您的实时位置，WAI 需要随时访问您的位置权限，包括应用在后台运行时。\\n\\n我们将会在您设定时间范围内访问您的位置权限，您随时可以终止位置共享。除了位置分享之外，我们不会把您的位置权限用于其它目的。"
   },
   "PermissionDrawAboveOtherAppsTitle": {
     "key": "PermissionDrawAboveOtherAppsTitle",
@@ -12181,7 +12181,7 @@ export default {
   },
   "ClearTelegramCache": {
     "key": "ClearTelegramCache",
-    "value": "清除 BitPal 缓存"
+    "value": "清除 WAI 缓存"
   },
   "StatisticOverview": {
     "key": "StatisticOverview",
@@ -12205,11 +12205,11 @@ export default {
   },
   "TelegramCacheSize": {
     "key": "TelegramCacheSize",
-    "value": "%s BitPal 缓存"
+    "value": "%s WAI 缓存"
   },
   "LocalDatabaseSize": {
     "key": "LocalDatabaseSize",
-    "value": "%s BitPal 本地数据库"
+    "value": "%s WAI 本地数据库"
   },
   "CacheWasCleared": {
     "key": "CacheWasCleared",
@@ -12441,7 +12441,7 @@ export default {
   },
   "Page1Title": {
     "key": "Page1Title",
-    "value": "BitPal"
+    "value": "WAI"
   },
   "Page2Title": {
     "key": "Page2Title",
@@ -12469,23 +12469,23 @@ export default {
   },
   "Page2Message": {
     "key": "Page2Message",
-    "value": "**BitPal** 以同类软件中最快的速度\\n为您传递消息"
+    "value": "**WAI** 以同类软件中最快的速度\\n为您传递消息"
   },
   "Page3Message": {
     "key": "Page3Message",
-    "value": "**BitPal** 永久免费，无广告\\n不收取任何费用"
+    "value": "**WAI** 永久免费，无广告\\n不收取任何费用"
   },
   "Page4Message": {
     "key": "Page4Message",
-    "value": "**BitPal** 保障您的消息安全\\n免受黑客攻击"
+    "value": "**WAI** 保障您的消息安全\\n免受黑客攻击"
   },
   "Page5Message": {
     "key": "Page5Message",
-    "value": "**BitPal** 不限制\\n文件和消息大小"
+    "value": "**WAI** 不限制\\n文件和消息大小"
   },
   "Page6Message": {
     "key": "Page6Message",
-    "value": "**BitPal** 让您能从\\n多个设备收发消息"
+    "value": "**WAI** 让您能从\\n多个设备收发消息"
   },
   "StartMessaging": {
     "key": "StartMessaging",
@@ -12541,15 +12541,15 @@ export default {
   },
   "VoipInCallBranding": {
     "key": "VoipInCallBranding",
-    "value": "BitPal Call"
+    "value": "WAI Call"
   },
   "VoipInVideoCallBranding": {
     "key": "VoipInVideoCallBranding",
-    "value": "BitPal 视频通话"
+    "value": "WAI 视频通话"
   },
   "VoipOutgoingCall": {
     "key": "VoipOutgoingCall",
-    "value": "进行中的 BitPal 通话"
+    "value": "进行中的 WAI 通话"
   },
   "VoipVoiceChat": {
     "key": "VoipVoiceChat",
@@ -12593,7 +12593,7 @@ export default {
   },
   "VoipRingtoneInfo": {
     "key": "VoipRingtoneInfo",
-    "value": "你可以自定义该联系人在 BitPal 上呼叫您时的铃声。"
+    "value": "你可以自定义该联系人在 WAI 上呼叫您时的铃声。"
   },
   "Calls": {
     "key": "Calls",
@@ -12729,7 +12729,7 @@ export default {
   },
   "VoipPeerVideoOutdated": {
     "key": "VoipPeerVideoOutdated",
-    "value": "抱歉，**%1$s** 使用的是不支持视频通话的旧版 BitPal。"
+    "value": "抱歉，**%1$s** 使用的是不支持视频通话的旧版 WAI。"
   },
   "VoipPeerVideoOutdatedMakeVoice": {
     "key": "VoipPeerVideoOutdatedMakeVoice",
@@ -12737,15 +12737,15 @@ export default {
   },
   "VoipRateCallAlert": {
     "key": "VoipRateCallAlert",
-    "value": "请对此次 BitPal Call 的质量作出评价"
+    "value": "请对此次 WAI Call 的质量作出评价"
   },
   "VoipNeedMicPermission": {
     "key": "VoipNeedMicPermission",
-    "value": "BitPal 需要访问您的麦克风来拨打电话。"
+    "value": "WAI 需要访问您的麦克风来拨打电话。"
   },
   "VoipNeedMicCameraPermission": {
     "key": "VoipNeedMicCameraPermission",
-    "value": "BitPal 电报需要访问您的麦克风和摄像头，以便您可以进行视频通话。"
+    "value": "WAI 电报需要访问您的麦克风和摄像头，以便您可以进行视频通话。"
   },
   "VoipFeedbackCommentHint": {
     "key": "VoipFeedbackCommentHint",
@@ -12769,11 +12769,11 @@ export default {
   },
   "CallViaTelegram": {
     "key": "CallViaTelegram",
-    "value": "BitPal 通话"
+    "value": "WAI 通话"
   },
   "VideoCallViaTelegram": {
     "key": "VideoCallViaTelegram",
-    "value": "BitPal 视频通话"
+    "value": "WAI 视频通话"
   },
   "VoipAudioRoutingEarpiece": {
     "key": "VoipAudioRoutingEarpiece",
@@ -12825,7 +12825,7 @@ export default {
   },
   "CallReportSent": {
     "key": "CallReportSent",
-    "value": "感谢您帮助 BitPal Call 变得更好。"
+    "value": "感谢您帮助 WAI Call 变得更好。"
   },
   "VoipAnsweringAsAccount": {
     "key": "VoipAnsweringAsAccount",
@@ -12837,7 +12837,7 @@ export default {
   },
   "VoipQuickRepliesExplain": {
     "key": "VoipQuickRepliesExplain",
-    "value": "拒接 BitPal 电话时，你可以使用以上的模板答复。您可以根据喜好来更改它们。"
+    "value": "拒接 WAI 电话时，你可以使用以上的模板答复。您可以根据喜好来更改它们。"
   },
   "QuickReplyDefault1": {
     "key": "QuickReplyDefault1",
@@ -12869,7 +12869,7 @@ export default {
   },
   "VoipInVideoCallBrandingWithName": {
     "key": "VoipInVideoCallBrandingWithName",
-    "value": "拨打 BitPal 视频电话给%s"
+    "value": "拨打 WAI 视频电话给%s"
   },
   "VoipErrorUnknown": {
     "key": "VoipErrorUnknown",
@@ -13309,51 +13309,51 @@ export default {
   },
   "TelegramContacts_zero": {
     "key": "TelegramContacts_zero",
-    "value": "%1$d 位 BitPal 用户有此联系人信息"
+    "value": "%1$d 位 WAI 用户有此联系人信息"
   },
   "TelegramContacts_one": {
     "key": "TelegramContacts_one",
-    "value": "%1$d 位 BitPal 用户有此联系人信息"
+    "value": "%1$d 位 WAI 用户有此联系人信息"
   },
   "TelegramContacts_two": {
     "key": "TelegramContacts_two",
-    "value": "%1$d 位 BitPal 用户有此联系人信息"
+    "value": "%1$d 位 WAI 用户有此联系人信息"
   },
   "TelegramContacts_few": {
     "key": "TelegramContacts_few",
-    "value": "%1$d 位 BitPal 用户有此联系人信息"
+    "value": "%1$d 位 WAI 用户有此联系人信息"
   },
   "TelegramContacts_many": {
     "key": "TelegramContacts_many",
-    "value": "%1$d 位 BitPal 用户有此联系人信息"
+    "value": "%1$d 位 WAI 用户有此联系人信息"
   },
   "TelegramContacts_other": {
     "key": "TelegramContacts_other",
-    "value": "%1$d 位 BitPal 用户有此联系人信息"
+    "value": "%1$d 位 WAI 用户有此联系人信息"
   },
   "InviteTextNum_zero": {
     "key": "InviteTextNum_zero",
-    "value": "嗨，我在和另外 %1$d 个联系人使用 BitPal 聊天。加入我们吧！从这里下载：%2$s"
+    "value": "嗨，我在和另外 %1$d 个联系人使用 WAI 聊天。加入我们吧！从这里下载：%2$s"
   },
   "InviteTextNum_one": {
     "key": "InviteTextNum_one",
-    "value": "嗨，我在和另外 %1$d 个联系人使用 BitPal 聊天。加入我们吧！从这里下载：%2$s"
+    "value": "嗨，我在和另外 %1$d 个联系人使用 WAI 聊天。加入我们吧！从这里下载：%2$s"
   },
   "InviteTextNum_two": {
     "key": "InviteTextNum_two",
-    "value": "嗨，我在和另外 %1$d 个联系人使用 BitPal 聊天。加入我们吧！从这里下载：%2$s"
+    "value": "嗨，我在和另外 %1$d 个联系人使用 WAI 聊天。加入我们吧！从这里下载：%2$s"
   },
   "InviteTextNum_few": {
     "key": "InviteTextNum_few",
-    "value": "嗨，我在和另外 %1$d 个联系人使用 BitPal 聊天。加入我们吧！从这里下载：%2$s"
+    "value": "嗨，我在和另外 %1$d 个联系人使用 WAI 聊天。加入我们吧！从这里下载：%2$s"
   },
   "InviteTextNum_many": {
     "key": "InviteTextNum_many",
-    "value": "嗨，我在和另外 %1$d 个联系人使用 BitPal 聊天。加入我们吧！从这里下载：%2$s"
+    "value": "嗨，我在和另外 %1$d 个联系人使用 WAI 聊天。加入我们吧！从这里下载：%2$s"
   },
   "InviteTextNum_other": {
     "key": "InviteTextNum_other",
-    "value": "嗨，我在和另外 %1$d 个联系人使用 BitPal 聊天。加入我们吧！从这里下载：%2$s"
+    "value": "嗨，我在和另外 %1$d 个联系人使用 WAI 聊天。加入我们吧！从这里下载：%2$s"
   },
   "Chats_zero": {
     "key": "Chats_zero",
@@ -15849,11 +15849,11 @@ export default {
   },
   "AllowReadCallAndSms": {
     "key": "AllowReadCallAndSms",
-    "value": "请允许 BitPal 接收来电，以便自动验证您的手机号码。"
+    "value": "请允许 WAI 接收来电，以便自动验证您的手机号码。"
   },
   "AllowReadSms": {
     "key": "AllowReadSms",
-    "value": "请授予 BitPal 短信权限以便我们自动读取验证码。"
+    "value": "请授予 WAI 短信权限以便我们自动读取验证码。"
   },
   "AlwaysAllowPlaceholder": {
     "key": "AlwaysAllowPlaceholder",
@@ -15921,7 +15921,7 @@ export default {
   },
   "CreateNewThemeInfo": {
     "key": "CreateNewThemeInfo",
-    "value": "您可以在应用内修改其颜色来创建您自己的主题。您可以在任何时候在这里还原为 BitPal 默认的主题。"
+    "value": "您可以在应用内修改其颜色来创建您自己的主题。您可以在任何时候在这里还原为 WAI 默认的主题。"
   },
   "DeleteAccountIfAwayFor": {
     "key": "DeleteAccountIfAwayFor",
@@ -15937,7 +15937,7 @@ export default {
   },
   "DiceInfo": {
     "key": "DiceInfo",
-    "value": "将 🎲 发送到任意对话来从 BitPal 获得一个随机数。"
+    "value": "将 🎲 发送到任意对话来从 WAI 获得一个随机数。"
   },
   "DiscussionChannelGroupSetHelp": {
     "key": "DiscussionChannelGroupSetHelp",
@@ -16093,7 +16093,7 @@ export default {
   },
   "PassportInfo": {
     "key": "PassportInfo",
-    "value": "通过使用 BitPal Passport，您可以方便地注册需要实名认证网站和服务。\\n\\n您的信息、个人数据和档案受端到端加密保护。没有人，包括 BitPal，可以在未经您许可的情况下访问它们。\\n\\n您可以阅读我们的 FAQ 来了解更多信息。"
+    "value": "通过使用 WAI Passport，您可以方便地注册需要实名认证网站和服务。\\n\\n您的信息、个人数据和档案受端到端加密保护。没有人，包括 WAI，可以在未经您许可的情况下访问它们。\\n\\n您可以阅读我们的 FAQ 来了解更多信息。"
   },
   "PassportSDK_Cancel": {
     "key": "PassportSDK_Cancel",
@@ -16101,11 +16101,11 @@ export default {
   },
   "PassportSDK_DownloadTelegram": {
     "key": "PassportSDK_DownloadTelegram",
-    "value": "你需要 BitPal 来登陆 **%s**。你想现在安装吗？"
+    "value": "你需要 WAI 来登陆 **%s**。你想现在安装吗？"
   },
   "PassportSDK_LogInWithTelegram": {
     "key": "PassportSDK_LogInWithTelegram",
-    "value": "通过 BitPal 登录"
+    "value": "通过 WAI 登录"
   },
   "PassportSDK_OpenGooglePlay": {
     "key": "PassportSDK_OpenGooglePlay",
@@ -16113,7 +16113,7 @@ export default {
   },
   "PassportSDK_TelegramPassport": {
     "key": "PassportSDK_TelegramPassport",
-    "value": "BitPal Passport"
+    "value": "WAI Passport"
   },
   "PendingEmailText": {
     "key": "PendingEmailText",
@@ -16153,7 +16153,7 @@ export default {
   },
   "PrivacyPaymentsClearInfo": {
     "key": "PrivacyPaymentsClearInfo",
-    "value": "您可以删除您的配送信息并通知所有的支付服务提供商清除您已保存的信用卡信息。请注意：BitPal 从来不会存储您的信用卡数据。"
+    "value": "您可以删除您的配送信息并通知所有的支付服务提供商清除您已保存的信用卡信息。请注意：WAI 从来不会存储您的信用卡数据。"
   },
   "Question": {
     "key": "Question",
@@ -16253,7 +16253,7 @@ export default {
   },
   "SyncContactsDeleteInfo": {
     "key": "SyncContactsDeleteInfo",
-    "value": "这将把你的通讯录信息从 BitPal 服务端删除。如果“同步通讯录”选项处于启用状态，通讯录信息将被重新同步。"
+    "value": "这将把你的通讯录信息从 WAI 服务端删除。如果“同步通讯录”选项处于启用状态，通讯录信息将被重新同步。"
   },
   "TerminateWebSessionQuestion": {
     "key": "TerminateWebSessionQuestion",
@@ -16297,7 +16297,7 @@ export default {
   },
   "download_telegram_text": {
     "key": "download_telegram_text",
-    "value": "你需要 BitPal 来登陆 **%s**。你想现在安装吗？"
+    "value": "你需要 WAI 来登陆 **%s**。你想现在安装吗？"
   },
   "formatDateScheduleDay": {
     "key": "formatDateScheduleDay",
@@ -16305,11 +16305,11 @@ export default {
   },
   "login_with_telegram": {
     "key": "login_with_telegram",
-    "value": "通过 BitPal 登录"
+    "value": "通过 WAI 登录"
   },
   "telegram_passport": {
     "key": "telegram_passport",
-    "value": "BitPal Passport"
+    "value": "WAI Passport"
   },
   "LocationNotifiationButton": {
     "key": "LocationNotifiationButton",

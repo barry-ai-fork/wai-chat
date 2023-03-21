@@ -126,12 +126,13 @@ export async function msgHandler(pdu:Pdu,account:Account){
           const history = await msgModel.getAiMsgHistory();
           const msgModelBotReply = new Msg({user_id,chatId,senderId:chatId});
           await msgModelBotReply.sendText(TEXT_AI_THINKING);
-          const [error,reply] = await sendMessageToChatGPT(msgModel.getMsgText(),history);
+          let [error,reply] = await sendMessageToChatGPT(msgModel.getMsgText(),history);
           if(!error){
+            reply = reply.replace("```html","```");
+            console.log(reply)
             msgModelBotReply.aiRole = AiChatRole.ASSISTANT;
             msgModel.aiRole = AiChatRole.USER;
           }
-
           msgModel.save().catch(console.error);
           msgModelBotReply.sendText(reply,"updateMessageSendSucceeded",{},msgModelBotReply.msg?.id)
           msgModelBotReply.save().catch(console.error)

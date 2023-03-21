@@ -625,6 +625,24 @@ var $conv_message = $createConverter([
                 },
                 AuthStep2Res: {
                     '$': {"100":["err","uint32",0]}
+                },
+                UpdateProfileReq: {
+                    '$': {"1":["firstName","string",""],"2":["lastName","string",""],"3":["about","string",""]}
+                },
+                UpdateProfileRes: {
+                    '$': {"100":["err","uint32",0]}
+                },
+                UpdateUsernameReq: {
+                    '$': {"1":["username","string",""]}
+                },
+                UpdateUsernameRes: {
+                    '$': {"100":["err","uint32",0]}
+                },
+                UploadProfilePhotoReq: {
+                    '$': {"1":["id","string",""],"2":["is_video","bool",false],"3":["thumbnail","string",""]}
+                },
+                UploadProfilePhotoRes: {
+                    '$': {"1":["payload","string",""],"100":["err","uint32",0]}
                 }
             },
             Chats: {

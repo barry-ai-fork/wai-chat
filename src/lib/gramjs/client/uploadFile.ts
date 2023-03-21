@@ -7,7 +7,7 @@ import { getUploadPartSize } from '../Utils';
 import errors from '../errors';
 import { Foreman } from '../../../util/foreman';
 import {UploadReq} from "../../ptp/protobuf/PTPFile";
-import {BASE_API} from "../../../config";
+import {BASE_API, DEBUG} from "../../../config";
 import {FileInfo} from "../../ptp/protobuf/PTPCommon";
 import localDb from "../../../api/gramjs/localDb";
 
@@ -20,7 +20,7 @@ interface OnProgress {
 
 export interface UploadFileParams {
     file: File;
-    workers: number;
+    workers?: number;
     onProgress?: OnProgress;
 }
 
@@ -49,7 +49,6 @@ export async function uploadFileV1(
 
     const partSize = getUploadPartSize(size) * KB_TO_BYTES;
     const partCount = Math.floor((size + partSize - 1) / partSize);
-
     // Pick the least busy foreman
     // For some reason, fresh connections give out a higher speed for the first couple of seconds
     // I have no idea why, but this may speed up the download of small files
@@ -77,10 +76,14 @@ export async function uploadFileV1(
 
         const blobSlice = file.slice(i * partSize, (i + 1) * partSize);
         // eslint-disable-next-line no-loop-func, @typescript-eslint/no-loop-func
+
         promises.push((async (jMemo: number, blobSliceMemo: Blob) => {
             // eslint-disable-next-line no-constant-condition
             while (true) {
                 try {
+                    if(DEBUG){
+                        console.log("uploadProfilePhoto",fileIdStr,jMemo,partCount)
+                    }
                     const partBytes = await blobSliceMemo.arrayBuffer();
                     const buf = Buffer.from(partBytes)
                     const fileInfo = {
@@ -88,12 +91,12 @@ export async function uploadFileV1(
                         size,
                         type:file.type,
                         part:jMemo,
-                        part_total:isLarge ? partCount: undefined,
+                        part_total:partCount,
                         buf
                     }
                     const uploadReq = new UploadReq({file:fileInfo})
                     const body = Buffer.from(uploadReq.pack().getPbData());
-                    await fetch(`${BASE_API}/upload`,{
+                    await fetch(`${BASE_API}/proto`,{
                         method: 'POST',
                         body
                     })

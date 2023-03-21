@@ -89,7 +89,6 @@ const ProfilePhoto: FC<OwnProps> = ({
   }, [canPlayVideo]);
 
   let content: TeactNode | undefined;
-
   if (isSavedMessages) {
     content = <i className="icon-avatar-saved-messages" />;
   } else if (isDeleted) {
@@ -137,6 +136,16 @@ const ProfilePhoto: FC<OwnProps> = ({
     content = (
       <div className="spinner-wrapper">
         <Spinner color="white" />
+      </div>
+    );
+  }
+
+  if(!content){
+    content = (
+      <div className="spinner-wrapper">
+        <label style={'display:inline-flex'}role="button" title="Edit your profile photo">
+          <i className="icon-camera-add" style={'font-size:48px'}></i>
+        </label>
       </div>
     );
   }

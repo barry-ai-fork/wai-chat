@@ -124,6 +124,18 @@ export function imgToCanvas(img: HTMLImageElement) {
   return canvas;
 }
 
+export function imgToBlob(imageFile:File) {
+  const reader = new FileReader();
+  return new Promise<Blob>((resolve, reject) => {
+    reader.onload = () => {
+      const blob = new Blob([reader.result!], {type: imageFile.type});
+      resolve(blob);
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(imageFile);
+  });
+}
+
 export function hasPreview(file: File) {
   return CONTENT_TYPES_WITH_PREVIEW.has(file.type);
 }

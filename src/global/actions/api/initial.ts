@@ -3,14 +3,14 @@ import {addActionHandler, getGlobal, setGlobal,} from '../../index';
 import {callApi, callApiLocal, initApi} from '../../../api/gramjs';
 
 import {
-  CUSTOM_BG_CACHE_NAME, GLOBAL_STATE_CACHE_KEY,
+  CUSTOM_BG_CACHE_NAME,
+  GLOBAL_STATE_CACHE_KEY,
   IS_TEST,
   LANG_CACHE_NAME,
   LOCK_SCREEN_ANIMATION_DURATION_MS,
   MEDIA_CACHE_NAME,
   MEDIA_CACHE_NAME_AVATARS,
   MEDIA_PROGRESSIVE_CACHE_NAME,
-  SESSION_TOKEN,
 } from '../../../config';
 import {IS_MOV_SUPPORTED, IS_WEBM_SUPPORTED, MAX_BUFFER_SIZE, PLATFORM_ENV,} from '../../../util/environment';
 import {unsubscribe} from '../../../util/notifications';
@@ -34,11 +34,13 @@ import parseMessageInput from "../../../util/parseMessageInput";
 import Account from "../../../worker/share/Account";
 import {ApiUpdateConnectionStateType} from "../../../api/types";
 import LocalStorage from "../../../worker/share/db/LocalStorage";
-import {AuthPreLoginReq, AuthPreLoginRes} from "../../../lib/ptp/protobuf/PTPAuth";
+import {AuthPreLoginReq, AuthPreLoginRes, UploadProfilePhotoRes} from "../../../lib/ptp/protobuf/PTPAuth";
 import {getCurrentTabId} from "../../../util/establishMultitabRole";
 import {SendRes} from "../../../lib/ptp/protobuf/PTPMsg";
 import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
 import {sha1} from '../../../worker/helpers/cryptoHelpers';
+import UploadProfilePhotoReq from "../../../lib/ptp/protobuf/PTPAuth/UploadProfilePhotoReq";
+import {addCustomEmojiInputRenderCallback} from "../../../util/customEmojiManager";
 
 addActionHandler('updateGlobal', (global,action,payload): ActionReturnType => {
   return {
@@ -85,7 +87,7 @@ const handleRecvMsg = (global:any,actions:any,action:string,data:any)=>{
         ...entities
       }
     }else{
-      msg.content.text.entities =entities
+      msg.content.text.entities = entities
     }
   }
 
@@ -329,15 +331,25 @@ addActionHandler('uploadProfilePhoto', async (global, actions, payload): Promise
   const {
     file, isFallback, isVideo, videoTs,
   } = payload!;
-
+  debugger
   const result = await callApi('uploadProfilePhoto', file, isFallback, isVideo, videoTs);
   if (!result) return;
-
+  debugger
+  let res = await MsgConn.getMsgClient()?.sendPduWithCallback(new UploadProfilePhotoReq(result).pack())
+  if (!res) return;
+  const uploadProfilePhotoRes = UploadProfilePhotoRes.parseMsg(res)
+  if(uploadProfilePhotoRes.err !== ERR.NO_ERROR){
+    return;
+  }
+  const user  = JSON.parse(uploadProfilePhotoRes.payload!)
   global = getGlobal();
-  global = addUsers(global, buildCollectionByKey(result.users, 'id'));
+  global = addUsers(global, buildCollectionByKey([{
+    ...global.users.byId[global.currentUserId!],
+    ...user
+  }], 'id'));
   setGlobal(global);
 
-  actions.loadFullUser({ userId: global.currentUserId! });
+  // actions.loadFullUser({ userId: global.currentUserId! });
 });
 
 addActionHandler('signUp', (global, actions, payload): ActionReturnType => {

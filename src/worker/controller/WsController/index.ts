@@ -1,6 +1,6 @@
 import {genUserId} from "../AuthController";
 import {randomize} from "worktop/utils";
-import {getInitSystemBots, initSystemBot} from "../UserController";
+import {getInitSystemBots, initSystemBot, uploadProfilePhotoReq,updateProfile,updateUsername} from "../UserController";
 import {ENV, kv} from "../../helpers/env";
 import Account from "../../share/Account";
 import {ActionCommands, getActionCommandsName} from "../../../lib/ptp/protobuf/ActionCommands";
@@ -225,26 +225,51 @@ export default async function (event:FetchEvent){
 
 export async function _ApiMsg(pdu:Pdu,account:Account){
   let pduRsp:Pdu | undefined = undefined;
-  switch (pdu.getCommandId()){
-    case ActionCommands.CID_MsgListReq:
-    case ActionCommands.CID_MsgDeleteReq:
-    case ActionCommands.CID_MsgUpdateReq:
-    case ActionCommands.CID_SendReq:
-      await msgHandler(pdu,account);
-      break;
-    case ActionCommands.CID_LoadChatsReq:
-      await initSystemBot(getInitSystemBots());
-      const loadChatsReq = LoadChatsReq.parseMsg(pdu);
-      // console.log(">>>loadChatsReq",loadChatsReq)
-      let user_id = account.getUid() || undefined;
-      pduRsp = new LoadChatsRes({
-        err:ERR.NO_ERROR,
-        payload:JSON.stringify(await User.loadChats(user_id))
-      }).pack();
-      break
-    default:
+
+  switch (pdu.getCommandId()) {
+    case ActionCommands.CID_UpdateProfileReq:
+    case ActionCommands.CID_UpdateUsernameReq:
+    case ActionCommands.CID_UploadProfilePhotoReq:
+      if (!account.getUid()) {
+        pduRsp = new OtherNotify({
+            err:ERR.ERR_AUTH_NEED
+        }).pack()
+        pduRsp.updateSeqNo(pdu.getSeqNum())
+      }
       break
   }
+  if(!pduRsp){
+    switch (pdu.getCommandId()){
+      case ActionCommands.CID_UploadProfilePhotoReq:
+        await uploadProfilePhotoReq(pdu,account)
+        break
+      case ActionCommands.CID_UpdateProfileReq:
+        await updateProfile(pdu,account)
+        break
+      case ActionCommands.CID_UpdateUsernameReq:
+        await updateUsername(pdu,account)
+        break
+      case ActionCommands.CID_MsgListReq:
+      case ActionCommands.CID_MsgDeleteReq:
+      case ActionCommands.CID_MsgUpdateReq:
+      case ActionCommands.CID_SendReq:
+        await msgHandler(pdu,account);
+        break;
+      case ActionCommands.CID_LoadChatsReq:
+        await initSystemBot(getInitSystemBots());
+        const loadChatsReq = LoadChatsReq.parseMsg(pdu);
+        // console.log(">>>loadChatsReq",loadChatsReq)
+        let user_id = account.getUid() || undefined;
+        pduRsp = new LoadChatsRes({
+          err:ERR.NO_ERROR,
+          payload:JSON.stringify(await User.loadChats(user_id))
+        }).pack();
+        break
+      default:
+        break
+    }
+  }
+
   if(pduRsp){
     pduRsp.updateSeqNo(pdu.getSeqNum())
     account.sendPdu(pduRsp);

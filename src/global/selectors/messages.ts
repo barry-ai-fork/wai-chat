@@ -991,7 +991,7 @@ function selectShouldDisplayReplyKeyboard<T extends GlobalState>(global: T, mess
     isKeyboardSelective,
     isMentioned,
     replyToMessageId,
-  } = message;
+  } = message || {};
   if (!keyboardButtons || shouldHideKeyboardButtons) return false;
 
   if (isKeyboardSelective) {

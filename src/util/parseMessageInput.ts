@@ -23,6 +23,12 @@ const MAX_TAG_DEEPNESS = 3;
 export default function parseMessageInput(
   html: string, withMarkdownLinks = false, skipMarkdown = false,
 ): ApiFormattedText {
+  if(html.indexOf("```html") !== -1){
+    return {
+      text:html,
+      entities: undefined,
+    };
+  }
   const fragment = document.createElement('div');
   fragment.innerHTML = skipMarkdown ? html
     : withMarkdownLinks ? parseMarkdown(parseMarkdownLinks(html)) : parseMarkdown(html);
@@ -76,6 +82,9 @@ export function fixImageContent(fragment: HTMLDivElement) {
 }
 
 function parseMarkdown(html: string) {
+  if(html.indexOf("```html") !== -1){
+    return html
+  }
   let parsedHtml = html.slice(0);
 
   // Strip redundant nbsp's
@@ -129,7 +138,6 @@ function parseMarkdown(html: string) {
     /(^|\s)(?!<(code|pre)[^<]*|<\/)[|]{2}([^|\n]+)[|]{2}(?![^<]*<\/(code|pre)>)(\s|$)/g,
     `$1<span data-entity-type="${ApiMessageEntityTypes.Spoiler}">$3</span>$5`,
   );
-
   return parsedHtml;
 }
 

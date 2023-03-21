@@ -78,74 +78,82 @@ const SettingsMain: FC<OwnProps & StateProps> = ({
             forceShowSelf
           />
         )}
-        <ListItem
-          icon="settings"
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onScreenSelect(SettingsScreens.General)}
-        >
-          {lang('Telegram.GeneralSettingsViewController')}
-        </ListItem>
-        <ListItem
-          icon="unmute"
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onScreenSelect(SettingsScreens.Notifications)}
-        >
-          {lang('Notifications')}
-        </ListItem>
-        <ListItem
-          icon="data"
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onScreenSelect(SettingsScreens.DataStorage)}
-        >
-          {lang('DataSettings')}
-        </ListItem>
-        <ListItem
-          icon="lock"
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onScreenSelect(SettingsScreens.Privacy)}
-        >
-          {lang('PrivacySettings')}
-        </ListItem>
-        <ListItem
-          icon="folder"
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onScreenSelect(SettingsScreens.Folders)}
-        >
-          {lang('Filters')}
-        </ListItem>
-        <ListItem
-          icon="active-sessions"
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onScreenSelect(SettingsScreens.ActiveSessions)}
-        >
-          {lang('SessionsTitle')}
-          {sessionCount > 0 && (<span className="settings-item__current-value">{sessionCount}</span>)}
-        </ListItem>
-        <ListItem
-          icon="language"
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onScreenSelect(SettingsScreens.Language)}
-        >
-          {lang('Language')}
-          <span className="settings-item__current-value">{lang.langName}</span>
-        </ListItem>
-        <ListItem
-          icon="stickers"
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onScreenSelect(SettingsScreens.Stickers)}
-        >
-          {lang('StickersName')}
-        </ListItem>
-        {canBuyPremium && (
-          <ListItem
-            leftElement={<PremiumIcon withGradient big />}
-            className="settings-main-menu-premium"
-            // eslint-disable-next-line react/jsx-no-bind
-            onClick={() => openPremiumModal()}
-          >
-            {lang('TelegramPremium')}
-          </ListItem>
-        )}
+        {/*<ListItem*/}
+        {/*  icon="settings"*/}
+        {/*  // eslint-disable-next-line react/jsx-no-bind*/}
+        {/*  onClick={() => onScreenSelect(SettingsScreens.General)}*/}
+        {/*>*/}
+        {/*  {lang('Telegram.GeneralSettingsViewController')}*/}
+        {/*</ListItem>*/}
+        {/*<ListItem*/}
+        {/*  icon="unmute"*/}
+        {/*  // eslint-disable-next-line react/jsx-no-bind*/}
+        {/*  onClick={() => onScreenSelect(SettingsScreens.Notifications)}*/}
+        {/*>*/}
+        {/*  {lang('Notifications')}*/}
+        {/*</ListItem>*/}
+        {/*<ListItem*/}
+        {/*  icon="data"*/}
+        {/*  // eslint-disable-next-line react/jsx-no-bind*/}
+        {/*  onClick={() => onScreenSelect(SettingsScreens.DataStorage)}*/}
+        {/*>*/}
+        {/*  {lang('DataSettings')}*/}
+        {/*</ListItem>*/}
+        {/*<ListItem*/}
+        {/*  icon="lock"*/}
+        {/*  // eslint-disable-next-line react/jsx-no-bind*/}
+        {/*  onClick={() => onScreenSelect(SettingsScreens.Privacy)}*/}
+        {/*>*/}
+        {/*  {lang('PrivacySettings')}*/}
+        {/*</ListItem>*/}
+        {/*<ListItem*/}
+        {/*  icon="folder"*/}
+        {/*  // eslint-disable-next-line react/jsx-no-bind*/}
+        {/*  onClick={() => onScreenSelect(SettingsScreens.Folders)}*/}
+        {/*>*/}
+        {/*  {lang('Filters')}*/}
+        {/*</ListItem>*/}
+        {/*<ListItem*/}
+        {/*  icon="active-sessions"*/}
+        {/*  // eslint-disable-next-line react/jsx-no-bind*/}
+        {/*  onClick={() => onScreenSelect(SettingsScreens.ActiveSessions)}*/}
+        {/*>*/}
+        {/*  {lang('SessionsTitle')}*/}
+        {/*  {sessionCount > 0 && (<span className="settings-item__current-value">{sessionCount}</span>)}*/}
+        {/*</ListItem>*/}
+        {/*<ListItem*/}
+        {/*  icon="language"*/}
+        {/*  // eslint-disable-next-line react/jsx-no-bind*/}
+        {/*  onClick={() => onScreenSelect(SettingsScreens.Language)}*/}
+        {/*>*/}
+        {/*  {lang('Language')}*/}
+        {/*  <span className="settings-item__current-value">{lang.langName}</span>*/}
+        {/*</ListItem>*/}
+        {/*<ListItem*/}
+        {/*  icon="stickers"*/}
+        {/*  // eslint-disable-next-line react/jsx-no-bind*/}
+        {/*  onClick={() => onScreenSelect(SettingsScreens.Stickers)}*/}
+        {/*>*/}
+        {/*  {lang('StickersName')}*/}
+        {/*</ListItem>*/}
+        {/*{canBuyPremium && (*/}
+        {/*  <ListItem*/}
+        {/*    leftElement={<PremiumIcon withGradient big />}*/}
+        {/*    className="settings-main-menu-premium"*/}
+        {/*    // eslint-disable-next-line react/jsx-no-bind*/}
+        {/*    onClick={() => openPremiumModal()}*/}
+        {/*  >*/}
+        {/*    {lang('TelegramPremium')}*/}
+        {/*  </ListItem>*/}
+        {/*)}*/}
+        {/*  <ListItem*/}
+        {/*    leftElement={<PremiumIcon withGradient big />}*/}
+        {/*    className="settings-main-menu-premium"*/}
+        {/*    // eslint-disable-next-line react/jsx-no-bind*/}
+        {/*    onClick={() => openPremiumModal()}*/}
+        {/*  >*/}
+        {/*    {lang('TelegramPremium')}*/}
+        {/*  </ListItem>*/}
       </div>
     </div>
   );

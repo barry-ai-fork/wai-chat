@@ -11,7 +11,7 @@ import {
   preloadVideo,
   createPosterForVideo,
 } from '../../../../util/files';
-import { scaleImage } from '../../../../util/imageResize';
+import {resizeImage, scaleImage} from '../../../../util/imageResize';
 
 const MAX_QUICK_IMG_SIZE = 1280; // px
 const FILE_EXT_REGEX = /\.[^/.]+$/;
@@ -24,17 +24,18 @@ export default async function buildAttachment(
   let quick;
   let audio;
   let previewBlobUrl;
+  let thumbBlobUrl;
 
   if (SUPPORTED_IMAGE_CONTENT_TYPES.has(mimeType)) {
     const img = await preloadImage(blobUrl);
     const { width, height } = img;
     const shouldShrink = Math.max(width, height) > MAX_QUICK_IMG_SIZE;
     const isGif = mimeType === GIF_MIME_TYPE;
-
     if (!options?.compressedBlobUrl && !isGif && (shouldShrink || mimeType !== 'image/jpeg')) {
       const resizedUrl = await scaleImage(
         blobUrl, shouldShrink ? MAX_QUICK_IMG_SIZE / Math.max(width, height) : 1, 'image/jpeg',
       );
+
       URL.revokeObjectURL(blobUrl);
       return buildAttachment(filename, blob, {
         compressedBlobUrl: resizedUrl,
@@ -47,11 +48,15 @@ export default async function buildAttachment(
 
     quick = { width, height };
     previewBlobUrl = blobUrl;
+    thumbBlobUrl =  await resizeImage(
+      blobUrl, 40,40, 'image/jpeg',0.1
+    );
   } else if (SUPPORTED_VIDEO_CONTENT_TYPES.has(mimeType)) {
     const { videoWidth: width, videoHeight: height, duration } = await preloadVideo(blobUrl);
     quick = { width, height, duration };
 
     previewBlobUrl = await createPosterForVideo(blobUrl);
+
   } else if (SUPPORTED_AUDIO_CONTENT_TYPES.has(mimeType)) {
     const {
       duration, title, performer, coverUrl,
@@ -62,10 +67,12 @@ export default async function buildAttachment(
       performer,
     };
     previewBlobUrl = coverUrl;
+
   }
 
   return {
     blobUrl,
+    thumbBlobUrl,
     filename,
     mimeType,
     size,
