@@ -34,6 +34,15 @@ import useAppLayout from '../../../hooks/useAppLayout';
 
 import ProgressSpinner from '../../ui/ProgressSpinner';
 import MediaSpoiler from '../../common/MediaSpoiler';
+import {getPasswordFromEvent} from "../../../worker/share/utils/utils";
+import {blobToBuffer, blobToDataUri, fetchBlob} from "../../../util/files";
+import {
+  readBytes,
+  readInt16,
+  wrapByteBuffer,
+} from "../../../lib/ptp/protobuf/BaseMsg";
+import Account from "../../../worker/share/Account";
+import {getGlobal} from "../../../global";
 
 export type OwnProps = {
   id?: string;
@@ -55,6 +64,8 @@ export type OwnProps = {
   onClick?: (id: number) => void;
   onCancelUpload?: (message: ApiMessage) => void;
 };
+
+export const photosMap:Record<string, string> = {}
 
 const Photo: FC<OwnProps> = ({
   id,
@@ -78,6 +89,8 @@ const Photo: FC<OwnProps> = ({
 }) => {
   // eslint-disable-next-line no-null/no-null
   const ref = useRef<HTMLDivElement>(null);
+
+  const [decryptUrl,setDecryptUrl] = useState("");
 
   const photo = (getMessagePhoto(message) || getMessageWebPagePhoto(message))!;
   const localBlobUrl = photo.blobUrl;
@@ -124,7 +137,7 @@ const Photo: FC<OwnProps> = ({
     transitionClassNames: downloadButtonClassNames,
   } = useShowTransition(!fullMediaData && !isLoadAllowed);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(async () => {
     if (isUploading) {
       onCancelUpload?.(message);
       return;
@@ -136,6 +149,33 @@ const Photo: FC<OwnProps> = ({
     }
 
     if (isSpoilerShown) {
+      if(message.chatId === getGlobal().currentUserId){
+        const data = await fetchBlob(fullMediaData);
+        const buf = await blobToBuffer(data);
+        const bb = wrapByteBuffer(buf);
+        const encryptTypeLne = readInt16(bb)
+        const encryptType = readBytes(bb,encryptTypeLne)
+        if(encryptType.toString() === "EN"){
+          const typeLen = readInt16(bb)
+          const type = readBytes(bb,typeLen);
+          if(type.toString().indexOf("image/") === 0){
+            const hintLen = readInt16(bb)
+            let hint
+            if(hintLen){
+              hint = readBytes(bb,hintLen);
+              hint = hint.toString();
+            }
+            const {password} = await getPasswordFromEvent(hint,true);
+            const body = buf.subarray(2 * 3 + encryptTypeLne + typeLen + hintLen)
+            const decryptData = await Account.getCurrentAccount()?.decryptByPrvKey(body,password);
+            const uri = await blobToDataUri(new Blob([Buffer.from(decryptData!)],{type:"image/jpeg"}))
+            setDecryptUrl(uri);
+            photosMap[getMessageMediaHash(message, 'full')!] = uri;
+            photosMap[getMessageMediaHash(message, 'preview')!] = uri;
+          }
+        }
+      }
+
       hideSpoiler();
       return;
     }
@@ -184,11 +224,12 @@ const Photo: FC<OwnProps> = ({
       onClick={isUploading ? undefined : handleClick}
     >
       <img
-        src={fullMediaData}
+        src={decryptUrl ? decryptUrl : fullMediaData}
         className="full-media"
         alt=""
         draggable={!isProtected}
       />
+
       {withThumb && (
         <canvas ref={thumbRef} className={buildClassName('thumbnail', thumbClassNames)} />
       )}

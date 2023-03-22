@@ -16463,4 +16463,37 @@ export default {
     "key": "InputAttach.Popover.Photo",
     "value": "上传图像"
   },
+  "PasswordTipsCheck": {
+    "key": "PasswordTipsCheck",
+    "value": "密码需要包含大小写字母至少8个字符"
+  },
+  "PasswordTipsLocalHint": {
+    "key": "PasswordTipsLocalHint",
+    "value": "提示(可选)"
+  },
+  "PasswordTipsLocalStorage": {
+    "key": "PasswordTipsLocalStorage",
+    "value": "消息加密密码不会存储服务器,跟账户助记词直接相关，请牢记消息加密密码和妥善保管助记词"
+  },
+  "PasswordTipsLocalStorage1": {
+    "key": "PasswordTipsLocalStorage1",
+    "value": "可以为每个密码设置提示,但提示不要包含密码,便于密码管理"
+  },
+  "PasswordTipsLocalPlaceholder": {
+    "key": "PasswordTipsLocalPlaceholder",
+    "value": "请输入消息加密密码"
+  },
+  "PasswordTipsLoginPlaceholder": {
+    "key": "PasswordTipsLoginPlaceholder",
+    "value": "请输入登录密码"
+  },
+  "PasswordNotValid": {
+    "key": "PasswordNotValid",
+    "value": "密码不正确"
+  },
+  "DecryptError": {
+    "key": "DecryptError",
+    "value": "解密失败"
+  },
+
 } as ApiLangPack;

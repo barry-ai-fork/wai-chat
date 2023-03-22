@@ -1,5 +1,6 @@
 import {sha256} from "ethereum-cryptography/sha256";
-import {decrypt, encrypt} from "ethereum-cryptography/aes";
+import * as EthEcies from '../../lib/ptp/wallet/EthEcies';
+
 import {ecdh} from "ethereum-cryptography/secp256k1";
 import Mnemonic from "../../lib/ptp/wallet/Mnemonic";
 import Wallet from "../../lib/ptp/wallet/Wallet";
@@ -10,6 +11,7 @@ import CloudFlareKv from "./db/CloudFlareKv";
 import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
 import {AuthLoginReq_Type} from "../../lib/ptp/protobuf/PTPAuth/types";
 import {getActionCommandsName} from "../../lib/ptp/protobuf/ActionCommands";
+import {decrypt, encrypt} from "ethereum-cryptography/aes";
 
 const KEY_PREFIX = "KEY_";
 const SESSION_PREFIX = "SI_";
@@ -150,6 +152,22 @@ export default class Account {
     let mnemonic = new Mnemonic();
     this.entropy = mnemonic.toEntropy();
   }
+  async encryptByPubKey(plain:Buffer,password?:string):Promise<Buffer>{
+    const entropy = await this.getEntropy();
+    let wallet = new Wallet(Mnemonic.fromEntropy(entropy),password);
+    let { pubKey_ } = wallet.getPTPWallet(0);
+    const encrypted = EthEcies.encrypt(pubKey_, plain);
+    return encrypted
+  }
+
+  async decryptByPrvKey(cipher:Buffer,password?:string ):Promise<Buffer>{
+    const entropy = await this.getEntropy();
+    let wallet = new Wallet(Mnemonic.fromEntropy(entropy),password);
+    let { prvKey } = wallet.getPTPWallet(0);
+    const decrypted = EthEcies.decrypt(prvKey, cipher);
+    return decrypted
+  }
+
   async getEntropy() {
     if(this.entropy){
       return this.entropy

@@ -59,7 +59,7 @@ const PasswordForm: FC<OwnProps> = ({
   const focusDelayTimeoutMs = isMobile ? 550 : 400;
 
   useEffect(() => {
-    if (shouldResetValue) {
+    if (shouldResetValue && !TEST_PWD) {
       setPassword('');
     }
   }, [shouldResetValue]);

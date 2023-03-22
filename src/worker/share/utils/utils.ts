@@ -1,4 +1,5 @@
 
+
 export function generateRandomString(length:number) {
   let result = '';
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -176,4 +177,39 @@ export function sha1(str: string): string {
   let result =
     cvt_hex(H0) + cvt_hex(H1) + cvt_hex(H2) + cvt_hex(H3) + cvt_hex(H4);
   return result.toLowerCase();
+}
+
+export function replaceSubstring(text:string, offset:number, length:number,replace:string) {
+  const prefix = text.substring(0, offset);
+  const suffix = text.substring(offset + length);
+  return prefix + replace + suffix;
+
+}
+export function fetchWithTimeout(url: RequestInfo | URL, options: RequestInit | undefined, timeout = 10000) {
+  return Promise.race([
+    fetch(url, options),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`Timeout: ${timeout}s`)), timeout)
+    )
+  ]);
+}
+
+export const isEmailValid = (email:string)=>{
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
+}
+
+export const getPasswordFromEvent = async (hint?:string,hideHitInput?:boolean)=>{
+  return new Promise<{password:string,hint?:string}>((resolve)=>{
+    const event = new CustomEvent('password',{
+      detail:{
+        hint,
+        hideHitInput,
+        callback:({password,hint}:{password:string,hint?:string})=>{
+          resolve({password:sha1(password),hint})
+        }
+      }
+    });
+    document.dispatchEvent(event);
+  })
 }

@@ -368,6 +368,7 @@ export function sendMessage(
             if(localMessage.content.photo){
               const {size,dataUri} = await getPhotoInfo(attachment);
               localMessage.content.photo = {
+                isSpoiler:localMessage.content.photo.isSpoiler,
                 id:fileId,
                 "thumbnail": {
                   ...size,
@@ -390,7 +391,6 @@ export function sendMessage(
         }else{
           await onProgress(2,localMessage)
         }
-
       }
     } catch (error: any) {
       onUpdate({
@@ -466,48 +466,104 @@ function sendGroupedMedia(
       return;
     }
 
-    const inputMedia = await fetchInputMedia(
-      buildInputPeer(chat.id, chat.accessHash),
-      media as GramJs.InputMediaUploadedPhoto | GramJs.InputMediaUploadedDocument,
-    );
+    // const inputMedia = await fetchInputMedia(
+    //   buildInputPeer(chat.id, chat.accessHash),
+    //   media as GramJs.InputMediaUploadedPhoto | GramJs.InputMediaUploadedDocument,
+    // );
 
     await prevQueue;
 
-    if (!inputMedia) {
-      groupedUploads[groupedId].counter--;
+    // if (!inputMedia) {
+    //   groupedUploads[groupedId].counter--;
+    //
+    //   if (DEBUG) {
+    //     // eslint-disable-next-line no-console
+    //     console.warn('Failed to upload grouped media');
+    //   }
+    //
+    //   return;
+    // }
 
-      if (DEBUG) {
-        // eslint-disable-next-line no-console
-        console.warn('Failed to upload grouped media');
+    // groupedUploads[groupedId].singleMediaByIndex[groupIndex] = new GramJs.InputSingleMedia({
+    //   media: inputMedia,
+    //   randomId,
+    //   message: text || '',
+    //   entities: entities ? entities.map(buildMtpMessageEntity) : undefined,
+    // });
+    //
+    // if (Object.keys(groupedUploads[groupedId].singleMediaByIndex).length < groupedUploads[groupedId].counter) {
+    //   return;
+    // }
+
+    // const { singleMediaByIndex } = groupedUploads[groupedId];
+    delete groupedUploads[groupedId];
+    if (onProgress) {
+      let fileId: string | undefined;
+      //@ts-ignore
+      if(media && media!.file && media.file.id) {
+        //@ts-ignore
+        fileId = media!.file.id.toString()
       }
 
-      return;
+      if(localMessage.content.photo || localMessage.content.document){
+
+        const getPhotoInfo = async (attachment:ApiAttachment)=>{
+          const dataUri = await blobToDataUri(await fetchBlob(attachment.thumbBlobUrl! ));
+          const size = {
+            "width": attachment.quick!.width,
+            "height":  attachment.quick!.height,
+          }
+          return{
+            dataUri,size
+          }
+        }
+
+        if(localMessage.content.document){
+          localMessage.content.document.id = fileId
+
+          if(localMessage.content.document.mimeType.split("/")[0] === "image"){
+            const {size,dataUri} = await getPhotoInfo(attachment);
+            localMessage.content.document.mediaType = "photo";
+            localMessage.content.document.previewBlobUrl = undefined;
+            localMessage.content.document.thumbnail = {
+              ...size,
+              dataUri
+            }
+            localMessage.content.document.mediaSize = size;
+          }
+        }
+
+        if(localMessage.content.photo){
+          const {size,dataUri} = await getPhotoInfo(attachment);
+          localMessage.content.photo = {
+            isSpoiler:localMessage.content.photo.isSpoiler,
+            id:fileId!,
+            "thumbnail": {
+              ...size,
+              dataUri
+            },
+            "sizes": [
+              {
+                ...size,
+                "type": "y"
+              }
+            ],
+          }
+        }
+      }
+      debugger
+      await onProgress(2, localMessage)
     }
-
-    groupedUploads[groupedId].singleMediaByIndex[groupIndex] = new GramJs.InputSingleMedia({
-      media: inputMedia,
-      randomId,
-      message: text || '',
-      entities: entities ? entities.map(buildMtpMessageEntity) : undefined,
-    });
-
-    if (Object.keys(groupedUploads[groupedId].singleMediaByIndex).length < groupedUploads[groupedId].counter) {
-      return;
-    }
-
-    const { singleMediaByIndex } = groupedUploads[groupedId];
-    delete groupedUploads[groupedId];
-
-    await invokeRequest(new GramJs.messages.SendMultiMedia({
-      clearDraft: true,
-      peer: buildInputPeer(chat.id, chat.accessHash),
-      multiMedia: Object.values(singleMediaByIndex), // Object keys are usually ordered
-      replyToMsgId: replyingTo,
-      ...(replyingToTopId && { topMsgId: replyingToTopId }),
-      ...(isSilent && { silent: isSilent }),
-      ...(scheduledAt && { scheduleDate: scheduledAt }),
-      ...(sendAs && { sendAs: buildInputPeer(sendAs.id, sendAs.accessHash) }),
-    }), true);
+    // await invokeRequest(new GramJs.messages.SendMultiMedia({
+    //   clearDraft: true,
+    //   peer: buildInputPeer(chat.id, chat.accessHash),
+    //   multiMedia: Object.values(singleMediaByIndex), // Object keys are usually ordered
+    //   replyToMsgId: replyingTo,
+    //   ...(replyingToTopId && { topMsgId: replyingToTopId }),
+    //   ...(isSilent && { silent: isSilent }),
+    //   ...(scheduledAt && { scheduleDate: scheduledAt }),
+    //   ...(sendAs && { sendAs: buildInputPeer(sendAs.id, sendAs.accessHash) }),
+    // }), true);
   })();
 
   return queue;
@@ -623,7 +679,7 @@ export async function rescheduleMessage({
 
 async function uploadMedia(localMessage: ApiMessage, attachment: ApiAttachment, onProgress: ApiOnProgress) {
   const {
-    filename, blobUrl, mimeType, quick, voice, audio, previewBlobUrl, shouldSendAsFile, shouldSendAsSpoiler,
+    filename, blobUrl, encryptUrl,mimeType, quick, voice, audio, previewBlobUrl, shouldSendAsFile, shouldSendAsSpoiler,
   } = attachment;
 
   const patchedOnProgress: ApiOnProgress = (progress) => {
@@ -633,7 +689,13 @@ async function uploadMedia(localMessage: ApiMessage, attachment: ApiAttachment, 
       onProgress(progress, localMessage);
     }
   };
-  const file = await fetchFile(blobUrl, filename);
+
+  let file;
+  if(encryptUrl){
+    file = await fetchFile(encryptUrl, "EN_"+filename);
+  }else{
+    file = await fetchFile(blobUrl, filename);
+  }
   const inputFile = await uploadFileV1({file, onProgress:patchedOnProgress,workers: UPLOAD_WORKERS});
   // const thumbFile = previewBlobUrl && await fetchFile(previewBlobUrl, filename);
   //const thumb = thumbFile ? await uploadFileV1({file:thumbFile,workers: UPLOAD_WORKERS}) : undefined;

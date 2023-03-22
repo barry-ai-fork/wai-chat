@@ -27,6 +27,7 @@ export interface ApiOnProgress {
 
 export interface ApiAttachment {
   blobUrl: string;
+  encryptUrl?:string,
   thumbBlobUrl?: string;
   compressedBlobUrl?: string;
   filename: string;

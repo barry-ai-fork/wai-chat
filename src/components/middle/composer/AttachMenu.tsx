@@ -98,6 +98,7 @@ const AttachMenu: FC<OwnProps> = ({
         canSendPhotos ? SUPPORTED_IMAGE_CONTENT_TYPES : SUPPORTED_VIDEO_CONTENT_TYPES
       )).join(','),
       (e) => handleFileSelect(e, true),
+      true
     );
   }, [canSendPhotos, canSendVideoAndPhoto, handleFileSelect]);
 
@@ -105,7 +106,7 @@ const AttachMenu: FC<OwnProps> = ({
     openSystemFilesDialog(!canSendDocuments && canSendAudios
       ? Array.from(SUPPORTED_AUDIO_CONTENT_TYPES).join(',') : (
         '*'
-      ), (e) => handleFileSelect(e, false));
+      ), (e) => handleFileSelect(e, false),true);
   }, [canSendAudios, canSendDocuments, handleFileSelect]);
 
   const bots = useMemo(() => {

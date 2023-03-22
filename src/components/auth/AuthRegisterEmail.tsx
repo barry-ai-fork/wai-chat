@@ -5,7 +5,6 @@ import React, {memo, useCallback, useEffect, useState} from '../../lib/teact/tea
 import {getActions, withGlobal} from '../../global';
 import github from '../../assets/oauth/github.svg';
 import google from '../../assets/oauth/google.svg';
-import PasswordValidator from "password-validator";
 import type {GlobalState} from '../../global/types';
 
 import {pick} from '../../util/iteratees';
@@ -18,9 +17,10 @@ import {sha1} from '../../lib/gramjs/Helpers';
 
 import {parseQueryFromUrl} from "../../worker/helpers/network";
 import {BASE_API, SESSION_TOKEN, TEST_PWD, TEST_USERNAME} from "../../config";
-import {isEmailValid} from "../../worker/helpers/helpers";
 import MsgConn, {MsgClientState} from "../../lib/ptp/client/MsgConn";
 import {getIsMobile} from "../../hooks/useAppLayout";
+import {isEmailValid} from "../../worker/share/utils/utils";
+import {passwordCheck} from "../../worker/share/utils/helpers";
 
 type StateProps = Pick<GlobalState, 'authError'>;
 let handleTokenGoing = false;
@@ -92,18 +92,9 @@ const AuthRegisterEmail: FC<StateProps> = ({
     if(!isEmailValid(email) ){
       return showAuthError("Email不合法")
     }
-    const schema = new PasswordValidator();
-    schema
-      .is().min(8)                                    // Minimum length 8
-      .is().max(100)                                  // Maximum length 100
-      .has().uppercase()                              // Must have uppercase letters
-      .has().lowercase()                              // Must have lowercase letters
-      .has().not().spaces()                           // Should not have spaces
-      .is().not().oneOf(['Passw0rd', 'Password123']); // Blacklist these values
 
-    console.log(schema.validate('password', { list: true }));
-    if(!schema.validate(password)){
-      return setPasswordError("密码需要包含大小写字母至少8个字符")
+    if(!passwordCheck(password)){
+      return setPasswordError(lang("PasswordTipsCheck"))
     }
     if(isOAuthLoginOk){
       const pwd1 = await sha1(password.toString());

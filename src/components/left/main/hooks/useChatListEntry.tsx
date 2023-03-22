@@ -216,6 +216,9 @@ function renderSummary(
   }
 
   const isSpoiler = getMessageIsSpoiler(message);
+  if(isSpoiler && message.chatId === getGlobal().currentUserId){
+    return messageSummary
+  }
 
   return (
     <span className="media-preview">

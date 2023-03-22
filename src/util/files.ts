@@ -53,6 +53,25 @@ export function blobToDataUri(blob: Blob): Promise<string> {
   });
 }
 
+
+export function blobToBuffer(blob: Blob): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = (e: ProgressEvent<FileReader>) => {
+      const { result } = e.target || {};
+      if (typeof result === 'object' && result && result.byteLength > 9) {
+        resolve(Buffer.from(result));
+      }
+
+      reject(new Error('Failed to read blob'));
+    };
+
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(blob);
+  });
+}
+
 export function blobToFile(blob: Blob, fileName: string) {
   return new File([blob], fileName, {
     lastModified: Date.now(),

@@ -3,8 +3,9 @@
  * Modified from https://github.com/vhpoet/simple-ecies/blob/master/index.js
  */
 // @ts-ignore
-import Crypto from 'crypto';
 import { ec as EC } from 'elliptic';
+// import Crypto from 'crypto';
+const Crypto = require('crypto-browserify')
 
 const { Buffer } = require('buffer');
 
@@ -84,7 +85,6 @@ export const encrypt = (
   if (64 !== pubKeyTo.length) {
     throw new Error('pubKeyTo len must 64');
   }
-
   const prvKey = opts.ephemPrivKey! || Crypto.randomBytes(32);
   const ephemPrivKey = ec.keyFromPrivate(prvKey);
   const ephemPubKey = ephemPrivKey.getPublic();

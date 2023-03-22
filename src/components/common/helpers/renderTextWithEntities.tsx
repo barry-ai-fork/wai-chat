@@ -329,7 +329,7 @@ function processEntity(
   if (isSimple) {
     const text = renderNestedMessagePart();
     if (entity.type === ApiMessageEntityTypes.Spoiler) {
-      return <Spoiler>{text}</Spoiler>;
+      return <Spoiler entity={entity}>{text}</Spoiler>;
     }
 
     if (entity.type === ApiMessageEntityTypes.CustomEmoji) {
@@ -458,7 +458,7 @@ function processEntity(
     case ApiMessageEntityTypes.Underline:
       return <ins data-entity-type={entity.type}>{renderNestedMessagePart()}</ins>;
     case ApiMessageEntityTypes.Spoiler:
-      return <Spoiler messageId={messageId}>{renderNestedMessagePart()}</Spoiler>;
+      return <Spoiler entity={entity} messageId={messageId}>{renderNestedMessagePart()}</Spoiler>;
     case ApiMessageEntityTypes.CustomEmoji:
       return (
         <CustomEmoji

@@ -38,9 +38,8 @@ import {AuthPreLoginReq, AuthPreLoginRes, UploadProfilePhotoRes} from "../../../
 import {getCurrentTabId} from "../../../util/establishMultitabRole";
 import {SendRes} from "../../../lib/ptp/protobuf/PTPMsg";
 import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
-import {sha1} from '../../../worker/helpers/cryptoHelpers';
+import {sha1} from '../../../worker/share/utils/utils';
 import UploadProfilePhotoReq from "../../../lib/ptp/protobuf/PTPAuth/UploadProfilePhotoReq";
-import {addCustomEmojiInputRenderCallback} from "../../../util/customEmojiManager";
 
 addActionHandler('updateGlobal', (global,action,payload): ActionReturnType => {
   return {

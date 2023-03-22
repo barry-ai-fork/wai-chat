@@ -48,9 +48,6 @@ export default async function buildAttachment(
 
     quick = { width, height };
     previewBlobUrl = blobUrl;
-    thumbBlobUrl =  await resizeImage(
-      blobUrl, 40,40, 'image/jpeg',0.1
-    );
   } else if (SUPPORTED_VIDEO_CONTENT_TYPES.has(mimeType)) {
     const { videoWidth: width, videoHeight: height, duration } = await preloadVideo(blobUrl);
     quick = { width, height, duration };

@@ -4371,9 +4371,13 @@ namespace Api {
   export class MessageEntitySpoiler extends VirtualClass<{
     offset: int;
     length: int;
+    cipher?: string;
+      hint?: string;
   }> {
     offset: int;
     length: int;
+    cipher?: string;
+      hint?: string;
   };
   export class MessageEntityCustomEmoji extends VirtualClass<{
     offset: int;

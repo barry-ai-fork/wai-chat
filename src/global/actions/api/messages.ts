@@ -95,6 +95,11 @@ import {getCurrentTabId} from '../../../util/establishMultitabRole';
 import MsgConn, {MsgConnNotifyAction} from "../../../lib/ptp/client/MsgConn";
 import {MsgDeleteReq, MsgListReq, MsgListRes, MsgUpdateReq, SendReq} from "../../../lib/ptp/protobuf/PTPMsg";
 import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
+import Account from "../../../worker/share/Account";
+import {getPasswordFromEvent, replaceSubstring} from "../../../worker/share/utils/utils";
+import {blobToBuffer, fetchBlob} from "../../../util/files";
+import {popByteBuffer, toUint8Array, writeBytes, writeInt16} from "../../../lib/ptp/protobuf/BaseMsg";
+import {resizeImage} from "../../../util/imageResize";
 
 const AUTOLOGIN_TOKEN_KEY = 'autologin_token';
 
@@ -220,18 +225,86 @@ addActionHandler('loadMessage', async (global, actions, payload): Promise<void> 
   }
 });
 
-addActionHandler('sendMessage', (global, actions, payload): ActionReturnType => {
+addActionHandler('sendMessage', async (global, actions, payload): ActionReturnType => {
   const { tabId = getCurrentTabId() } = payload;
   const currentMessageList = selectCurrentMessageList(global, tabId);
 
   if (!currentMessageList) {
     return undefined;
   }
-
   const { chatId, threadId, type } = currentMessageList;
-
   payload = omit(payload, ['tabId']);
+  const {currentUserId} = getGlobal();
 
+  if(currentUserId === chatId){
+    if(payload.attachments){
+      const hasMessageEntitySpoiler = payload.attachments.find((a:ApiAttachment)=>a.shouldSendAsSpoiler);
+      if(hasMessageEntitySpoiler){
+        const {password,hint} = await getPasswordFromEvent();
+        if(password){
+          let {attachments} = payload;
+          for (let i = 0; i < attachments.length; i++) {
+            const attachment = attachments[i];
+            const {blobUrl,mimeType} = attachment;
+            const buf = await blobToBuffer(await fetchBlob(blobUrl));
+            const cipher = await Account.getCurrentAccount()?.encryptByPubKey(buf, password)
+            const bb = popByteBuffer();
+            const hintLen = (hint ? hint.length:0)
+            const typeLen = mimeType.length;
+            writeInt16(bb, 2);
+            writeBytes(bb,Buffer.from("EN"));
+            writeInt16(bb, typeLen);
+            writeBytes(bb,Buffer.from(mimeType));
+            writeInt16(bb, hintLen);
+            if(hintLen){
+              writeBytes(bb,Buffer.from(hint||""));
+            }
+            const res = toUint8Array(bb);
+            const blob = new Blob([Buffer.from(res),Buffer.from(cipher!)], { type: attachment.mimeType });
+            payload.attachments[i].encryptUrl = URL.createObjectURL(blob)
+          }
+        }else{
+          return undefined
+        }
+      }
+    }
+    let {attachments} = payload;
+    if(attachments){
+      for (let i = 0; i < attachments.length; i++) {
+        const attachment = attachments[i];
+        const {mimeType,encryptUrl,blobUrl} = attachment;
+        if(mimeType.indexOf("image/") === 0){
+          const size = encryptUrl ? 10 : 40;
+          const quality = 0.1;
+          attachment.thumbBlobUrl = await resizeImage(
+            blobUrl, size,size, 'image/jpeg',quality
+          );
+        }
+      }
+    }
+    if(payload.text && payload.entities && payload.entities!.length > 0){
+      let {entities,text} = payload;
+      const hasMessageEntitySpoiler = entities.find((entity:ApiMessageEntity)=>entity.type === "MessageEntitySpoiler");
+      if(hasMessageEntitySpoiler){
+        const {password,hint} = await getPasswordFromEvent();
+        if(password){
+          for (let i = 0; i < entities.length; i++) {
+            if(entities[i].type === "MessageEntitySpoiler"){
+              const entity = payload.entities[i];
+              const {offset,length} = entity;
+              const cipher = await Account.getCurrentAccount()?.encryptByPubKey(Buffer.from(text.substr(offset,length)), password)
+              payload.text = replaceSubstring(payload.text,offset,length,"x".repeat(length));
+              //@ts-ignore
+              payload.entities[i] = {...entity,cipher:cipher.toString(),hint}
+            }
+          }
+        }else{
+          return undefined
+        }
+      }
+    }
+  }
+  global = getGlobal();
   if (type === 'scheduled' && !payload.scheduledAt) {
     return updateTabState(global, {
       contentToBeScheduled: payload,

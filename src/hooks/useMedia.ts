@@ -1,6 +1,6 @@
-import { useEffect } from '../lib/teact/teact';
+import {useEffect} from '../lib/teact/teact';
 
-import { ApiMediaFormat } from '../api/types';
+import {ApiMediaFormat} from '../api/types';
 
 import * as mediaLoader from '../util/mediaLoader';
 import useForceUpdate from './useForceUpdate';

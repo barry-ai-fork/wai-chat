@@ -1,88 +1,93 @@
-import type { FC } from '../../../lib/teact/teact';
+import type {FC} from '../../../lib/teact/teact';
 import React, {
-  memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState,
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
 } from '../../../lib/teact/teact';
-import { getActions, withGlobal } from '../../../global';
+import {getActions, withGlobal} from '../../../global';
 
-import type {
-  TabState, MessageListType, GlobalState, ApiDraft,
-} from '../../../global/types';
+import type {ApiDraft, GlobalState, MessageListType, TabState,} from '../../../global/types';
 import type {
   ApiAttachment,
-  ApiBotInlineResult,
+  ApiAttachMenuPeerType,
+  ApiBotCommand,
   ApiBotInlineMediaResult,
-  ApiSticker,
-  ApiVideo,
-  ApiNewPoll,
-  ApiMessage,
-  ApiFormattedText,
+  ApiBotInlineResult,
+  ApiBotMenuButton,
   ApiChat,
   ApiChatMember,
+  ApiFormattedText,
+  ApiMessage,
+  ApiNewPoll,
+  ApiSticker,
   ApiUser,
-  ApiBotCommand,
-  ApiBotMenuButton,
-  ApiAttachMenuPeerType,
+  ApiVideo,
 } from '../../../api/types';
-import type { InlineBotSettings, ISettings } from '../../../types';
+import type {InlineBotSettings, ISettings} from '../../../types';
 
 import {
   BASE_EMOJI_KEYWORD_LANG,
+  EDITABLE_INPUT_CSS_SELECTOR,
   EDITABLE_INPUT_ID,
+  EDITABLE_INPUT_MODAL_ID,
+  MAX_UPLOAD_FILEPART_SIZE,
   REPLIES_USER_ID,
   SEND_MESSAGE_ACTION_INTERVAL,
-  EDITABLE_INPUT_CSS_SELECTOR,
-  MAX_UPLOAD_FILEPART_SIZE, EDITABLE_INPUT_MODAL_ID,
 } from '../../../config';
-import { IS_VOICE_RECORDING_SUPPORTED, IS_IOS } from '../../../util/environment';
-import { MEMO_EMPTY_ARRAY } from '../../../util/memo';
+import {IS_IOS, IS_VOICE_RECORDING_SUPPORTED} from '../../../util/environment';
+import {MEMO_EMPTY_ARRAY} from '../../../util/memo';
 import {
+  selectCanScheduleUntilOnline,
   selectChat,
-  selectIsRightColumnShown,
-  selectIsInSelectMode,
-  selectNewestMessageWithBotKeyboardButtons,
-  selectDraft,
-  selectScheduledIds,
-  selectEditingMessage,
-  selectIsChatWithSelf,
   selectChatBot,
   selectChatMessage,
-  selectUser,
-  selectCanScheduleUntilOnline,
-  selectEditingScheduledDraft,
-  selectEditingDraft,
-  selectRequestedDraftText,
-  selectTheme,
-  selectCurrentMessageList,
-  selectIsCurrentUserPremium,
   selectChatType,
-  selectRequestedDraftFiles,
-  selectTabState,
+  selectCurrentMessageList,
+  selectDraft,
+  selectEditingDraft,
+  selectEditingMessage,
+  selectEditingScheduledDraft,
+  selectIsChatWithSelf,
+  selectIsCurrentUserPremium,
+  selectIsInSelectMode,
+  selectIsRightColumnShown,
+  selectNewestMessageWithBotKeyboardButtons,
   selectReplyingToId,
+  selectRequestedDraftFiles,
+  selectRequestedDraftText,
+  selectScheduledIds,
+  selectTabState,
+  selectTheme,
+  selectUser,
 } from '../../../global/selectors';
 import {
   getAllowedAttachmentOptions,
   getChatSlowModeOptions,
   isChatAdmin,
-  isChatSuperGroup,
   isChatChannel,
+  isChatSuperGroup,
   isUserId,
 } from '../../../global/helpers';
-import { formatMediaDuration, formatVoiceRecordDuration } from '../../../util/dateFormat';
+import {formatMediaDuration, formatVoiceRecordDuration} from '../../../util/dateFormat';
 import focusEditableElement from '../../../util/focusEditableElement';
 import parseMessageInput from '../../../util/parseMessageInput';
-import buildAttachment, { prepareAttachmentsToSend } from './helpers/buildAttachment';
+import buildAttachment, {prepareAttachmentsToSend} from './helpers/buildAttachment';
 import renderText from '../../common/helpers/renderText';
-import { insertHtmlInSelection } from '../../../util/selection';
+import {insertHtmlInSelection} from '../../../util/selection';
 import deleteLastCharacterOutsideSelection from '../../../util/deleteLastCharacterOutsideSelection';
 import buildClassName from '../../../util/buildClassName';
 import windowSize from '../../../util/windowSize';
-import { isSelectionInsideInput } from './helpers/selection';
+import {isSelectionInsideInput} from './helpers/selection';
 import applyIosAutoCapitalizationFix from './helpers/applyIosAutoCapitalizationFix';
-import { getServerTime } from '../../../util/serverTime';
-import { selectCurrentLimit } from '../../../global/selectors/limits';
-import { buildCustomEmojiHtml } from './helpers/customEmoji';
-import { processMessageInputForCustomEmoji } from '../../../util/customEmojiManager';
-import { getTextWithEntitiesAsHtml } from '../../common/helpers/renderTextWithEntities';
+import {getServerTime} from '../../../util/serverTime';
+import {selectCurrentLimit} from '../../../global/selectors/limits';
+import {buildCustomEmojiHtml} from './helpers/customEmoji';
+import {processMessageInputForCustomEmoji} from '../../../util/customEmojiManager';
+import {getTextWithEntitiesAsHtml} from '../../common/helpers/renderTextWithEntities';
 
 import useSignal from '../../../hooks/useSignal';
 import useFlag from '../../../hooks/useFlag';
@@ -105,7 +110,7 @@ import useCustomEmojiTooltip from './hooks/useCustomEmojiTooltip';
 import useAttachmentModal from './hooks/useAttachmentModal';
 import useGetSelectionRange from '../../../hooks/useGetSelectionRange';
 import useDerivedState from '../../../hooks/useDerivedState';
-import { useStateRef } from '../../../hooks/useStateRef';
+import {useStateRef} from '../../../hooks/useStateRef';
 import useDraft from './hooks/useDraft';
 
 import DeleteMessageModal from '../../common/DeleteMessageModal.async';
@@ -127,13 +132,14 @@ import ComposerEmbeddedMessage from './ComposerEmbeddedMessage';
 import AttachmentModal from './AttachmentModal.async';
 import BotCommandMenu from './BotCommandMenu.async';
 import PollModal from './PollModal.async';
-import DropArea, { DropAreaState } from './DropArea.async';
+import DropArea, {DropAreaState} from './DropArea.async';
 import WebPagePreview from './WebPagePreview';
 import SendAsMenu from './SendAsMenu.async';
 import BotMenuButton from './BotMenuButton';
 import SymbolMenuButton from './SymbolMenuButton';
 
 import './Composer.scss';
+import PasswordModal from "../../ui/PasswordModal";
 // import WebkitSpeechRecognition from "../../../worker/share/WebkitSpeechRecognition";
 
 // const recognition = new WebkitSpeechRecognition();
@@ -738,7 +744,6 @@ const Composer: FC<OwnProps & StateProps> = ({
     }
     if (!validateTextLength(text, true)) return;
     if (!checkSlowMode()) return;
-
     sendMessage({
       text,
       entities,
@@ -1242,9 +1247,10 @@ const Composer: FC<OwnProps & StateProps> = ({
 
   const withBotCommands = isChatWithBot && botMenuButton?.type === 'commands' && !editingMessage
     && botCommands !== false && !activeVoiceRecording;
-
+  const [passwordOpen,setPasswordOpen] = useState(true);
   return (
     <div className={className}>
+      <PasswordModal/>
       {canAttachMedia && isReady && (
         <DropArea
           isOpen={dropAreaState !== DropAreaState.None}

@@ -48,6 +48,7 @@ export async function Download(pdu:Pdu){
     }).pack().getPbData());
 
   }catch (e){
+    console.error(e)
     body = Buffer.from(new DownloadRes({
       err:ERR.ERR_SYSTEM
     }).pack().getPbData());

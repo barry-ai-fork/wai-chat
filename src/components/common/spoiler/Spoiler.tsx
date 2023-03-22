@@ -3,16 +3,20 @@ import React, {
 } from '../../../lib/teact/teact';
 
 import type { FC } from '../../../lib/teact/teact';
-import { ApiMessageEntityTypes } from '../../../api/types';
+import {ApiMessageEntity, ApiMessageEntityTypes} from '../../../api/types';
 
 import { createClassNameBuilder } from '../../../util/buildClassName';
 import useFlag from '../../../hooks/useFlag';
 
 import './Spoiler.scss';
+import {getPasswordFromEvent} from "../../../worker/share/utils/utils";
+import Account from "../../../worker/share/Account";
+import useLang from "../../../hooks/useLang";
 
 type OwnProps = {
   children?: React.ReactNode;
   messageId?: number;
+  entity?:ApiMessageEntity
 };
 
 const READING_SYMBOLS_PER_SECOND = 23; // Heuristics
@@ -27,7 +31,9 @@ const actionsByMessageId: Map<number, {
 
 const buildClassName = createClassNameBuilder('Spoiler');
 
+let tempText = "";
 const Spoiler: FC<OwnProps> = ({
+  entity,
   children,
   messageId,
 }) => {
@@ -46,10 +52,32 @@ const Spoiler: FC<OwnProps> = ({
     // Optimization: ignore alt, assume that viewing emoji takes same time as viewing 4 characters
     return textLength + emojiCount * 4;
   }, []);
-
-  const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+  const lang = useLang();
+  const handleClick = useCallback(async (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     e.preventDefault();
     e.stopPropagation();
+    if(entity){
+      tempText = contentRef.current!.innerText;
+      //@ts-ignore
+      const {hint,cipher} = entity;
+      const {password} = await getPasswordFromEvent(hint,true);
+      if(password === ""){
+        return;
+      }else{
+        try {
+          debugger
+          let plain = await Account.getCurrentAccount()?.decryptByPrvKey(Buffer.from(cipher,'hex'),password)
+          if(!plain){
+            alert(lang("DecryptError"));
+            return
+          }
+          contentRef.current!.innerText = plain.toString();;
+        }catch (e){
+          alert(lang("DecryptError"));
+          return
+        }
+      }
+    }
 
     actionsByMessageId.get(messageId!)?.forEach((actions) => actions.reveal());
 
@@ -60,6 +88,8 @@ const Spoiler: FC<OwnProps> = ({
 
     setTimeout(() => {
       actionsByMessageId.get(messageId!)?.forEach((actions) => actions.conceal());
+      contentRef.current!.innerText = tempText;
+      tempText = ""
       conceal();
     }, timeoutMs);
   }, [conceal, messageId]);

@@ -10,7 +10,7 @@ import useLang from '../../hooks/useLang';
 import MonkeyPassword from '../common/PasswordMonkey';
 import PasswordForm from '../common/PasswordForm';
 import Button from "../ui/Button";
-import PasswordValidator from "password-validator";
+import {passwordCheck} from "../../worker/share/utils/helpers";
 
 type StateProps = Pick<GlobalState, 'authIsLoading' | 'authError' | 'authHint'>;
 
@@ -27,19 +27,9 @@ const AuthSignPassword: FC<StateProps> = ({
   }, []);
 
   const handleSubmit = useCallback(async (password: string) => {
-    const schema = new PasswordValidator();
-    schema
-      .is().min(8)                                    // Minimum length 8
-      .is().max(100)                                  // Maximum length 100
-      .has().uppercase()                              // Must have uppercase letters
-      .has().lowercase()                              // Must have lowercase letters
-      .has().not().spaces()                           // Should not have spaces
-      .is().not().oneOf(['Passw0rd', 'Password123']); // Blacklist these values
-
-    if(!schema.validate(password)){
-      return showAuthError("密码需要包含大小写字母至少8个字符")
+    if(!passwordCheck(password)){
+      return showAuthError(lang("PasswordTipsCheck"))
     }
-
     setAuthPassword({ password });
   }, [setAuthPassword]);
 
@@ -69,7 +59,7 @@ const AuthSignPassword: FC<StateProps> = ({
         <PasswordForm
           clearError={clearAuthError}
           error={authError && lang(authError)}
-          hint={authHint}
+          hint={lang("PasswordTipsLoginPlaceholder")}
           isLoading={authIsLoading}
           isPasswordVisible={showPassword}
           onChangePasswordVisibility={handleChangePasswordVisibility}

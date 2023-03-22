@@ -26,6 +26,7 @@ import useMediaWithLoadProgress from '../../../hooks/useMediaWithLoadProgress';
 import useBlurSync from '../../../hooks/useBlurSync';
 import { MediaViewerOrigin } from '../../../types';
 import { VIDEO_AVATAR_FULL_DIMENSIONS, AVATAR_FULL_DIMENSIONS } from '../../common/helpers/mediaDimensions';
+import {photosMap} from "../../middle/message/Photo";
 
 type UseMediaProps = {
   mediaId?: number;
@@ -91,14 +92,19 @@ export const useMediaProps = ({
     delay,
   );
   const previewMediaHash = getMediaHash();
-  const previewBlobUrl = useMedia(
+  let previewBlobUrl = useMedia(
     previewMediaHash,
     undefined,
     ApiMediaFormat.BlobUrl,
     undefined,
     delay,
   );
-  const {
+
+  if(previewMediaHash && photosMap[previewMediaHash]){
+    previewBlobUrl = photosMap[previewMediaHash];
+  }
+
+  let {
     mediaData: fullMediaBlobUrl,
     loadProgress,
   } = useMediaWithLoadProgress(
@@ -108,6 +114,10 @@ export const useMediaProps = ({
     undefined,
     delay,
   );
+
+  if(getMediaHash(true) && photosMap[getMediaHash(true)!]){
+    fullMediaBlobUrl = photosMap[getMediaHash(true)!];
+  }
 
   const localBlobUrl = (photo || video) ? (photo || video)!.blobUrl : undefined;
   let bestImageData = (!isVideo && (localBlobUrl || fullMediaBlobUrl)) || previewBlobUrl || pictogramBlobUrl;

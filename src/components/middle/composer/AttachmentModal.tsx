@@ -51,6 +51,7 @@ import MenuItem from '../../ui/MenuItem';
 import SymbolMenuButton from './SymbolMenuButton';
 
 import styles from './AttachmentModal.module.scss';
+import {getPasswordFromEvent} from "../../../worker/share/utils/utils";
 
 export type OwnProps = {
   chatId: string;
@@ -327,7 +328,7 @@ const AttachmentModal: FC<OwnProps & StateProps> = ({
     onAttachmentsUpdate(attachments.filter((a, i) => i !== index));
   }, [attachments, onAttachmentsUpdate]);
 
-  const handleEnableSpoilers = useCallback(() => {
+  const handleEnableSpoilers = useCallback(async () => {
     onAttachmentsUpdate(attachments.map((a) => ({ ...a, shouldSendAsSpoiler: true })));
   }, [attachments, onAttachmentsUpdate]);
 
@@ -335,7 +336,7 @@ const AttachmentModal: FC<OwnProps & StateProps> = ({
     onAttachmentsUpdate(attachments.map((a) => ({ ...a, shouldSendAsSpoiler: undefined })));
   }, [attachments, onAttachmentsUpdate]);
 
-  const handleToggleSpoiler = useCallback((index: number) => {
+  const handleToggleSpoiler = useCallback(async (index: number) => {
     onAttachmentsUpdate(attachments.map((attachment, i) => {
       if (i === index) {
         return {
@@ -583,16 +584,16 @@ const AttachmentModal: FC<OwnProps & StateProps> = ({
               >
                 {lang('Send')}
               </Button>
-              {canShowCustomSendMenu && (
-                <CustomSendMenu
-                  isOpen={isCustomSendMenuOpen}
-                  onSendSilent={!isChatWithSelf ? handleSendSilent : undefined}
-                  onSendSchedule={handleScheduleClick}
-                  onClose={handleContextMenuClose}
-                  onCloseAnimationEnd={handleContextMenuHide}
-                  isSavedMessages={isChatWithSelf}
-                />
-              )}
+              {/*{canShowCustomSendMenu && (*/}
+              {/*  <CustomSendMenu*/}
+              {/*    isOpen={isCustomSendMenuOpen}*/}
+              {/*    onSendSilent={!isChatWithSelf ? handleSendSilent : undefined}*/}
+              {/*    onSendSchedule={handleScheduleClick}*/}
+              {/*    onClose={handleContextMenuClose}*/}
+              {/*    onCloseAnimationEnd={handleContextMenuHide}*/}
+              {/*    isSavedMessages={isChatWithSelf}*/}
+              {/*  />*/}
+              {/*)}*/}
             </div>
           </div>
         </div>
