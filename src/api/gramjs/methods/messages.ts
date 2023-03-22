@@ -551,7 +551,7 @@ function sendGroupedMedia(
           }
         }
       }
-      debugger
+      // debugger
       await onProgress(2, localMessage)
     }
     // await invokeRequest(new GramJs.messages.SendMultiMedia({
@@ -1372,6 +1372,7 @@ export async function forwardMessages({
       noCaptions,
       isCurrentUserPremium,
     });
+
     localDb.localMessages[String(randomIds[index])] = localMessage;
 
     onUpdate({
@@ -1382,19 +1383,20 @@ export async function forwardMessages({
     });
   });
 
-  await invokeRequest(new GramJs.messages.ForwardMessages({
-    fromPeer: buildInputPeer(fromChat.id, fromChat.accessHash),
-    toPeer: buildInputPeer(toChat.id, toChat.accessHash),
-    randomId: randomIds,
-    id: messageIds,
-    withMyScore: withMyScore || undefined,
-    silent: isSilent || undefined,
-    dropAuthor: noAuthors || undefined,
-    dropMediaCaptions: noCaptions || undefined,
-    ...(toThreadId && { topMsgId: toThreadId }),
-    ...(scheduledAt && { scheduleDate: scheduledAt }),
-    ...(sendAs && { sendAs: buildInputPeer(sendAs.id, sendAs.accessHash) }),
-  }), true);
+  //
+  // await invokeRequest(new GramJs.messages.ForwardMessages({
+  //   fromPeer: buildInputPeer(fromChat.id, fromChat.accessHash),
+  //   toPeer: buildInputPeer(toChat.id, toChat.accessHash),
+  //   randomId: randomIds,
+  //   id: messageIds,
+  //   withMyScore: withMyScore || undefined,
+  //   silent: isSilent || undefined,
+  //   dropAuthor: noAuthors || undefined,
+  //   dropMediaCaptions: noCaptions || undefined,
+  //   ...(toThreadId && { topMsgId: toThreadId }),
+  //   ...(scheduledAt && { scheduleDate: scheduledAt }),
+  //   ...(sendAs && { sendAs: buildInputPeer(sendAs.id, sendAs.accessHash) }),
+  // }), true);
 }
 
 export async function findFirstMessageIdAfterDate({

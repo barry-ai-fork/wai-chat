@@ -65,7 +65,7 @@ const Spoiler: FC<OwnProps> = ({
         return;
       }else{
         try {
-          debugger
+          // debugger
           let plain = await Account.getCurrentAccount()?.decryptByPrvKey(Buffer.from(cipher,'hex'),password)
           if(!plain){
             alert(lang("DecryptError"));

@@ -318,12 +318,12 @@ const MessageContextMenu: FC<OwnProps> = ({
         {/* {canReschedule && ( */}
         {/*   <MenuItem icon="schedule" onClick={onReschedule}>{lang('MessageScheduleEditTime')}</MenuItem> */}
         {/* )} */}
-        {/* {canReply && <MenuItem icon="reply" onClick={onReply}>{lang('Reply')}</MenuItem>} */}
-        {/* {!noReplies && Boolean(repliesThreadInfo?.messagesCount) && ( */}
-        {/*   <MenuItem icon="replies" onClick={onOpenThread}> */}
-        {/*     {lang('Conversation.ContextViewReplies', repliesThreadInfo!.messagesCount, 'i')} */}
-        {/*   </MenuItem> */}
-        {/* )} */}
+        {/* {canReply && <MenuItem icon="reply" onClick={onReply}>{lang('Reply')}</MenuItem>}*/}
+        {/* {!noReplies && Boolean(repliesThreadInfo?.messagesCount) && (*/}
+        {/*   <MenuItem icon="replies" onClick={onOpenThread}>*/}
+        {/*     {lang('Conversation.ContextViewReplies', repliesThreadInfo!.messagesCount, 'i')}*/}
+        {/*   </MenuItem>*/}
+        {/* )}*/}
          {canEdit && <MenuItem icon="edit" onClick={onEdit}>{lang('Edit')}</MenuItem>}
         {/* {canFaveSticker && ( */}
         {/*   <MenuItem icon="favorite" onClick={onFaveSticker}>{lang('AddToFavorites')}</MenuItem> */}
@@ -331,7 +331,7 @@ const MessageContextMenu: FC<OwnProps> = ({
         {/* {canUnfaveSticker && ( */}
         {/*   <MenuItem icon="favorite" onClick={onUnfaveSticker}>{lang('Stickers.RemoveFromFavorites')}</MenuItem> */}
         {/* )} */}
-        {/* {canTranslate && <MenuItem icon="language" onClick={onTranslate}>{lang('TranslateMessage')}</MenuItem>} */}
+        {/* {canTranslate && <MenuItem icon="language" onClick={onTranslate}>{lang('TranslateMessage')}</MenuItem>}*/}
         {/* {canShowOriginal && <MenuItem icon="language" onClick={onShowOriginal}>{lang('ShowOriginalButton')}</MenuItem>} */}
         {/* {canSelectLanguage && ( */}
         {/*   <MenuItem icon="web" onClick={onSelectLanguage}>{lang('lng_settings_change_lang')}</MenuItem> */}
@@ -344,12 +344,12 @@ const MessageContextMenu: FC<OwnProps> = ({
         {/* {canSaveGif && <MenuItem icon="gifs" onClick={onSaveGif}>{lang('lng_context_save_gif')}</MenuItem>} */}
         {/* {canRevote && <MenuItem icon="revote" onClick={onCancelVote}>{lang('lng_polls_retract')}</MenuItem>} */}
         {/* {canClosePoll && <MenuItem icon="stop" onClick={onClosePoll}>{lang('lng_polls_stop')}</MenuItem>} */}
-        {/* {canDownload && ( */}
-        {/*   <MenuItem icon="download" onClick={onDownload}> */}
-        {/*     {isDownloading ? lang('lng_context_cancel_download') : lang('lng_media_download')} */}
-        {/*   </MenuItem> */}
-        {/* )} */}
-        {/* {canForward && <MenuItem icon="forward" onClick={onForward}>{lang('Forward')}</MenuItem>} */}
+         {canDownload && (
+           <MenuItem icon="download" onClick={onDownload}>
+             {isDownloading ? lang('lng_context_cancel_download') : lang('lng_media_download')}
+           </MenuItem>
+         )}
+         {/*{canForward && <MenuItem icon="forward" onClick={onForward}>{lang('Forward')}</MenuItem>}*/}
          {canSelect && <MenuItem icon="select" onClick={onSelect}>{lang('Common.Select')}</MenuItem>}
         {/* {canReport && <MenuItem icon="flag" onClick={onReport}>{lang('lng_context_report_msg')}</MenuItem>} */}
         {/* {(canShowSeenBy || canShowReactionsCount) && !isSponsoredMessage && ( */}
@@ -408,7 +408,7 @@ const MessageContextMenu: FC<OwnProps> = ({
         {/*     )} */}
         {/*   </> */}
         {/* )} */}
-        {/* {isSponsoredMessage && <MenuItem icon="help" onClick={onAboutAds}>{lang('SponsoredMessageInfo')}</MenuItem>} */}
+         {isSponsoredMessage && <MenuItem icon="help" onClick={onAboutAds}>{lang('SponsoredMessageInfo')}</MenuItem>}
         {/* {isSponsoredMessage && onSponsoredHide && ( */}
         {/*   <MenuItem icon="stop" onClick={onSponsoredHide}>{lang('HideAd')}</MenuItem> */}
         {/* )} */}

@@ -330,10 +330,10 @@ addActionHandler('uploadProfilePhoto', async (global, actions, payload): Promise
   const {
     file, isFallback, isVideo, videoTs,
   } = payload!;
-  debugger
+  // debugger
   const result = await callApi('uploadProfilePhoto', file, isFallback, isVideo, videoTs);
   if (!result) return;
-  debugger
+  // debugger
   let res = await MsgConn.getMsgClient()?.sendPduWithCallback(new UploadProfilePhotoReq(result).pack())
   if (!res) return;
   const uploadProfilePhotoRes = UploadProfilePhotoRes.parseMsg(res)

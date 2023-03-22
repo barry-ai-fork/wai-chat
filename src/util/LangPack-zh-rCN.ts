@@ -16495,5 +16495,33 @@ export default {
     "key": "DecryptError",
     "value": "解密失败"
   },
+  "Conversation.DeleteMessagesFor": {
+    "key": "Conversation.DeleteMessagesFor",
+    "value": "全部删除记录"
+  },
+  'ChatList.DeleteForEveryone': {
+    key: 'ChatList.DeleteForEveryone',
+    value: '删除我的记录 and %@',
+  },
+  'ChatList.DeleteForCurrentUser': {
+    key: 'ChatList.DeleteForCurrentUser',
+    value: '只是删除我的记录',
+  },
+  'lng_media_download': {
+    key: 'lng_media_download',
+    value: '下载',
+  },
+  'lng_context_cancel_download': {
+    key: 'lng_context_cancel_download',
+    value: '取消下载',
+  },
+  'Conversation.ForwardTooltip.SavedMessages.One': {
+    key: 'Conversation.ForwardTooltip.SavedMessages.One',
+    value: '已收藏',
+  },
+  'Conversation.ForwardTooltip.SavedMessages.Many': {
+    key: 'Conversation.ForwardTooltip.SavedMessages.Many',
+    value: '已收藏',
+  },
 
 } as ApiLangPack;
