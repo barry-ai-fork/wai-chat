@@ -1,7 +1,7 @@
 {
-    "name": "AiChat Web Beta",
-    "short_name": "AiChat Web Beta",
-    "description": "AiChat is a cloud-based mobile and desktop messaging app with a focus on security and speed.",
+    "name": "WAI Web Beta",
+    "short_name": "WAI Web Beta",
+    "description": "WAI is a cloud-based mobile and desktop messaging app with a focus on security and speed.",
     "start_url": "./",
     "gcm_sender_id": "122867383838",
     "icons": [
