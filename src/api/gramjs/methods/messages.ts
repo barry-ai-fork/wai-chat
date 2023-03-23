@@ -387,6 +387,9 @@ export function sendMessage(
           if(localMessage.content.voice){
             localMessage.content.voice.id = fileId
           }
+          if(localMessage.content.audio){
+            localMessage.content.audio.id = fileId
+          }
           await onProgress(2,localMessage)
         }else{
           await onProgress(2,localMessage)

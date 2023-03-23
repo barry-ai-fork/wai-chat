@@ -21,9 +21,11 @@ import ContactList from './ContactList.async';
 import NewChatButton from '../NewChatButton';
 import Button from '../../ui/Button';
 import ForumPanel from './ForumPanel';
+import * as cacheApi from '../../../util/cacheApi';
 
 import './LeftMain.scss';
 import { getActions } from '../../../global';
+import {LANG_CACHE_NAME} from "../../../config";
 
 type OwnProps = {
   content: LeftColumnContent;
@@ -112,7 +114,8 @@ const LeftMain: FC<OwnProps> = ({
     closeForumPanel();
   }, [closeForumPanel, onContentChange]);
 
-  const handleUpdateClick = useCallback(() => {
+  const handleUpdateClick = useCallback(async () => {
+    await cacheApi.clear(LANG_CACHE_NAME);
     window.location.reload();
   }, []);
 

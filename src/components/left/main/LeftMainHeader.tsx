@@ -490,7 +490,7 @@ export default memo(withGlobal<OwnProps>(
 
     return {
       searchQuery,
-      isLoading: fetchingStatus ? Boolean(fetchingStatus.chats || fetchingStatus.messages) : false,
+      isLoading: fetchingStatus ? Boolean(fetchingStatus.messages) : false,
       currentUserId,
       chatsById,
       globalSearchChatId: chatId,

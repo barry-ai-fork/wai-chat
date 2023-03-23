@@ -15,7 +15,7 @@ addActionHandler('setGlobalSearchQuery', (global, actions, payload): ActionRetur
     globalResults: {},
     localResults: {},
     resultsByType: undefined,
-    ...(query ? { fetchingStatus: { chats: !chatId, messages: true } } : { fetchingStatus: undefined }),
+    ...(query ? { fetchingStatus: { chats: false, messages: true } } : { fetchingStatus: undefined }),
     query,
   }, tabId);
 });

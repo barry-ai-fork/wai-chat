@@ -293,13 +293,11 @@ export default memo(withGlobal<OwnProps>(
     const { byId: chatsById } = global.chats;
 
     const { userIds: localContactIds } = global.contactList || {};
-
-    if (!localContactIds) {
-      return {
-        chatsById,
-      };
-    }
-
+    // if (!localContactIds) {
+    //   return {
+    //     chatsById,
+    //   };
+    // }
     const {
       currentUserId, messages, lastSyncTime,
     } = global;
