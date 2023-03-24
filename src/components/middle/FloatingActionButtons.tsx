@@ -65,10 +65,11 @@ const FloatingActionButtons: FC<OwnProps & StateProps> = ({
   }, [chatId, fetchUnreadMentions, hasUnreadMentions]);
 
   const handleClick = useCallback(() => {
+    // debugger
     if (!isShown) {
       return;
     }
-    if (messageListType === 'thread') {
+    if (messageListType !== 'thread') {
       focusNextReply();
     } else {
       const messagesContainer = elementRef.current!.parentElement!.querySelector<HTMLDivElement>('.MessageList')!;

@@ -65,16 +65,19 @@ addActionHandler('setGlobalSearchQuery', (global, actions, payload): ActionRetur
           chatIds.push(chat?.id)
         }
         const messages = selectChatMessages(global,chatId)
-        const messageIds = Object.keys(messages);
-        for (let i = 0; i < messageIds.length; i++) {
-          const messageId = Number(messageIds[i])
-          const message = selectChatMessage(global,chatId,messageId)
-          if(message?.content && message?.content.text && message?.content.text.text){
-            if(message?.content.text.text.toLowerCase().indexOf(query.toLowerCase()) > -1){
-              messagesList.push(message)
+        if(messages){
+          const messageIds = Object.keys(messages);
+          for (let i = 0; i < messageIds.length; i++) {
+            const messageId = Number(messageIds[i])
+            const message = selectChatMessage(global,chatId,messageId)
+            if(message?.content && message?.content.text && message?.content.text.text){
+              if(message?.content.text.text.toLowerCase().indexOf(query.toLowerCase()) > -1){
+                messagesList.push(message)
+              }
             }
           }
         }
+
       }
       const currentSearchQuery = selectCurrentGlobalSearchQuery(global, tabId);
       if (messagesList.length === 0 || !currentSearchQuery || (query !== currentSearchQuery)) {

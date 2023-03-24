@@ -40,7 +40,7 @@ export function getInitSystemBots(){
         {
           "botId": USER_ID_CHATGPT,
           "command": "start",
-          "description": "Start Chat"
+          "description": "开始对话"
         },
         {
           "botId": USER_ID_CHATGPT,
@@ -51,6 +51,31 @@ export function getInitSystemBots(){
           "botId": USER_ID_CHATGPT,
           "command": "clear",
           "description": "清除当前有效Prompt和对话的历史记录"
+        },
+        {
+          "botId": USER_ID_CHATGPT,
+          "command": "get_init_msg",
+          "description": "查看初始化消息"
+        },
+        {
+          "botId": USER_ID_CHATGPT,
+          "command": "set_init_msg",
+          "description": "设置初始化消息"
+        },
+        {
+          "botId": USER_ID_CHATGPT,
+          "command": "get_api_key",
+          "description": "查看API密钥"
+        },
+        {
+          "botId": USER_ID_CHATGPT,
+          "command": "set_api_key",
+          "description": "设置API密钥"
+        },
+        {
+          "botId": USER_ID_CHATGPT,
+          "command": "reset_config",
+          "description": "初始化配置"
         }
       ],
       first_name:"Chat Gpt",
