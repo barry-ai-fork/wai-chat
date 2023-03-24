@@ -8,7 +8,6 @@ import errors from '../errors';
 import { Foreman } from '../../../util/foreman';
 import {UploadReq} from "../../ptp/protobuf/PTPFile";
 import {BASE_API, DEBUG} from "../../../config";
-import {FileInfo} from "../../ptp/protobuf/PTPCommon";
 import localDb from "../../../api/gramjs/localDb";
 
 interface OnProgress {

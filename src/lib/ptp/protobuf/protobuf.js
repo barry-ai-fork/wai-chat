@@ -658,10 +658,64 @@ var $conv_message = $createConverter([
                     '@': {"AUTH_TYPE_USERNAME":0,"AUTH_TYPE_EMAIL":1,"AUTH_TYPE_MOBILE":2}
                 },
                 ERR: {
-                    '@': {"NO_ERROR":0,"ERR_SYSTEM":1,"ERR_AUTH_LOGIN":2}
+                    '@': {"NO_ERROR":0,"ERR_SYSTEM":1,"ERR_AUTH_LOGIN":2,"ERR_AUTH_NEED":3}
                 },
                 FileInfo: {
                     '$': {"1":["id","string",""],"2":["size","uint64",{"low":0,"high":0,"unsigned":true}],"3":["part","uint32",0],"4":["part_total","uint32",0],"5":["buf","bytes",[]],"6":["type","string",""]}
+                },
+                PbBotInfo: {
+                    '$': {"1":["botId","string",""],"2":["description","string",""],"3":["isChatGpt","bool",false],"4":["menuButton","default.PTP.Common.PbMenuButton",null],"5":["commands","<default.PTP.Common.PbCommands",null]}
+                },
+                PbChat: {
+                    '$': {"1":["type","string",""],"2":["id","string",""],"3":["title","string",""],"4":["usernames","<default.PTP.Common.PbUsernames",null],"5":["isMuted","bool",false],"6":["isMin","bool",false],"7":["hasPrivateLink","bool",false],"8":["isSignaturesShown","bool",false],"9":["accessHash","string",""],"10":["isVerified","bool",false],"11":["isJoinToSend","bool",false],"12":["isJoinRequest","bool",false],"13":["isForum","bool",false],"14":["isListed","bool",false],"15":["settings","default.PTP.Common.PbSettings",null],"16":["lastMessage","default.PTP.Common.PbMsg",null]}
+                },
+                PbChatFolder: {
+                    '$': {"1":["id","uint32",0],"2":["title","string",""],"3":["channels","bool",false],"4":["pinnedChatIds","<string",null],"5":["includedChatIds","<string",null],"6":["excludedChatIds","<string",null]}
+                },
+                PbCommands: {
+                    '$': {"1":["botId","string",""],"2":["command","string",""],"3":["description","string",""]}
+                },
+                PbContent: {
+                    '$': {"1":["text","default.PTP.Common.PbText",null],"2":["photo","default.PTP.Common.PbPhoto",null],"3":["voice","default.PTP.Common.PbVoice",null]}
+                },
+                PbFullInfo: {
+                    '$': {"1":["bio","string",""],"2":["commonChatsCount","uint32",0],"3":["isBlocked","bool",false],"4":["noVoiceMessages","bool",false],"5":["botInfo","default.PTP.Common.PbBotInfo",null],"6":["pinnedMessageId","uint32",0]}
+                },
+                PbMenuButton: {
+                    '$': {"1":["type","string",""]}
+                },
+                PbMessageEntity: {
+                    '$': {"1":["type","string",""],"2":["offset","uint32",0],"3":["length","uint32",0],"4":["documentId","string",""],"5":["userId","string",""],"6":["url","string",""],"7":["language","string",""],"8":["cipher","string",""],"9":["hint","string",""]}
+                },
+                PbMsg: {
+                    '$': {"1":["id","uint32",0],"2":["chatId","string",""],"3":["content","default.PTP.Common.PbContent",null],"4":["date","uint32",0],"5":["isOutgoing","bool",false],"6":["senderId","string",""],"7":["isForwardingAllowed","bool",false],"8":["previousLocalId","double",0]}
+                },
+                PbPhoto: {
+                    '$': {"1":["id","string",""],"2":["thumbnail","default.PTP.Common.PbThumbnail",null],"3":["sizes","<default.PTP.Common.PbSizes",null],"4":["isSpoiler","bool",false]}
+                },
+                PbSettings: {
+                    '$': {"1":["isAutoArchived","bool",false],"2":["canReportSpam","bool",false],"3":["canAddContact","bool",false],"4":["canBlockContact","bool",false]}
+                },
+                PbSizes: {
+                    '$': {"1":["width","uint32",0],"2":["height","uint32",0],"3":["type","string",""]}
+                },
+                PbText: {
+                    '$': {"1":["text","string",""],"2":["entities","<default.PTP.Common.PbMessageEntity",null]}
+                },
+                PbThumbnail: {
+                    '$': {"1":["width","uint32",0],"2":["height","uint32",0],"3":["dataUri","string",""]}
+                },
+                PbUser: {
+                    '$': {"1":["id","string",""],"2":["firstName","string",""],"3":["usernames","<default.PTP.Common.PbUsernames",null],"4":["isMin","bool",false],"5":["isPremium","bool",false],"6":["type","string",""],"7":["hasVideoAvatar","bool",false],"8":["canBeInvitedToGroup","bool",false],"9":["phoneNumber","string",""],"10":["noStatus","bool",false],"11":["accessHash","string",""],"12":["fullInfo","default.PTP.Common.PbFullInfo",null],"13":["lastName","string",""],"14":["isSelf","bool",false]}
+                },
+                PbUsernames: {
+                    '$': {"1":["username","string",""],"2":["isActive","bool",false],"3":["isEditable","bool",false]}
+                },
+                PbUserSetting: {
+                    '$': {"1":["chatFolders","<default.PTP.Common.PbChatFolder",null],"2":["chatFolderOrderedIds","[uint32",null],"3":["myBotIds","<string",null],"4":["myGroups","<string",null]}
+                },
+                PbVoice: {
+                    '$': {"1":["id","string",""],"2":["waveform","[uint32",null],"3":["duration","uint32",0]}
                 }
             },
             File: {
@@ -686,7 +740,7 @@ var $conv_message = $createConverter([
                     '$': {"100":["err","uint32",0]}
                 },
                 MsgListReq: {
-                    '$': {"1":["payload","string",""]}
+                    '$': {"1":["chatId","string",""],"2":["lastMessageId","uint32",0],"3":["limit","uint32",0]}
                 },
                 MsgListRes: {
                     '$': {"1":["payload","string",""],"100":["err","uint32",0]}

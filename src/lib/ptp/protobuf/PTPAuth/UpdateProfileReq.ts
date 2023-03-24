@@ -4,17 +4,13 @@ import type { Pdu } from '../BaseMsg';
 import type { UpdateProfileReq_Type } from './types';
 
 export default class UpdateProfileReq extends BaseMsg {
+  public msg?: UpdateProfileReq_Type
   constructor(msg?: UpdateProfileReq_Type) {
     super('PTP.Auth.UpdateProfileReq', msg);
     this.setCommandId(ActionCommands.CID_UpdateProfileReq);
+    this.msg = msg;
   }
-  decode(data: Uint8Array): UpdateProfileReq_Type {
-    return this.__D(data);
-  }
-  pack(): Pdu {
-    return this.__pack();
-  }
-  static parseMsg(pdu : Pdu) {
-    return new UpdateProfileReq().decode(pdu.getPbBody());
+  static parseMsg(pdu : Pdu): UpdateProfileReq_Type {
+    return new UpdateProfileReq().decode(pdu.body());
   }
 }

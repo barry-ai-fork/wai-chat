@@ -11,7 +11,9 @@ export interface MsgDeleteRes_Type {
   err: PTPCommon.ERR;
 }
 export interface MsgListReq_Type {
-  payload: string;
+  chatId: string;
+  lastMessageId: number;
+  limit: number;
 }
 export interface MsgListRes_Type {
   payload: string;

@@ -37,7 +37,7 @@ import LocalStorage from "../../../worker/share/db/LocalStorage";
 import {AuthPreLoginReq, AuthPreLoginRes, UploadProfilePhotoRes} from "../../../lib/ptp/protobuf/PTPAuth";
 import {getCurrentTabId} from "../../../util/establishMultitabRole";
 import {SendRes} from "../../../lib/ptp/protobuf/PTPMsg";
-import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
+import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
 import {sha1} from '../../../worker/share/utils/utils';
 import UploadProfilePhotoReq from "../../../lib/ptp/protobuf/PTPAuth/UploadProfilePhotoReq";
 
@@ -76,6 +76,7 @@ addActionHandler('updateMsg', (global,actions,payload:any): ActionReturnType => 
 
 const handleRecvMsg = (global:any,actions:any,action:string,data:any)=>{
   let {msg,localMsgId} = data;
+  console.log("[handleRecvMsg]",action,data)
   const {chatId,content} = msg;
   if(!msg.isOutgoing && content.text && content.text.text){
     const { text, entities } = parseMessageInput(content.text.text);

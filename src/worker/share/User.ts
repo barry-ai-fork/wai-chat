@@ -1,73 +1,121 @@
-import {ApiBotInfo, ApiUser, ApiUserStatus, ApiUserType} from "../../api/types";
+import {ApiUser, ApiUserStatus} from "../../api/types";
 import {ENV, kv} from "../helpers/env";
 import {Chat} from "./Chat";
 import {UserIdAccountIdMap} from "../controller/WsController";
 import {Msg} from "./Msg";
+import {PbChatFolder, PbUser, PbUserSetting} from "../../lib/ptp/protobuf/PTPCommon";
+import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
+import {
+  PbBotInfo_Type,
+  PbChatFolder_Type,
+  PbFullInfo_Type,
+  PbUser_Type,
+  PbUserSetting_Type
+} from "../../lib/ptp/protobuf/PTPCommon/types";
+import {unique} from "../../util/iteratees";
 
-export class User{
-  private user: ApiUser
-  constructor(user:ApiUser) {
-    this.user = user;
+export class User extends PbUser{
+  declare public msg?:PbUser_Type;
+  static userTypeBot = "userTypeBot";
+  static userTypeRegular = "userTypeRegular";
+  static userTypeDeleted = "userTypeDeleted";
+  static userTypeUnknown = "userTypeUnknown";
+  setUserInfo(user:ApiUser) {
+    this.msg = {
+      id: user.id,
+      accessHash: user.accessHash || "",
+      phoneNumber: user.phoneNumber,
+      type: user.type,
+      firstName: user.firstName,
+      lastName:user.lastName,
+      canBeInvitedToGroup: user.canBeInvitedToGroup || false,
+      hasVideoAvatar: user.hasVideoAvatar || false,
+      isMin: user.isMin || false,
+      isPremium: user.isPremium || false,
+      noStatus: user.noStatus || false,
+      fullInfo:{
+        isBlocked:false,
+        noVoiceMessages:false,
+      }
+    };
+    if(user.fullInfo){
+      //@ts-ignore
+      this.msg.fullInfo = {...this.msg.fullInfo,...user.fullInfo}
+    }
+
+    if(user.usernames){
+      //@ts-ignore
+      this.msg.usernames = user.usernames
+    }
+    if(user.photos){
+      //@ts-ignore
+      this.msg.photos = {...user.photos}
+    }
   }
 
   getUserInfo(){
-    return this.user;
-  }
-
-  setUserInfo(user:ApiUser){
-    this.user = user;
-  }
-
-  async updateChatId(chatId:string,msgId:number =0){
-    await kv.put(`UC_${this.user.id}_${chatId}`,msgId.toString())
-  }
-
-  async getLastMsgId(chatId:string){
-    const msgId =  await kv.get(`UC_${this.user.id}_${chatId}`)
-    return msgId ? parseInt(msgId) : 0;
-  }
-
-  static getDefaultChatFolder(){
+    const {fullInfo,...msg} = this.msg!
     return {
-      "byId": {
-        "1": {
+      accessHash:"",
+      firstName: "",
+      lastName:"",
+      canBeInvitedToGroup: true,
+      hasVideoAvatar: false,
+      isMin: false,
+      isPremium: false,
+      noStatus: false,
+      fullInfo:{
+        isBlocked:false,
+        noVoiceMessages:false,
+        ...fullInfo
+      },
+      ...msg
+    };
+  }
+  static getDefaultChatFolder() {
+    return {
+      byId:{
+        "1":{
           "id": 1,
-          "title": "Bot",
           "channels": false,
+          "title": "Bot",
           "pinnedChatIds": [],
           "includedChatIds": User.getPublicBots(),
           "excludedChatIds": []
         }
       },
-      "orderedIds": [
-        0,
-        1
-      ]
+      orderedIds:[0,1]
     }
   }
+
   async getChatFolder(){
-    const res = await kv.get(`UCF_${this.user.id}`);
+    const res = await kv.get(`UCF_${this.msg!.id}`);
     if(res){
       return JSON.parse(res);
     }else{
       return null;
     }
   }
-  async updateChatFolder(chatFoler:any){
-    await kv.put(`UCF_${this.user.id}`,JSON.stringify(chatFoler));
+  async saveUserSetting(userSetting:PbUserSetting_Type){
+    await kv.put(`US_${this.msg!.id}`,Buffer.from(new PbUserSetting(userSetting).pack().getPbData()).toString("hex"));
+  }
+
+  async getUserSetting(){
+    const str = await kv.get(`US_${this.msg!.id}`);
+    return PbUserSetting.parseMsg(new Pdu(Buffer.from(str,'hex')));
   }
   static async getChatIds(user_id?:string){
     const rows = await kv.list({
-      prefix:`UC_${user_id}_`
+      prefix:`U_C_${user_id}_`
     })
     const res = [];
     for (let i = 0; i < rows.length; i++) {
       const key = rows[i];
-      const chatId = key.name.replace(`UC_${user_id}_`,"");
-      const msgId = await kv.get(key.name)
-      res.push({chatId,msgId:parseInt(msgId)})
+      const chatId = key.name.replace(`U_C_${user_id}_`,"");
+      const chatMsgId = await kv.get(key.name)
+      res.push({chatId,chatMsgId:parseInt(chatMsgId)})
     }
-    res.sort((a,b)=>b.msgId - a.msgId)
+    res.sort((a,b)=>b.chatMsgId - a.chatMsgId)
     const chatIds = [];
     for (let i = 0; i < res.length; i++) {
       chatIds.push(res[i].chatId)
@@ -79,7 +127,9 @@ export class User{
     const chats = [];
     for (let i = 0; i < chatIds.length; i++) {
       const chat = await Chat.getFromCache(chatIds[i])
-      chats.push(chat?.getChatInfo())
+      if(chat){
+        chats.push(chat?.getChatInfo())
+      }
     }
     return chats
   }
@@ -94,110 +144,90 @@ export class User{
     return chats
   }
 
-  static format(user:{
-    id:string,isSelf?:true,type?:ApiUserType,
-    isPremium?:boolean;first_name?:string,user_name?:string
-  },bot?:ApiBotInfo,bio?:string):ApiUser{
-    const usernames = user.user_name ? [{
-      "username": user.user_name,
-      "isActive": true,
-      "isEditable": true
-    }] :undefined
-
-    return {
-      "id": user.id,
-      isSelf:user.isSelf,
-      firstName:user.first_name || "",
-      usernames:usernames,
-      "isMin": false,
-      "isPremium": user.isPremium || false,
-      "type": user.type||'userTypeRegular',
-      hasVideoAvatar:false,
-      "canBeInvitedToGroup": false,
-      "phoneNumber": "",
-      "noStatus": true,
-      accessHash:"",
-      "fullInfo": {
-        bio,
-        "commonChatsCount": 0,
-        "isBlocked": false,
-        "noVoiceMessages": false,
-        botInfo:bot ? bot:undefined
-      },
-      // "avatarHash": "5942933258171459000",
-      // "photos": [
-      //   {
-      //     "id": "5942933258171459000",
-      //     "thumbnail": {
-      //       "dataUri": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDACgcHiMeGSgjISMtKygwPGRBPDc3PHtYXUlkkYCZlo+AjIqgtObDoKrarYqMyP/L2u71////m8H////6/+b9//j/2wBDASstLTw1PHZBQXb4pYyl+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj/wAARCAAoACgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDMZyT/AIVLaQNcS46KOpquf0rQs/3YUHgdWqSy8tnaiMqkas3qcmoZrMJB5kPQfeUnpV23njfO09PalLoSSCCrdaGhHP7GlkYDqBRV6yhAvp0P8PFFLXoMzYVDyhTyPT1rR8xVn8koMd/estWKOGHUHIq55jXLLIBtZRz702JGtGsUTqiRnDL1AzSrBHHLsUnLZ71UhZGYE7t/oP8AGlSQS3LSq4YoccdhQMsW8ZF/OexOaKS2nM80uw46AEiimiTBlTa+PanQ72Gxfu98d6KKOgLc0rbTgzEz7wvZd1Q6iohul8oBAEGNtFFCBiWd40DH5QQevrRRRV2RFz//2Q==",            "width": 640,
-      //       "height": 640
-      //     },
-      //     "sizes": [
-      //       {
-      //         "width": 160,
-      //         "height": 160,
-      //         "type": "s"
-      //       },
-      //       {
-      //         "width": 320,
-      //         "height": 320,
-      //         "type": "m"
-      //       },
-      //       {
-      //         "width": 640,
-      //         "height": 640,
-      //         "type": "x"
-      //       }
-      //     ]
-      //   }
-      // ]
+  setFullInfo(fullInfo:PbFullInfo_Type){
+    if(!this.msg!.fullInfo){
+      this.msg!.fullInfo = {};
+    }
+    this.msg!.fullInfo = {
+      ...this.msg?.fullInfo,
+      ...fullInfo,
     }
   }
+
+
+  setUsernames(username:string,isActive:boolean = true,isEditable:boolean = true){
+    if(!this.msg!.usernames){
+      this.msg!.usernames = [];
+    }
+    this.msg!.usernames.push({
+      username,isActive,isEditable
+    });
+  }
+
+  setBotInfo(botInfo:PbBotInfo_Type){
+    if(!this.msg!.fullInfo){
+      this.msg!.fullInfo = {};
+    }
+    this.msg!.fullInfo = {
+      ...this.msg!.fullInfo,
+      botInfo
+    };
+  }
   async save(){
-    await kv.put(`U_${this.user.id}`,JSON.stringify(this.user))
+    await kv.put(`U_${this.msg!.id}`,Buffer.from(this.pack().getPbData()).toString("hex"))
   }
-  isBot(){
-    return !!this.user?.fullInfo?.botInfo
-  }
-  static async getFromCache(id:string){
+
+  static async getFromCache(id:string):Promise<User | null>{
     let t = await kv.get(`U_${id}`)
     if(t){
-      t = JSON.parse(t);
-      const u = new User(t.id)
-      u.user = t;
-      return u
+      const u = new User()
+      u.msg = User.parseMsg(new Pdu(Buffer.from(t,"hex")))
+      return u;
     }else{
       return null
     }
   }
+  isBot(){
+    return !!this.msg?.fullInfo?.botInfo
+  }
   static getPublicBots(){
-    const {USER_IDS_PUBLIC} = ENV;
+    const {USER_IDS_PUBLIC,IS_PROD,USER_ID_BOT_DEV} = ENV;
+    if(!IS_PROD){
+      USER_IDS_PUBLIC.push(USER_ID_BOT_DEV)
+    }
     return USER_IDS_PUBLIC
   }
+
   static async loadChats(user_id?:string){
-    let chatIds = [];
+    let chatIds = User.getPublicBots();
     let userStatusesById:Record<string, ApiUserStatus>  = {};
-    let chatFolders = User.getDefaultChatFolder();
+    let chatFolders:any = User.getDefaultChatFolder();
+
     let chats = []
 
     if(user_id){
-      let user = await User.getFromCache(user_id);
-      if(!user){
-        const user = new User(User.format({
-          id:user_id,
-        }))
-        await user.save();
-        chatFolders = await user.getChatFolder();
+      const user = await User.init(user_id)
+      const userSetting = await user.getUserSetting();
+      userSetting.chatFolders?.forEach((item:PbChatFolder_Type)=>{
+        item.pinnedChatIds = []
+        item.excludedChatIds = []
+        chatFolders.byId[item.id] = item;
+      })
+      chatFolders.orderedIds = userSetting.chatFolderOrderedIds!;
+      const chatIds1 = await User.getChatIds(user_id)
+      if(!chatIds1.includes(user_id)){
+        chatIds1.push(user_id)
       }
-      chatIds = await User.getChatIds(user_id)
+
+      chatIds = unique(chatIds.concat(chatIds1));
       chats = await User.getChatsByChatIds(chatIds);
       for (let i = 0; i < chats.length; i++) {
-        const msgId = await user?.getLastMsgId(chats[i]!.id)
-        const lastMessage = await Msg.getMsgFromCache(user_id,chats[i]!.id,msgId!)
+        const chat = chats[i]
+        const chatMsgId = await Msg.getLastMsgId(user_id,chat.id!)
+        const lastMessage = chatMsgId ? await Msg.getFromCache(user_id,chat.id!,chatMsgId): undefined;
         chats[i]!.lastMessage = lastMessage ? lastMessage.msg : undefined
       }
     }else{
-      chatIds = User.getPublicBots();
       chats = await User.getChatsByChatIds(chatIds);
     }
 
@@ -208,7 +238,7 @@ export class User{
         if(user){
           const id = user?.getUserInfo()!.id!;
           if(id === user_id){
-            user!.getUserInfo().isSelf = true;
+            user!.msg!.isSelf = true;
           }
           users.push(user?.getUserInfo())
           if(!user?.isBot()){
@@ -230,42 +260,51 @@ export class User{
         }
       }
     }
-    const res = {
-      publicBotIds:User.getPublicBots(),
+    return {
+      publicBotIds: User.getPublicBots(),
       userStatusesById,
       users,
       chats,
       chatIds,
       chatFolders,
-      draftsById:{},
-      replyingToById:{},
-      orderedPinnedIds:[],
-      totalChatCount:chatIds.length
+      draftsById: {},
+      replyingToById: {},
+      orderedPinnedIds: [],
+      totalChatCount: chatIds.length
     }
-    // console.log("========>>","loadChats",JSON.stringify(res))
-    return res
   }
   static async init(user_id:string){
     let user = await User.getFromCache(user_id);
     if(!user){
-      user = new User(User.format({id:user_id}))
-      await user.save()
+      user = new User({
+        id:user_id,
+        type:User.userTypeRegular,
+        phoneNumber:"",
+      })
+      await user.save();
+
+      const chatFolders:PbChatFolder_Type[] = []
+      Object.keys(User.getDefaultChatFolder().byId).forEach(key=>{
+        // @ts-ignore
+        chatFolders.push(User.getDefaultChatFolder().byId[key])
+      })
+      await user.saveUserSetting({
+        chatFolders:chatFolders,
+        chatFolderOrderedIds:[0,1],
+        myBotIds:[],
+        myGroups:[]
+      })
     }
     let chat = await Chat.getFromCache(user_id);
     if(!chat){
-      chat = new Chat(Chat.format({
+      chat = new Chat({
         id:user_id,
-      }))
+        type:Chat.chatTypePrivate,
+        title:""
+      })
       await chat.save();
-      await user.updateChatId(user_id)
-      const chatIds = User.getPublicBots()
-      for (let i = 0; i < chatIds.length; i++) {
-        await user.updateChatId(chatIds[i])
-      }
-      const ChatFolder = User.getDefaultChatFolder();
-      await user.updateChatFolder(ChatFolder)
     }
-
+    return user;
   }
 
 }

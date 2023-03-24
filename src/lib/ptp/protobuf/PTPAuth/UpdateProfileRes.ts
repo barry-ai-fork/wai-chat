@@ -4,17 +4,13 @@ import type { Pdu } from '../BaseMsg';
 import type { UpdateProfileRes_Type } from './types';
 
 export default class UpdateProfileRes extends BaseMsg {
+  public msg?: UpdateProfileRes_Type
   constructor(msg?: UpdateProfileRes_Type) {
     super('PTP.Auth.UpdateProfileRes', msg);
     this.setCommandId(ActionCommands.CID_UpdateProfileRes);
+    this.msg = msg;
   }
-  decode(data: Uint8Array): UpdateProfileRes_Type {
-    return this.__D(data);
-  }
-  pack(): Pdu {
-    return this.__pack();
-  }
-  static parseMsg(pdu : Pdu) {
-    return new UpdateProfileRes().decode(pdu.getPbBody());
+  static parseMsg(pdu : Pdu): UpdateProfileRes_Type {
+    return new UpdateProfileRes().decode(pdu.body());
   }
 }

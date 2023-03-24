@@ -4,17 +4,13 @@ import type { Pdu } from '../BaseMsg';
 import type { UpdateUsernameReq_Type } from './types';
 
 export default class UpdateUsernameReq extends BaseMsg {
+  public msg?: UpdateUsernameReq_Type
   constructor(msg?: UpdateUsernameReq_Type) {
     super('PTP.Auth.UpdateUsernameReq', msg);
     this.setCommandId(ActionCommands.CID_UpdateUsernameReq);
+    this.msg = msg;
   }
-  decode(data: Uint8Array): UpdateUsernameReq_Type {
-    return this.__D(data);
-  }
-  pack(): Pdu {
-    return this.__pack();
-  }
-  static parseMsg(pdu : Pdu) {
-    return new UpdateUsernameReq().decode(pdu.getPbBody());
+  static parseMsg(pdu : Pdu): UpdateUsernameReq_Type {
+    return new UpdateUsernameReq().decode(pdu.body());
   }
 }

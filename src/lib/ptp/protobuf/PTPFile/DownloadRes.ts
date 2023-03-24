@@ -4,17 +4,13 @@ import type { Pdu } from '../BaseMsg';
 import type { DownloadRes_Type } from './types';
 
 export default class DownloadRes extends BaseMsg {
+  public msg?: DownloadRes_Type
   constructor(msg?: DownloadRes_Type) {
     super('PTP.File.DownloadRes', msg);
     this.setCommandId(ActionCommands.CID_DownloadRes);
+    this.msg = msg;
   }
-  decode(data: Uint8Array): DownloadRes_Type {
-    return this.__D(data);
-  }
-  pack(): Pdu {
-    return this.__pack();
-  }
-  static parseMsg(pdu : Pdu) {
-    return new DownloadRes().decode(pdu.getPbBody());
+  static parseMsg(pdu : Pdu): DownloadRes_Type {
+    return new DownloadRes().decode(pdu.body());
   }
 }

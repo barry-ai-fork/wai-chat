@@ -6,8 +6,10 @@ import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
 import Account from "../share/Account";
 import UploadProfilePhotoReq from "../../lib/ptp/protobuf/PTPAuth/UploadProfilePhotoReq";
 import UploadProfilePhotoRes from "../../lib/ptp/protobuf/PTPAuth/UploadProfilePhotoRes";
-import { ERR } from "../../lib/ptp/protobuf/PTPCommon";
+import { ERR } from "../../lib/ptp/protobuf/PTPCommon/types";
 import {UpdateProfileReq, UpdateUsernameReq} from "../../lib/ptp/protobuf/PTPAuth";
+
+let initSystemBot_down = false;
 
 export function getInitSystemBots(){
   const {USER_ID_CHATGPT,USER_ID_BOT_FATHER,USER_ID_BOT_DEV} = ENV;
@@ -76,7 +78,11 @@ export function getInitSystemBots(){
   ]
 
 }
-export let initSystemBot_down = false;
+
+export function resetInitSystemBot_down(){
+  initSystemBot_down = false
+}
+
 export async function initSystemBot(bots:any[],force?:boolean){
   if(!force && initSystemBot_down){
     return;
@@ -86,24 +92,38 @@ export async function initSystemBot(bots:any[],force?:boolean){
     const {id,first_name,user_name,isPremium,description,commands,menuButton} = bots[i]
     let user = await User.getFromCache(id)
     if(!user){
-      const bot = new Bot(Bot.format({
-        id,
+      const bot = new Bot({
+        botId:id,
+        isChatGpt:id === ENV.USER_ID_CHATGPT,
         menuButton,
         commands,
         description
-      }))
-      const user = new User(User.format({
+      })
+      const userObj = new User();
+
+      userObj.setUserInfo({
+        phoneNumber: "",
+        isMin:false,
         id,
-        first_name,
-        user_name,
+        firstName:first_name,
         isPremium,
-        type:"userTypeBot",
-      },bot.getBotInfo(),description));
-      await user.save()
-      const chat = new Chat(Chat.format({
+        type:'userTypeBot',
+        noStatus:true,
+        fullInfo:{
+          bio:description,
+        }
+      });
+      userObj.setUsernames(user_name)
+      userObj.setBotInfo(bot.getBotInfo())
+
+      await userObj.save()
+      const chat = new Chat()
+      chat.setChatInfo({
         id,
         title:first_name,
-      }))
+        type:"chatTypePrivate",
+        isVerified:true,
+      })
       await chat.save();
     }
   }
@@ -114,7 +134,6 @@ export async function uploadProfilePhotoReq(pdu:Pdu,account:Account){
   console.log("uploadProfilePhotoReq",{id,is_video})
 
   const user = await User.getFromCache(account.getUid()!);
-  const currentUser = user?.getUserInfo();
   if(!is_video){
     const payload = {
       "avatarHash": id,
@@ -163,16 +182,7 @@ export async function updateUsername(pdu:Pdu,account:Account){
   const {username} = UpdateUsernameReq.parseMsg(pdu);
   console.log("updateUsername",{username})
   const user = await User.getFromCache(account.getUid()!);
-  user?.setUserInfo({
-    ...user?.getUserInfo(),
-    usernames:[
-      {
-        username,
-        "isActive": true,
-        "isEditable": true
-      }
-    ]
-  })
+  user?.setUsernames(username);
   await user?.save()
   account.sendPdu(new UploadProfilePhotoRes({
     err:ERR.NO_ERROR,
@@ -184,15 +194,7 @@ export async function updateProfile(pdu:Pdu,account:Account){
   console.log("updateProfile",{about,firstName,lastName});
   const user = await User.getFromCache(account.getUid()!);
   const currentUser = user?.getUserInfo();
-  user?.setUserInfo({
-    ...user?.getUserInfo(),
-    firstName,
-    lastName,
-    fullInfo: {
-      ...currentUser!.fullInfo,
-      bio: about,
-    },
-  })
+  user?.setFullInfo({bio:about})
   await user?.save()
   account.sendPdu(new UploadProfilePhotoRes({
     err:ERR.NO_ERROR,

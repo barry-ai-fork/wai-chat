@@ -1,7 +1,7 @@
 import {WS_URL} from '../../../config';
 import Account, {ISession} from "../../../worker/share/Account";
 import {Pdu} from "../protobuf/BaseMsg";
-import {ERR} from "../protobuf/PTPCommon";
+import {ERR} from "../protobuf/PTPCommon/types";
 import {AuthLoginReq, AuthLoginRes, AuthStep1Req, AuthStep1Res, AuthStep2Req, AuthStep2Res} from "../protobuf/PTPAuth";
 import {randomize} from "worktop/utils";
 import {ActionCommands, getActionCommandsName} from "../protobuf/ActionCommands";

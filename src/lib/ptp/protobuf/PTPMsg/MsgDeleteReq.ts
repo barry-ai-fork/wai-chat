@@ -4,17 +4,13 @@ import type { Pdu } from '../BaseMsg';
 import type { MsgDeleteReq_Type } from './types';
 
 export default class MsgDeleteReq extends BaseMsg {
+  public msg?: MsgDeleteReq_Type
   constructor(msg?: MsgDeleteReq_Type) {
     super('PTP.Msg.MsgDeleteReq', msg);
     this.setCommandId(ActionCommands.CID_MsgDeleteReq);
+    this.msg = msg;
   }
-  decode(data: Uint8Array): MsgDeleteReq_Type {
-    return this.__D(data);
-  }
-  pack(): Pdu {
-    return this.__pack();
-  }
-  static parseMsg(pdu : Pdu) {
-    return new MsgDeleteReq().decode(pdu.getPbBody());
+  static parseMsg(pdu : Pdu): MsgDeleteReq_Type {
+    return new MsgDeleteReq().decode(pdu.body());
   }
 }

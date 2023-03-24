@@ -4,17 +4,13 @@ import type { Pdu } from '../BaseMsg';
 import type { DownloadReq_Type } from './types';
 
 export default class DownloadReq extends BaseMsg {
+  public msg?: DownloadReq_Type
   constructor(msg?: DownloadReq_Type) {
     super('PTP.File.DownloadReq', msg);
     this.setCommandId(ActionCommands.CID_DownloadReq);
+    this.msg = msg;
   }
-  decode(data: Uint8Array): DownloadReq_Type {
-    return this.__D(data);
-  }
-  pack(): Pdu {
-    return this.__pack();
-  }
-  static parseMsg(pdu : Pdu) {
-    return new DownloadReq().decode(pdu.getPbBody());
+  static parseMsg(pdu : Pdu): DownloadReq_Type {
+    return new DownloadReq().decode(pdu.body());
   }
 }

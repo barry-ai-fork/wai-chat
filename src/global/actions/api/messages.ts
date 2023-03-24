@@ -92,9 +92,9 @@ import {translate} from '../../../util/langProvider';
 import {ensureProtocol} from '../../../util/ensureProtocol';
 import {updateTabState} from '../../reducers/tabs';
 import {getCurrentTabId} from '../../../util/establishMultitabRole';
-import MsgConn, {MsgConnNotifyAction} from "../../../lib/ptp/client/MsgConn";
+import MsgConn, {MsgClientState, MsgConnNotifyAction} from "../../../lib/ptp/client/MsgConn";
 import {MsgDeleteReq, MsgListReq, MsgListRes, MsgUpdateReq, SendReq} from "../../../lib/ptp/protobuf/PTPMsg";
-import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
+import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
 import Account from "../../../worker/share/Account";
 import {getPasswordFromEvent, replaceSubstring} from "../../../worker/share/utils/utils";
 import {blobToBuffer, fetchBlob} from "../../../util/files";
@@ -229,7 +229,7 @@ addActionHandler('sendMessage', async (global, actions, payload): ActionReturnTy
   const { tabId = getCurrentTabId() } = payload;
   const currentMessageList = selectCurrentMessageList(global, tabId);
 
-  if (!currentMessageList) {
+  if (!currentMessageList || MsgConn.getMsgClient()?.getState() !== MsgClientState.logged) {
     return undefined;
   }
   const { chatId, threadId, type } = currentMessageList;
@@ -1065,20 +1065,19 @@ async function loadViewportMessages<T extends GlobalState>(
   if(flag){
     setGlobal(global)
   }
+  const lastMessageId = chat?.lastMessage ? chat?.lastMessage.id : 0;
+
   const pdu = await MsgConn.getMsgClient()?.sendPduWithCallback(new MsgListReq({
-    payload:JSON.stringify({
-      chat: selectChat(global, chatId)!,
-      offsetId,
-      addOffset,
-      limit: MESSAGE_LIST_SLICE,
-      threadId,
-    })
+    lastMessageId,
+    chatId:chat.id,
+    limit: MESSAGE_LIST_SLICE,
   }).pack());
   const res = MsgListRes.parseMsg(pdu!)
   if(res.err !== ERR.NO_ERROR){
     return;
   }
   const result = JSON.parse(res!.payload)
+
   // console.log(result)
   // const result = await callApi('fetchMessages', {
   //   chat: selectChat(global, chatId)!,

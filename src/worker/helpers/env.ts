@@ -5,6 +5,7 @@ import CloudFlareR2 from "../share/storage/CloudFlareR2";
 export const ENV:{
   IS_PROD: boolean,
   TASK_EXE_USER_ID:string,
+  KV_NAMESPACE_KEY:string,
   TEST_TOKEN:string,
   USER_ID_START: string,
   USER_IDS_PUBLIC: string[],
@@ -28,13 +29,14 @@ export const ENV:{
   MAX_HISTORY_LENGTH: number,
 } = {
   IS_PROD: true,
+  KV_NAMESPACE_KEY: "DATABASE_PROD",
   TASK_EXE_USER_ID:"",
   TEST_TOKEN:"",
   USER_ID_START: "623415",
   USER_ID_BOT_FATHER: "10000",
   USER_ID_CHATGPT: "10001",
   USER_ID_BOT_DEV: "10002",
-  USER_IDS_PUBLIC:["10000","10001","10002"],
+  USER_IDS_PUBLIC:["10000","10001"],
   TOKEN_EXPIRE_TIME_SEC: 3600,
   JWT_SECRET: "",
   GITHUB_CLIENT_ID: "",
@@ -65,7 +67,7 @@ export function initEnv(env:Record<string, any>) {
     }
   }
   kv = new CloudFlareKv();
-  kv.init(env.DATABASE)
+  kv.init(env[ENV.KV_NAMESPACE_KEY])
   storage = new CloudFlareR2();
   storage.init(env.STORAGE)
 }

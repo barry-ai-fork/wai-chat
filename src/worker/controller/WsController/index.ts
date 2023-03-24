@@ -15,7 +15,7 @@ import {
   AuthStep2Req,
   AuthStep2Res
 } from "../../../lib/ptp/protobuf/PTPAuth";
-import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
+import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
 import {LoadChatsReq, LoadChatsRes} from "../../../lib/ptp/protobuf/PTPChats";
 import {OtherNotify} from "../../../lib/ptp/protobuf/PTPOther";
 import {msgHandler} from "../MsgController";
@@ -158,8 +158,8 @@ async function handleSession(websocket: WebSocket) {
           await accountServer.afterServerLoginOk(authLoginReq);
           const user_id = accountServer.getUid()!;
           console.log("[LOGIN OK] ====>>>",user_id)
-          await User.init(user_id);
-          const userInfo = (await User.getFromCache(user_id))?.getUserInfo();
+          const user = await User.init(user_id);
+          const userInfo = user.getUserInfo();
           userInfo!.isSelf = true;
           pduRsp = new AuthLoginRes({
             err:ERR.NO_ERROR,

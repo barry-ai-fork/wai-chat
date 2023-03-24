@@ -4,17 +4,13 @@ import type { Pdu } from '../BaseMsg';
 import type { LoadChatsRes_Type } from './types';
 
 export default class LoadChatsRes extends BaseMsg {
+  public msg?: LoadChatsRes_Type
   constructor(msg?: LoadChatsRes_Type) {
     super('PTP.Chats.LoadChatsRes', msg);
     this.setCommandId(ActionCommands.CID_LoadChatsRes);
+    this.msg = msg;
   }
-  decode(data: Uint8Array): LoadChatsRes_Type {
-    return this.__D(data);
-  }
-  pack(): Pdu {
-    return this.__pack();
-  }
-  static parseMsg(pdu : Pdu) {
-    return new LoadChatsRes().decode(pdu.getPbBody());
+  static parseMsg(pdu : Pdu): LoadChatsRes_Type {
+    return new LoadChatsRes().decode(pdu.body());
   }
 }

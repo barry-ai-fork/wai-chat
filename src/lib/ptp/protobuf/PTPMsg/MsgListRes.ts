@@ -4,17 +4,13 @@ import type { Pdu } from '../BaseMsg';
 import type { MsgListRes_Type } from './types';
 
 export default class MsgListRes extends BaseMsg {
+  public msg?: MsgListRes_Type
   constructor(msg?: MsgListRes_Type) {
     super('PTP.Msg.MsgListRes', msg);
     this.setCommandId(ActionCommands.CID_MsgListRes);
+    this.msg = msg;
   }
-  decode(data: Uint8Array): MsgListRes_Type {
-    return this.__D(data);
-  }
-  pack(): Pdu {
-    return this.__pack();
-  }
-  static parseMsg(pdu : Pdu) {
-    return new MsgListRes().decode(pdu.getPbBody());
+  static parseMsg(pdu : Pdu): MsgListRes_Type {
+    return new MsgListRes().decode(pdu.body());
   }
 }

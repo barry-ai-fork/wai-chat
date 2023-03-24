@@ -4,17 +4,13 @@ import type { Pdu } from '../BaseMsg';
 import type { MsgDeleteRes_Type } from './types';
 
 export default class MsgDeleteRes extends BaseMsg {
+  public msg?: MsgDeleteRes_Type
   constructor(msg?: MsgDeleteRes_Type) {
     super('PTP.Msg.MsgDeleteRes', msg);
     this.setCommandId(ActionCommands.CID_MsgDeleteRes);
+    this.msg = msg;
   }
-  decode(data: Uint8Array): MsgDeleteRes_Type {
-    return this.__D(data);
-  }
-  pack(): Pdu {
-    return this.__pack();
-  }
-  static parseMsg(pdu : Pdu) {
-    return new MsgDeleteRes().decode(pdu.getPbBody());
+  static parseMsg(pdu : Pdu): MsgDeleteRes_Type {
+    return new MsgDeleteRes().decode(pdu.body());
   }
 }

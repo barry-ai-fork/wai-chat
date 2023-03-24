@@ -1,4 +1,4 @@
-const { inflate } = require('pako/dist/pako_inflate');
+// const { inflate } = require('pako/dist/pako_inflate');
 const { serializeBytes } = require('../index');
 
 // CONTEST const { deflate } = require('pako/dist/pako_deflate')
@@ -31,7 +31,8 @@ class GZIPPacked {
     }
 
     static ungzip(input) {
-        return Buffer.from(inflate(input));
+        // return Buffer.from(inflate(input));
+        return Buffer.from("")
     }
 
     static read(reader) {

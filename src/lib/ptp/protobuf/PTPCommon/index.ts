@@ -1,41 +1,19 @@
-// DO NOT EDIT
-import BaseMsg from '../BaseMsg';
-import type { Pdu } from '../BaseMsg';
-
-export enum AUTH_TYPE {
-  AUTH_TYPE_USERNAME = 0,
-  AUTH_TYPE_EMAIL = 1,
-  AUTH_TYPE_MOBILE = 2,
-}
-
-export enum ERR {
-  NO_ERROR = 0,
-  ERR_SYSTEM = 1,
-  ERR_AUTH_LOGIN = 2,
-}
-
-export interface FileInfo_Type {
-  id: string;
-  size: number;
-  part: number;
-  part_total?: number;
-  buf: Buffer;
-  type: string;
-}
-
-import { ActionCommands } from '../ActionCommands';
-export class FileInfo extends BaseMsg {
-  constructor(msg?: FileInfo_Type) {
-    super('PTP.Common.FileInfo', msg);
-    this.setCommandId(ActionCommands.CID_FileInfo);
-  }
-  decode(data: Uint8Array): FileInfo_Type {
-    return this.__D(data);
-  }
-  pack(): Pdu {
-    return this.__pack();
-  }
-  static parseMsg(pdu : Pdu) {
-    return new FileInfo().decode(pdu.getPbBody());
-  }
-}
+export { default as FileInfo } from './FileInfo';
+export { default as PbBotInfo } from './PbBotInfo';
+export { default as PbChat } from './PbChat';
+export { default as PbChatFolder } from './PbChatFolder';
+export { default as PbCommands } from './PbCommands';
+export { default as PbContent } from './PbContent';
+export { default as PbFullInfo } from './PbFullInfo';
+export { default as PbMenuButton } from './PbMenuButton';
+export { default as PbMessageEntity } from './PbMessageEntity';
+export { default as PbMsg } from './PbMsg';
+export { default as PbPhoto } from './PbPhoto';
+export { default as PbSettings } from './PbSettings';
+export { default as PbSizes } from './PbSizes';
+export { default as PbText } from './PbText';
+export { default as PbThumbnail } from './PbThumbnail';
+export { default as PbUser } from './PbUser';
+export { default as PbUsernames } from './PbUsernames';
+export { default as PbUserSetting } from './PbUserSetting';
+export { default as PbVoice } from './PbVoice';

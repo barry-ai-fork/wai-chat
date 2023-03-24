@@ -4,17 +4,13 @@ import type { Pdu } from '../BaseMsg';
 import type { SendRes_Type } from './types';
 
 export default class SendRes extends BaseMsg {
+  public msg?: SendRes_Type
   constructor(msg?: SendRes_Type) {
     super('PTP.Msg.SendRes', msg);
     this.setCommandId(ActionCommands.CID_SendRes);
+    this.msg = msg;
   }
-  decode(data: Uint8Array): SendRes_Type {
-    return this.__D(data);
-  }
-  pack(): Pdu {
-    return this.__pack();
-  }
-  static parseMsg(pdu : Pdu) {
-    return new SendRes().decode(pdu.getPbBody());
+  static parseMsg(pdu : Pdu): SendRes_Type {
+    return new SendRes().decode(pdu.body());
   }
 }

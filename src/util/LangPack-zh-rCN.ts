@@ -16523,5 +16523,16 @@ export default {
     key: 'Conversation.ForwardTooltip.SavedMessages.Many',
     value: '已收藏',
   },
+  'ChatList.EmptyChatListFilterText': {
+    key: 'ChatList.EmptyChatListFilterText',
+    value: ' ',
+  },
+  'ChatList.EmptyChatListEditFilter': {
+    key: 'ChatList.EmptyChatListEditFilter',
+    value: '设置分类',
+  },
+
+
+
 
 } as ApiLangPack;

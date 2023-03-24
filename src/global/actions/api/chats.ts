@@ -84,7 +84,7 @@ import {updateTabState} from '../../reducers/tabs';
 import {getCurrentTabId} from '../../../util/establishMultitabRole';
 import Account from "../../../worker/share/Account";
 import {LoadChatsReq, LoadChatsRes} from "../../../lib/ptp/protobuf/PTPChats";
-import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
+import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
 import MsgConn, {MsgClientState} from "../../../lib/ptp/client/MsgConn";
 
 const TOP_CHAT_MESSAGES_PRELOAD_INTERVAL = 100;

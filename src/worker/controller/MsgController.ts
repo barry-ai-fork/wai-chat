@@ -12,20 +12,17 @@ import {
   SendReq
 } from "../../lib/ptp/protobuf/PTPMsg";
 import {Msg} from "../share/Msg";
-import {AiChatRole} from "../types";
 import {User} from "../share/User";
 import {TEXT_AI_THINKING} from "../setting";
 import {ActionCommands} from "../../lib/ptp/protobuf/ActionCommands";
-import {ERR} from "../../lib/ptp/protobuf/PTPCommon";
+import {ERR} from "../../lib/ptp/protobuf/PTPCommon/types";
 
 export async function msgHandler(pdu:Pdu,account:Account){
   switch (pdu.getCommandId()){
     case ActionCommands.CID_MsgListReq:
       const handleMsgListReq = async (pdu:Pdu)=>{
-        const {payload} = MsgListReq.parseMsg(pdu);
+        const {lastMessageId,chatId} = MsgListReq.parseMsg(pdu);
         // console.log(payload)
-        const  {chat,addOffset,limit,threadId} = JSON.parse(payload)
-        const {id:chatId} = chat
         console.log("CID_MsgListReq",{chatId})
         const user_id = account.getUid();
         const res = {
@@ -35,9 +32,7 @@ export async function msgHandler(pdu:Pdu,account:Account){
           messages:[]
         }
         if(user_id){
-          const msgObj = new Msg({chatId,user_id});
-          const rows = await msgObj.getAllMsgList();
-          // console.log(rows);
+          const rows = await Msg.getMsgList(user_id,chatId,lastMessageId,true);
           rows.forEach((msg:any)=>{
             // @ts-ignore
             return res.messages.push(msg.msg);
@@ -59,10 +54,13 @@ export async function msgHandler(pdu:Pdu,account:Account){
   switch (pdu.getCommandId()){
     case ActionCommands.CID_MsgUpdateReq:
       const msgUpdateReq = MsgUpdateReq.parseMsg(pdu);
-      const msgUpdate = await Msg.getMsgFromCache(msgUpdateReq.user_id,msgUpdateReq.chat_id,msgUpdateReq.msg_id)
-      if(msgUpdate){
-        msgUpdate.setMsgText(msgUpdateReq.text)
-        await msgUpdate.save()
+      const chatMsgIds = await Msg.getChatMsgIds(msgUpdateReq.user_id,msgUpdateReq.chat_id,[msgUpdateReq.msg_id])
+      for (let i = 0; i < chatMsgIds.length; i++) {
+        const msgUpdate = await Msg.getFromCache(msgUpdateReq.user_id,msgUpdateReq.chat_id,chatMsgIds[i])
+        if(msgUpdate){
+          msgUpdate.setMsgText(msgUpdateReq.text)
+          await msgUpdate.save(true)
+        }
       }
       account.sendPdu(new MsgUpdateRes({
         err:ERR.NO_ERROR
@@ -85,69 +83,59 @@ export async function msgHandler(pdu:Pdu,account:Account){
   const {msg} = JSON.parse(payload)
   const {chatId,id} = msg;
   const user_id = account.getUid()!;
-  const msgModel = new Msg({user_id,chatId,senderId:user_id});
-  msgModel.setMsg({
-    ...msg,
-    senderId:user_id,
-    isOutgoing:true,
-    id:await msgModel.incrMsgId()
-  });
+  const msgSendByUser = new Msg(msg);
+  const chatIsNotGroupOrChannel = Msg.getChatIsNotGroupOrChannel(chatId)
+  let botInfo;
+  if(chatIsNotGroupOrChannel){
+    const chatUser = await User.getFromCache(chatId);
+    botInfo = chatUser?.isBot() ? chatUser?.getUserInfo()!.fullInfo?.botInfo! : null
+  }
+  msgSendByUser.init(user_id,chatId,!!botInfo,user_id)
+  await msgSendByUser.genMsgId();
+  await msgSendByUser.send("updateMessageSendSucceeded",{localMsgId:id},seq_num)
 
-  await msgModel.send("updateMessageSendSucceeded",{localMsgId:id},seq_num)
-  const chatUser = await User.getFromCache(chatId);
-  const user = new User(User.format({id:user_id}))
-  const botInfo = chatUser?.isBot() ? chatUser?.getUserInfo()!.fullInfo?.botInfo! : null
-
+  msgSendByUser.save().catch(console.error)
   if(botInfo){
-    if(msgModel.getMsgText()){
-      if(msgModel.getMsgText().indexOf("/") === 0){
-        msgModel.save().catch(console.error)
-        await user.updateChatId(chatId,msgModel.msg?.id!)
-        const msgModelBotCmdReply = new Msg({user_id,chatId,senderId:chatId});
-        switch (msgModel.getMsgText()){
+    const msgModelBotReply = new Msg();
+    msgModelBotReply.init(user_id,chatId,true,chatId)
+    if(msgSendByUser.getMsgText()){
+      if(msgSendByUser.getMsgText().indexOf("/") === 0){
+        switch (msgSendByUser.getMsgText()){
           case "/start":
-            await msgModelBotCmdReply.sendText(botInfo['description']!)
+            await msgModelBotReply.sendText(botInfo['description']!)
             break
-          case "/clear":
-            await msgModel.clearAiMsgHistory();
-          case "/history":
-            const history = await msgModel.getAiMsgHistory();
-            await msgModelBotCmdReply.sendText(`===\nHistory\n==============\n\n${history.map(({role,content})=>{
-              return `${role === "user" ? "\n>" : "<"}:${content}`
-            }).join("\n")}`)
-            break
+          // case "/clear":
+          //   await msgSendByUser.clearAiMsgHistory();
+          // case "/history":
+          //   const history = await msgSendByUser.getAiMsgHistory();
+          //   await msgModelBotReply.sendText(`===\nHistory\n==============\n\n${history.map(({role,content})=>{
+          //     return `${role === "user" ? "\n>" : "<"}:${content}`
+          //   }).join("\n")}`)
+          //   break
           default:
             return;
         }
-        msgModelBotCmdReply.save().catch(console.error)
-        await user.updateChatId(chatId,msgModelBotCmdReply.msg?.id!)
       }else{
-        if(chatId === ENV.USER_ID_CHATGPT){
-          const history = await msgModel.getAiMsgHistory();
-          const msgModelBotReply = new Msg({user_id,chatId,senderId:chatId});
+        if(botInfo.isChatGpt){
+          // const history = await msgSendByUser.getAiMsgHistory();
+          const history: { role: string; content: string; }[] = [];
           await msgModelBotReply.sendText(TEXT_AI_THINKING);
-          let [error,reply] = await sendMessageToChatGPT(msgModel.getMsgText(),history);
+          let [error,reply] = await sendMessageToChatGPT(msgSendByUser.getMsgText(),history);
           if(!error){
             reply = reply.replace("```html","```");
             console.log(reply)
-            msgModelBotReply.aiRole = AiChatRole.ASSISTANT;
-            msgModel.aiRole = AiChatRole.USER;
+            // msgModelBotReply.aiRole = AiChatRole.ASSISTANT;
+            // msgSendByUser.aiRole = AiChatRole.USER;
+            await msgModelBotReply.sendText(reply,"updateMessageSendSucceeded",{
+              date:Msg.genMsgDate()
+            })
+          }else{
+            msgModelBotReply.hasSent = false
           }
-          msgModel.save().catch(console.error);
-          msgModelBotReply.sendText(reply,"updateMessageSendSucceeded",{},msgModelBotReply.msg?.id)
-          msgModelBotReply.save().catch(console.error)
-          await user.updateChatId(chatId,msgModelBotReply.msg?.id!)
-        }else{
-          msgModel.save().catch(console.error)
-          await user.updateChatId(chatId,msgModel.msg?.id!)
         }
       }
-    }else{
-      msgModel.save().catch(console.error)
-      await user.updateChatId(chatId,msgModel.msg?.id!)
+      msgModelBotReply.save().catch(console.error)
     }
-  }else{
-    msgModel.save().catch(console.error)
-    await user.updateChatId(chatId,msgModel.msg?.id!)
   }
+
 }

@@ -4,17 +4,13 @@ import type { Pdu } from '../BaseMsg';
 import type { AuthLoginRes_Type } from './types';
 
 export default class AuthLoginRes extends BaseMsg {
+  public msg?: AuthLoginRes_Type
   constructor(msg?: AuthLoginRes_Type) {
     super('PTP.Auth.AuthLoginRes', msg);
     this.setCommandId(ActionCommands.CID_AuthLoginRes);
+    this.msg = msg;
   }
-  decode(data: Uint8Array): AuthLoginRes_Type {
-    return this.__D(data);
-  }
-  pack(): Pdu {
-    return this.__pack();
-  }
-  static parseMsg(pdu : Pdu) {
-    return new AuthLoginRes().decode(pdu.getPbBody());
+  static parseMsg(pdu : Pdu): AuthLoginRes_Type {
+    return new AuthLoginRes().decode(pdu.body());
   }
 }

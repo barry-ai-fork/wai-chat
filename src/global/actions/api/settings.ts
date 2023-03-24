@@ -34,7 +34,7 @@ import {
   UploadProfilePhotoReq,
   UploadProfilePhotoRes
 } from "../../../lib/ptp/protobuf/PTPAuth";
-import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
+import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
 import {blobToDataUri, fetchBlob, imgToBlob} from "../../../util/files";
 import {resizeImage} from "../../../util/imageResize";
 

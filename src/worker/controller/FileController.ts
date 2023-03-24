@@ -2,7 +2,8 @@ import {getCorsHeader} from "../helpers/network";
 import {DownloadReq, DownloadRes, UploadReq} from "../../lib/ptp/protobuf/PTPFile";
 import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
 import {storage} from "../helpers/env";
-import {ERR, FileInfo} from "../../lib/ptp/protobuf/PTPCommon";
+import {ERR} from "../../lib/ptp/protobuf/PTPCommon/types";
+import {FileInfo} from "../../lib/ptp/protobuf/PTPCommon";
 
 export async function Upload(pdu:Pdu){
   const req = UploadReq.parseMsg(pdu)

@@ -15,7 +15,7 @@ import localDb from '../localDb';
 import * as cacheApi from '../../../util/cacheApi';
 import {getEntityTypeById} from '../gramjsBuilders';
 import {DownloadReq, DownloadRes} from "../../../lib/ptp/protobuf/PTPFile";
-import {ERR} from "../../../lib/ptp/protobuf/PTPCommon";
+import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
 import {Pdu} from "../../../lib/ptp/protobuf/BaseMsg";
 
 const MEDIA_ENTITY_TYPES = new Set([

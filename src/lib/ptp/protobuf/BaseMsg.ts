@@ -149,6 +149,10 @@ export class Pdu {
   getPbBody(): Uint8Array {
     return this._pbBody;
   }
+  
+  body(): Uint8Array {
+    return this._pbBody;
+  }
 
   getPbBodyLength(): number {
     return this._pbBody.length;
@@ -216,7 +220,7 @@ let seq_num = 0;
 
 export default class BaseMsg {
   private __cid?: any;
-  private __msg?: any;
+  public msg?: any;
   private __pb: any;
   constructor(namespace: string, msg?: any) {
     const t = namespace.split('.');
@@ -227,19 +231,25 @@ export default class BaseMsg {
       pb = pb[k];
     } while (t.length > 0);
     this.__pb = pb;
-    this.__setMsg(msg);
+    this.setMsg(msg);
   }
   protected setCommandId(cid: any) {
     this.__cid = cid;
   }
-  protected __setMsg(msg: any) {
-    this.__msg = msg;
+  setMsg(msg: any) {
+    this.msg = msg;
   }
-  protected __getMsg() {
-    return this.__msg;
+  getMsg() {
+    return this.msg;
   }
   encode(): Uint8Array {
     return this.__E();
+  }
+  decode(data: Uint8Array) {
+    return this.__D(data);
+  }
+  pack(): Pdu {
+    return this.__pack();
   }
   toHex(): string {
     return Buffer.from(this.__E()).toString('hex');
@@ -251,7 +261,7 @@ export default class BaseMsg {
     return this.__D(Buffer.from(hexStr, 'hex'));
   }
   protected __E(): Uint8Array {
-    const obj = this.__pb.create(this.__getMsg());
+    const obj = this.__pb.create(this.getMsg());
     return this.__pb.encode(obj).finish();
   }
   protected __D(data: Uint8Array): any {

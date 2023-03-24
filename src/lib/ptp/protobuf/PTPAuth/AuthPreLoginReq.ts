@@ -4,17 +4,13 @@ import type { Pdu } from '../BaseMsg';
 import type { AuthPreLoginReq_Type } from './types';
 
 export default class AuthPreLoginReq extends BaseMsg {
+  public msg?: AuthPreLoginReq_Type
   constructor(msg?: AuthPreLoginReq_Type) {
     super('PTP.Auth.AuthPreLoginReq', msg);
     this.setCommandId(ActionCommands.CID_AuthPreLoginReq);
+    this.msg = msg;
   }
-  decode(data: Uint8Array): AuthPreLoginReq_Type {
-    return this.__D(data);
-  }
-  pack(): Pdu {
-    return this.__pack();
-  }
-  static parseMsg(pdu : Pdu) {
-    return new AuthPreLoginReq().decode(pdu.getPbBody());
+  static parseMsg(pdu : Pdu): AuthPreLoginReq_Type {
+    return new AuthPreLoginReq().decode(pdu.body());
   }
 }

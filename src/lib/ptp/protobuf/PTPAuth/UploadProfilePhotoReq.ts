@@ -4,17 +4,13 @@ import type { Pdu } from '../BaseMsg';
 import type { UploadProfilePhotoReq_Type } from './types';
 
 export default class UploadProfilePhotoReq extends BaseMsg {
+  public msg?: UploadProfilePhotoReq_Type
   constructor(msg?: UploadProfilePhotoReq_Type) {
     super('PTP.Auth.UploadProfilePhotoReq', msg);
     this.setCommandId(ActionCommands.CID_UploadProfilePhotoReq);
+    this.msg = msg;
   }
-  decode(data: Uint8Array): UploadProfilePhotoReq_Type {
-    return this.__D(data);
-  }
-  pack(): Pdu {
-    return this.__pack();
-  }
-  static parseMsg(pdu : Pdu) {
-    return new UploadProfilePhotoReq().decode(pdu.getPbBody());
+  static parseMsg(pdu : Pdu): UploadProfilePhotoReq_Type {
+    return new UploadProfilePhotoReq().decode(pdu.body());
   }
 }
