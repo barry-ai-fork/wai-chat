@@ -1,9 +1,8 @@
 import {USER_CONFIG} from './context';
 import {ENV} from './env.js';
-import {fetchWithTimeout} from "../share/utils";
 
 // 发送消息到ChatGPT
-export async function sendMessageToChatGPT(message:string, history:{role:string,content:string}[]) {
+export async function sendMessageToChatGPT(message:string, history:{role:string,content:string}[],apiKey?:string) {
   try {
     const body = {
       model: 'gpt-3.5-turbo',
@@ -15,7 +14,7 @@ export async function sendMessageToChatGPT(message:string, history:{role:string,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${ENV.OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${apiKey ? apiKey: ENV.OPENAI_API_KEY}`,
       },
       body: JSON.stringify(body),
     }).then((res) => res.json());
@@ -26,7 +25,7 @@ export async function sendMessageToChatGPT(message:string, history:{role:string,
   } catch (e) {
     console.error(e);
     // @ts-ignore
-    return [true,`invoke openai error, message : ${e.message}`];
+    return [true,`OpenAI invoke error`];
   }
 }
 

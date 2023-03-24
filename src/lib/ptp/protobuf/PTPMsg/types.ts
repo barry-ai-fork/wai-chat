@@ -1,5 +1,5 @@
 // DO NOT EDIT
-import type * as PTPCommon from '../PTPCommon';
+import type * as PTPCommon from '../PTPCommon/types';
 
 export interface MsgDeleteReq_Type {
   user_id: string;

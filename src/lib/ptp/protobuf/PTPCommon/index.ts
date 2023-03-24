@@ -2,6 +2,7 @@ export { default as FileInfo } from './FileInfo';
 export { default as PbBotInfo } from './PbBotInfo';
 export { default as PbChat } from './PbChat';
 export { default as PbChatFolder } from './PbChatFolder';
+export { default as PbChatGpBotConfig } from './PbChatGpBotConfig';
 export { default as PbCommands } from './PbCommands';
 export { default as PbContent } from './PbContent';
 export { default as PbFullInfo } from './PbFullInfo';

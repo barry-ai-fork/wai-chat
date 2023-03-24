@@ -56,6 +56,11 @@ export interface PbChatFolder_Type {
   excludedChatIds?: string[];
 }
 
+export interface PbChatGpBotConfig_Type {
+  init_system_content?: string;
+  api_key?: string;
+}
+
 export interface PbCommands_Type {
   botId: string;
   command: string;

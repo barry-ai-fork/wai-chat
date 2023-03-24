@@ -227,8 +227,7 @@ export default class MsgConn {
     if(e.data && e.data.byteLength && e.data.byteLength > 16){
       let pdu = new Pdu(Buffer.from(e.data));
       const seq_num = pdu.getSeqNum();
-      console.log("[onData]",seq_num,getActionCommandsName(pdu.getCommandId()))
-
+      // console.log("[onData]",seq_num,getActionCommandsName(pdu.getCommandId()))
       if(this.__sending_msg_map[seq_num]){
         this.__rev_msg_map[seq_num] = pdu
         delete this.__sending_msg_map[seq_num];

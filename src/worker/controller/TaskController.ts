@@ -15,6 +15,7 @@ type Task = {
 }
 
 export const tasks:Record<string, Task> = {}
+
 export async function creatTask(account:Account,modelMsg:Msg){
   const taskText = modelMsg.getMsgText().replace("/task ","");
   if(taskText){
@@ -37,7 +38,8 @@ export async function creatTask(account:Account,modelMsg:Msg){
     }
     const user_id = account.getUid()!;
     const chatId = user_id;
-    const msgModelBotCmdReply = new Msg({user_id,chatId,senderId:user_id});
+    const msgModelBotCmdReply = new Msg();
+    msgModelBotCmdReply.init(user_id,chatId,true,user_id)
     await msgModelBotCmdReply.sendText(`${taskId} 【created】${taskText}`)
     console.log("task reply",msgModelBotCmdReply.msg)
   }
@@ -67,7 +69,8 @@ export default async function(request:Request){
   console.log(action)
   const user_id = TASK_EXE_USER_ID;
   const chatId = ENV.USER_ID_BOT_DEV;
-  const msgModelBotCmdReply = new Msg({user_id,chatId,senderId:user_id});
+  const msgModelBotCmdReply = new Msg();
+  msgModelBotCmdReply.init(user_id,chatId,true,user_id)
   console.log(JSON.stringify(payload,null,2))
   switch (action){
     case "Send_User":
@@ -93,10 +96,6 @@ export default async function(request:Request){
         msgModelBotCmdReply.setMsg({
           ...message,
           isOutgoing:false,
-          chatId:msgModelBotCmdReply.chatId,
-          senderId:msgModelBotCmdReply.chatId,
-          date:Msg.genMsgDate(),
-          id:await msgModelBotCmdReply.incrMsgId(),
         })
         await msgModelBotCmdReply.send();
         await msgModelBotCmdReply.sendText(`\nMESSAGE ======\n\n`+"```\n"+JSON.stringify(message,null,2)+"```")

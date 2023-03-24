@@ -1,6 +1,5 @@
 
 export enum AiChatRole {
-  NONE,
   USER,
   ASSISTANT
 }
@@ -8,6 +7,11 @@ export enum AiChatRole {
 export type RequestForm = {
   action:string,
   payload:any,
+}
+
+export type AiChatHistory = {
+  role:'system'|'user'|'assistant',
+  content:string
 }
 
 export type AuthForm = {

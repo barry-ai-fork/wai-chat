@@ -3,7 +3,7 @@ import {kv} from './env';
 // 用户配置
 export const USER_CONFIG = {
   // 系统初始化消息
-  SYSTEM_INIT_MESSAGE: '你是一个得力的助手',
+  SYSTEM_INIT_MESSAGE: '你是一个得力的助手,请使用中文进行我们的交流。',
   // OpenAI API 额外参数
   OPENAI_API_EXTRA_PARAMS: {},
 };

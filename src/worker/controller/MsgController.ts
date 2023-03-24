@@ -16,6 +16,7 @@ import {User} from "../share/User";
 import {TEXT_AI_THINKING} from "../setting";
 import {ActionCommands} from "../../lib/ptp/protobuf/ActionCommands";
 import {ERR} from "../../lib/ptp/protobuf/PTPCommon/types";
+import BotMsg from "../share/Msg/BotMsg";
 
 export async function msgHandler(pdu:Pdu,account:Account){
   switch (pdu.getCommandId()){
@@ -96,46 +97,7 @@ export async function msgHandler(pdu:Pdu,account:Account){
 
   msgSendByUser.save().catch(console.error)
   if(botInfo){
-    const msgModelBotReply = new Msg();
-    msgModelBotReply.init(user_id,chatId,true,chatId)
-    if(msgSendByUser.getMsgText()){
-      if(msgSendByUser.getMsgText().indexOf("/") === 0){
-        switch (msgSendByUser.getMsgText()){
-          case "/start":
-            await msgModelBotReply.sendText(botInfo['description']!)
-            break
-          // case "/clear":
-          //   await msgSendByUser.clearAiMsgHistory();
-          // case "/history":
-          //   const history = await msgSendByUser.getAiMsgHistory();
-          //   await msgModelBotReply.sendText(`===\nHistory\n==============\n\n${history.map(({role,content})=>{
-          //     return `${role === "user" ? "\n>" : "<"}:${content}`
-          //   }).join("\n")}`)
-          //   break
-          default:
-            return;
-        }
-      }else{
-        if(botInfo.isChatGpt){
-          // const history = await msgSendByUser.getAiMsgHistory();
-          const history: { role: string; content: string; }[] = [];
-          await msgModelBotReply.sendText(TEXT_AI_THINKING);
-          let [error,reply] = await sendMessageToChatGPT(msgSendByUser.getMsgText(),history);
-          if(!error){
-            reply = reply.replace("```html","```");
-            console.log(reply)
-            // msgModelBotReply.aiRole = AiChatRole.ASSISTANT;
-            // msgSendByUser.aiRole = AiChatRole.USER;
-            await msgModelBotReply.sendText(reply,"updateMessageSendSucceeded",{
-              date:Msg.genMsgDate()
-            })
-          }else{
-            msgModelBotReply.hasSent = false
-          }
-        }
-      }
-      msgModelBotReply.save().catch(console.error)
-    }
+    await new BotMsg(user_id,chatId,msgSendByUser,botInfo).process()
   }
 
 }

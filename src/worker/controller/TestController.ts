@@ -33,6 +33,57 @@ export default async function(request:Request){
   const {action,payload} = await input
   const {auth_uid} = payload;
   switch (action){
+    case "updateBot":
+      const userBot = await User.getFromCache(ENV.USER_ID_CHATGPT)
+      const {botInfo} = userBot?.getUserInfo().fullInfo!;
+      userBot?.setBotInfo({
+        ...botInfo!,
+        commands:[
+          {
+            "botId": "10001",
+            "command": "start",
+            "description": "开始对话"
+          },
+          {
+            "botId": "10001",
+            "command": "history",
+            "description": "获取当前有效Prompt和对话的历史记录"
+          },
+          {
+            "botId": "10001",
+            "command": "clear",
+            "description": "清除当前有效Prompt和对话的历史记录"
+          },
+          {
+            "botId": "10001",
+            "command": "get_init_msg",
+            "description": "查看初始化消息"
+          },
+          {
+            "botId": "10001",
+            "command": "set_init_msg",
+            "description": "设置初始化消息"
+          },
+          {
+            "botId": "10001",
+            "command": "get_api_key",
+            "description": "查看API密钥"
+          },
+          {
+            "botId": "10001",
+            "command": "set_api_key",
+            "description": "设置API密钥"
+          },
+          {
+            "botId": "10001",
+            "command": "reset_config",
+            "description": "初始化配置"
+          }
+        ]
+      })
+      await userBot?.save()
+      payload.commands = userBot?.getUserInfo().fullInfo!.botInfo!.commands
+      break
     case "upload":
       const blob = new Blob([payload.body], { type: "text/plain" });
       payload.put = await storage.put("test/t.jpg",blob);
