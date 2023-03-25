@@ -51,7 +51,6 @@ import MenuItem from '../../ui/MenuItem';
 import SymbolMenuButton from './SymbolMenuButton';
 
 import styles from './AttachmentModal.module.scss';
-import {getPasswordFromEvent} from "../../../worker/share/utils/utils";
 
 export type OwnProps = {
   chatId: string;

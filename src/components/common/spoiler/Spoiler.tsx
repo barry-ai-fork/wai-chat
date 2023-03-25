@@ -12,6 +12,8 @@ import './Spoiler.scss';
 import {getPasswordFromEvent} from "../../../worker/share/utils/utils";
 import Account from "../../../worker/share/Account";
 import useLang from "../../../hooks/useLang";
+import {hashSha256} from "../../../worker/share/utils/helpers";
+import {getActions} from "../../../global";
 
 type OwnProps = {
   children?: React.ReactNode;
@@ -37,6 +39,7 @@ const Spoiler: FC<OwnProps> = ({
   children,
   messageId,
 }) => {
+  const {showNotification} = getActions();
   // eslint-disable-next-line no-null/no-null
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -65,15 +68,14 @@ const Spoiler: FC<OwnProps> = ({
         return;
       }else{
         try {
-          // debugger
-          let plain = await Account.getCurrentAccount()?.decryptByPrvKey(Buffer.from(cipher,'hex'),password)
+          let plain = await Account.getCurrentAccount()?.decryptByPrvKey(Buffer.from(cipher,'hex'),hashSha256(password))
           if(!plain){
-            alert(lang("DecryptError"));
+            showNotification({message:lang("DecryptError")});
             return
           }
-          contentRef.current!.innerText = plain.toString();;
+          contentRef.current!.innerText = plain.toString();
         }catch (e){
-          alert(lang("DecryptError"));
+          showNotification({message:lang("DecryptError")});
           return
         }
       }

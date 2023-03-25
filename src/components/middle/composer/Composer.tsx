@@ -1250,7 +1250,6 @@ const Composer: FC<OwnProps & StateProps> = ({
   const [passwordOpen,setPasswordOpen] = useState(true);
   return (
     <div className={className}>
-      <PasswordModal/>
       {canAttachMedia && isReady && (
         <DropArea
           isOpen={dropAreaState !== DropAreaState.None}

@@ -60,6 +60,9 @@ export default class MsgConn {
   getAccountId() {
     return this.accountId;
   }
+  setAccountId(accountId:number) {
+    this.accountId = accountId;
+  }
 
   getAutoConnect() {
     return this.autoConnect;
@@ -67,6 +70,7 @@ export default class MsgConn {
   setAutoConnect(autoConnect: boolean) {
     this.autoConnect = autoConnect;
   }
+
   async close() {
     if (this.client && this.isConnect()) {
       this.client.close();
@@ -143,6 +147,7 @@ export default class MsgConn {
     this.__msgHandler = msgHandler;
   }
   onConnected() {
+    console.log("[onConnected account]",this.getAccountId())
     this.notifyState(MsgClientState.connected);
     this.authStep1().catch(console.error)
   }
@@ -168,15 +173,18 @@ export default class MsgConn {
       const {err,payload} = AuthLoginRes.parseMsg(pdu);
       if(err === ERR.NO_ERROR){
         // @ts-ignore
-        const {currentUser} = JSON.parse(payload)
+        const {currentUser,address} = JSON.parse(payload)
         account.setUid(session!.uid);
+        account.setAddress(address);
         account.setUserInfo(currentUser);
         account.setSession(session)
         await account.saveSession()
-        console.log("login OK!",account.getUid(),currentUser)
+        console.log("[login ok account]",this.getAccountId())
+        console.log("[user]",currentUser.id,address)
         this.notifyState(MsgClientState.logged);
         return account.getUid()
       }else{
+        console.log("[login error account]",this.getAccountId())
         return false;
       }
     }
@@ -190,8 +198,7 @@ export default class MsgConn {
       ts,
       address:await accountClient.getAccountAddress()
     }).pack());
-    const authStep2Res = AuthStep2Res.parseMsg(pdu)
-    // console.log("authStep2Res finished!",authStep2Res)
+    AuthStep2Res.parseMsg(pdu)
     await this.login();
   }
   async authStep1(){
@@ -201,18 +208,15 @@ export default class MsgConn {
     const req = new AuthStep1Req({
       p
     }).pack();
-    const t = AuthStep1Req.parseMsg(req);
     const pdu = await accountClient.sendPduWithCallback(req);
     const {err,address,q,sign,ts} = AuthStep1Res.parseMsg(pdu)
-    // console.log("AuthStep1Res",{err,p,q,address,sign})
     if(err == ERR.NO_ERROR){
       const res = accountClient.recoverAddressAndPubKey(sign,ts+Buffer.concat([p,q]).toString("hex"))
-      // console.log(res.address,address)
       if(res.address != address){
         console.error("invalid server address")
       }else{
         await accountClient.initEcdh(res.pubKey,p,q)
-        this.authStep2().catch(console.error)
+        await this.authStep2()
       }
     }else{
       console.error(err)

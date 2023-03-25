@@ -3,8 +3,13 @@
 }
 .auth-close{
   position: absolute;
-  top:44px;
-  right:44px;
+  top:8px;
+  right:8px;
+
+  @media (min-width: 600px) and (min-height: 450px) {
+    top:44px;
+    right:44px;
+  }
 }
 .auth-form {
   width: 100%;

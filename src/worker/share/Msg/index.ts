@@ -1,9 +1,11 @@
 import {SendRes} from "../../../lib/ptp/protobuf/PTPMsg";
-import {ERR, PbMsg_Type} from "../../../lib/ptp/protobuf/PTPCommon/types";
-import {kv} from "../../helpers/env";
+import {ERR, PbChatGpBotConfig_Type, PbMsg_Type} from "../../../lib/ptp/protobuf/PTPCommon/types";
+import {ENV, kv} from "../../helpers/env";
+import {USER_CONFIG} from "../../helpers/context";
 import {
   Pdu,
-  popByteBuffer, readInt16,
+  popByteBuffer,
+  readInt16,
   readInt32,
   toUint8Array,
   wrapByteBuffer,
@@ -11,8 +13,9 @@ import {
   writeInt32
 } from "../../../lib/ptp/protobuf/BaseMsg";
 import {UserIdAccountIdMap} from "../../controller/WsController";
-import {PbMsg} from "../../../lib/ptp/protobuf/PTPCommon";
 import {ApiMessage} from "../../../api/types";
+import {PbChatGpBotConfig, PbMsg} from "../../../lib/ptp/protobuf/PTPCommon";
+import {AiChatHistory, AiChatRole} from "../../types";
 
 type MsgType = "newMessage" | "updateMessageSendSucceeded" | 'updateMessage';
 
@@ -179,18 +182,6 @@ export class Msg extends PbMsg{
     await this.send(msgType);
   }
 
-  async clearAiMsgHistory() {
-    // const keys = await this.getAllKeys();
-    // for (let i = 0; i < keys.length; i++) {
-    //   const key = keys[i]
-    //   const json = JSON.parse(await kv.get(key));
-    //   if(json.aiRole !== AiChatRole.NONE){
-    //     json.aiRole = AiChatRole.NONE;
-    //     await kv.put(key,JSON.stringify(json));
-    //   }
-    // }
-  }
-
   parseHeader(buf:Buffer){
     const bb = wrapByteBuffer(buf);
     this.chatMsgId = readInt32(bb);
@@ -327,60 +318,6 @@ export class Msg extends PbMsg{
       return null
     }
   }
-
-  async getAiMsgHistory(){
-    // const keys = await this.getAllKeys();
-    // const history = [
-    //   {role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE},
-    // ];
-    //
-    // const msgIds = []
-    // for (let i = 0; i < keys.length; i++) {
-    //   const key = keys[i]
-    //   const [prefix,user_id,chatId,msgId] = key.split("_");
-    //   msgIds.push(parseInt(msgId));
-    // }
-    // msgIds.sort((a,b)=>(a - b))
-    // for (let i = 0; i < msgIds.length; i++) {
-    //   const msgId = msgIds[i]
-    //   const json = JSON.parse(await kv.get(`MSG_${this.user_id}_${this.chatId}_${msgId}`));
-    //   const obj = new Msg(json.msg);
-    //   obj.init(this.user_id!,this.chatId!)
-    //
-    //   // if(obj.aiRole!== undefined && obj.aiRole !== AiChatRole.NONE){
-    //   //   history.push({
-    //   //     role:obj.aiRole === AiChatRole.USER ? "user" : "assistant",
-    //   //     content:obj.getMsgText()
-    //   //   })
-    //   // }
-    // }
-    // const MAX_TOKEN_LENGTH = 2000;
-    // if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
-    //   // 历史记录超出长度需要裁剪
-    //   if (history.length > ENV.MAX_HISTORY_LENGTH) {
-    //     history.splice(history.length - ENV.MAX_HISTORY_LENGTH + 2);
-    //   }
-    //   // 处理token长度问题
-    //   let tokenLength = 0;
-    //   for (let i = history.length - 1; i >= 0; i--) {
-    //     const historyItem = history[i];
-    //     let length = 0;
-    //     if (historyItem.content) {
-    //       length = Array.from(historyItem.content).length;
-    //     } else {
-    //       historyItem.content = '';
-    //     }
-    //     // 如果最大长度超过maxToken,裁剪history
-    //     tokenLength += length;
-    //     if (tokenLength > MAX_TOKEN_LENGTH) {
-    //       history.splice(i);
-    //       break;
-    //     }
-    //   }
-    // }
-    // return history;
-  }
-
   async broadcast(pdu:Pdu,seqNum:number=0){
     const user_id = this.user_id!
     if(UserIdAccountIdMap[user_id]){
@@ -400,6 +337,15 @@ export class Msg extends PbMsg{
   }
 
   getMsgText(){
+    if(this.msg && this.msg.content.text && this.msg.content.text.text){
+      return this.msg.content.text.text;
+    }else{
+      return "";
+    }
+  }
+
+  getLastMsgText(){
+
     if(this.msg && this.msg.content.text && this.msg.content.text.text){
       return this.msg.content.text.text;
     }else{
@@ -433,4 +379,106 @@ export class Msg extends PbMsg{
     return msgId
   }
 
+  async updateAiMsg(role:AiChatRole){
+    await kv.put(`M_A_${this.user_id}_${this.chatId}_${this.chatMsgId}_${role.toString()}`,"1")
+  }
+
+  async getAiMsgIds(){
+    const res = await kv.list({prefix:`M_A_${this.user_id}_${this.chatId}_`})
+    const msgList = res.map((key:any)=> {
+      const t = key.name.split("_")
+      return {
+        chatMsgId:parseInt(t[4]),
+        role:parseInt(t[5])
+      }
+    });
+    msgList.sort((a,b)=>(a.chatMsgId - b.chatMsgId))
+    return msgList
+  }
+
+  async updateAiConfig(config:PbChatGpBotConfig_Type){
+    await kv.put(`A_C_${this.user_id}_${this.chatId}`,Buffer.from(new PbChatGpBotConfig(config).pack().getPbData()).toString("hex"))
+  }
+
+  async getAiConfig(){
+    const str = await kv.get(`A_C_${this.user_id}_${this.chatId}`)
+    if(str){
+      return PbChatGpBotConfig.parseMsg(new Pdu(Buffer.from(str,'hex')))
+    }else{
+      return {}
+    }
+  }
+
+  getChatGptInitMsg(config?:PbChatGpBotConfig_Type):AiChatHistory[]{
+    let content = USER_CONFIG.SYSTEM_INIT_MESSAGE;
+    if(config && config.init_system_content){
+      content = config.init_system_content
+    }
+    return [
+      {role: "system", content},
+    ];
+  }
+
+  async getAiMsgHistory():Promise<AiChatHistory[]>{
+    const history:AiChatHistory[] = []
+    const rows = await this.getAiMsgIds();
+    for (let i = 0; i < rows.length; i++) {
+      const {chatMsgId,role} = rows[i];
+      const msg = await Msg.getFromCache(this.user_id!,this.chatId!,chatMsgId)
+      history.push({
+        role:role === AiChatRole.USER ? 'user' : 'assistant',
+        content:msg?.getMsgText()!
+      })
+    }
+    return this.handleHistory(history)
+  }
+
+  async handleHistory(history:AiChatHistory[]){
+    const MAX_TOKEN_LENGTH = 2000;
+    if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
+      // 历史记录超出长度需要裁剪
+      if (history.length > ENV.MAX_HISTORY_LENGTH) {
+        history.splice(history.length - ENV.MAX_HISTORY_LENGTH + 2);
+      }
+      // 处理token长度问题
+      let tokenLength = 0;
+      for (let i = history.length - 1; i >= 0; i--) {
+        const historyItem = history[i];
+        let length = 0;
+        if (historyItem.content) {
+          length = Array.from(historyItem.content).length;
+        } else {
+          historyItem.content = '';
+        }
+        // 如果最大长度超过maxToken,裁剪history
+        tokenLength += length;
+        if (tokenLength > MAX_TOKEN_LENGTH) {
+          history.splice(i);
+          break;
+        }
+      }
+    }
+    return history;
+  }
+
+  async clearAiMsgHistory() {
+    const keys = await this.getAiMsgIds();
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i]
+      await kv.delete(`M_A_${this.user_id}_${this.chatId}_${key.chatMsgId}_${key.role.toString()}`)
+    }
+  }
+
+  async getInitMsg() {
+    const config = await this.getAiConfig();
+    return (config && "init_system_content" in config && config.init_system_content) ? config?.init_system_content:USER_CONFIG.SYSTEM_INIT_MESSAGE
+  }
+
+  async setInitMsg(msg:string) {
+    let config = await this.getAiConfig();
+    if(!config){
+      config = {}
+    }
+    config.init_system_content = msg;
+  }
 }

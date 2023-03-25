@@ -38,8 +38,9 @@ import {AuthPreLoginReq, AuthPreLoginRes, UploadProfilePhotoRes} from "../../../
 import {getCurrentTabId} from "../../../util/establishMultitabRole";
 import {SendRes} from "../../../lib/ptp/protobuf/PTPMsg";
 import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
-import {sha1} from '../../../worker/share/utils/utils';
 import UploadProfilePhotoReq from "../../../lib/ptp/protobuf/PTPAuth/UploadProfilePhotoReq";
+import Mnemonic from "../../../lib/ptp/wallet/Mnemonic";
+import {hashSha256} from "../../../worker/share/utils/helpers";
 
 addActionHandler('updateGlobal', (global,action,payload): ActionReturnType => {
   return {
@@ -171,7 +172,7 @@ addActionHandler('initApi', async (global, actions): Promise<void> => {
   })
   Account.setKvStore(new LocalStorage())
   const accountId = Account.getCurrentAccountId();
-  const account = Account.getInstance(accountId);
+  let account = Account.getInstance(accountId);
   await account.loadSession()
   const msgConn = new MsgConn(accountId);
   msgConn.setMsgHandler(async (accountId:number,notifys:MsgConnNotify[])=>{
@@ -185,7 +186,7 @@ addActionHandler('initApi', async (global, actions): Promise<void> => {
             if(msgClientState === MsgClientState.connected || msgClientState === MsgClientState.logged){
               connectionState = "connectionStateReady"
               if(msgClientState === MsgClientState.logged){
-                console.log("onConnectionStateChanged",'logged',account.getUserInfo())
+                account = Account.getInstance(msgConn.getAccountId())
                 actions.updateGlobal({
                   currentUserId:account.getUid(),
                   users:{
@@ -251,13 +252,36 @@ addActionHandler('setAuthCode', (global, actions, payload): ActionReturnType => 
 });
 
 addActionHandler('setAuthPassword', async (global, actions, payload): ActionReturnType => {
-  const { password } = payload!;
+  const { password,mnemonic } = payload!;
   setGlobal({
     ...global,
     authIsLoading: true,
     authError: undefined,
   })
-  const account = Account.getCurrentAccount();
+  let account;
+  if(mnemonic){
+    const client = MsgConn.getMsgClient()
+    if(client){
+      client.setAutoConnect(false)
+      if(client.isConnect()){
+        await client.close();
+        await client.waitForMsgServerState(MsgClientState.closed);
+      }
+      account = Account.getInstance(Account.genAccountId());
+      await account.setEntropy(new Mnemonic(mnemonic).toEntropy())
+      Account.setCurrentAccountId(account.getAccountId())
+      console.log("[change account]",account.getAccountId())
+      client.setAccountId(account.getAccountId())
+      client.setAutoConnect(true)
+      client.connect();
+      await client.waitForMsgServerState(MsgClientState.connected)
+      account.setMsgConn(client);
+      await client.authStep1()
+    }
+  }else{
+    account = Account.getCurrentAccount();
+  }
+
   if(!account){
     return {
       ...global,
@@ -266,8 +290,7 @@ addActionHandler('setAuthPassword', async (global, actions, payload): ActionRetu
     };
   }
   try {
-    const pwd = sha1(password);
-    // console.log({pwd,password})
+    const pwd = hashSha256(password)
     const ts = +(new Date());
     const res1 = await account.signMessage(ts.toString());
     const res2 = await account.signMessage(
@@ -285,8 +308,9 @@ addActionHandler('setAuthPassword', async (global, actions, payload): ActionRetu
     const authPreLoginRes = AuthPreLoginRes.parseMsg(resPre)
     // console.log({authPreLoginRes})
     if(authPreLoginRes.err !== ERR.NO_ERROR){
+      const global = getGlobal();
       setGlobal({
-        ...getGlobal(),
+        ...global,
         authIsLoading: false,
         authError: "request uid error",
       })
@@ -399,6 +423,9 @@ addActionHandler('saveSession', (global, actions, payload): ActionReturnType => 
 addActionHandler('signOut', async (global, actions, payload): Promise<void> => {
   setGlobal({
     ...global,
+    passcode:{
+
+    },
     currentUserId:undefined,
     chats:{
       ...global.chats,

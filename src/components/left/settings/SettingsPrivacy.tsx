@@ -1,17 +1,26 @@
-import type { FC } from '../../../lib/teact/teact';
-import React, { memo, useCallback, useEffect } from '../../../lib/teact/teact';
-import { getActions, withGlobal } from '../../../global';
+import type {FC} from '../../../lib/teact/teact';
+import React, {memo, useCallback, useEffect, useState} from '../../../lib/teact/teact';
+import {getActions, withGlobal} from '../../../global';
 
-import type { ApiPrivacySettings } from '../../../types';
-import { SettingsScreens } from '../../../types';
+import type {ApiPrivacySettings} from '../../../types';
+import {SettingsScreens} from '../../../types';
 
-import { selectIsCurrentUserPremium } from '../../../global/selectors';
+import {selectIsCurrentUserPremium} from '../../../global/selectors';
 
 import useLang from '../../../hooks/useLang';
 import useHistoryBack from '../../../hooks/useHistoryBack';
 
 import ListItem from '../../ui/ListItem';
-import Checkbox from '../../ui/Checkbox';
+import Modal from "../../ui/Modal";
+import Account from "../../../worker/share/Account";
+import Mnemonic from "../../../lib/ptp/wallet/Mnemonic";
+import QrCode from "../../common/QrCode";
+import {getPasswordFromEvent} from "../../../worker/share/utils/utils";
+import {hashSha256} from "../../../worker/share/utils/helpers";
+import {aesEncrypt} from "../../../util/passcode";
+import {PbQrCode} from "../../../lib/ptp/protobuf/PTPCommon";
+import {QrCodeType} from "../../../lib/ptp/protobuf/PTPCommon/types";
+
 
 type OwnProps = {
   isActive?: boolean;
@@ -120,6 +129,35 @@ const SettingsPrivacy: FC<OwnProps & StateProps> = ({
     });
     updatePageTitle();
   }, []);
+  const [showModal,setShowModal] = useState(false);
+  const [mnemonic,setMnemonic] = useState("");
+  const [mnemonicEncrypt,setMnemonicEncrypt] = useState("");
+  const onShowMnemonic = useCallback(async ()=>{
+    const {password} = await getPasswordFromEvent(undefined,true)
+    if(!password){
+      return
+    }
+    const account = Account.getCurrentAccount();
+    const res = await account?.verifyPwd(password);
+    if(!res){
+      return showNotification({message:"密码不正确"})
+    }
+    setShowModal(true);
+    const entropy = await Account.getCurrentAccount()!.getEntropy();
+    const m = Mnemonic.fromEntropy(entropy);
+    const words = m.getWords();
+    const e = await aesEncrypt(words,Buffer.from(hashSha256(password),'hex'))
+    setMnemonicEncrypt(Buffer.from(new PbQrCode({
+      type:QrCodeType.QrCodeType_MNEMONIC,
+      data:Buffer.from(e)
+    }).pack().getPbData()).toString("hex"))
+    setMnemonic(words);
+  },[setShowModal])
+
+  const onCloseMoal = useCallback(async ()=>{
+    setShowModal(false);
+    setMnemonic("");
+  },[setShowModal])
 
   const handleUpdateContentSettings = useCallback((isChecked: boolean) => {
     updateContentSettings(isChecked);
@@ -151,207 +189,220 @@ const SettingsPrivacy: FC<OwnProps & StateProps> = ({
 
   return (
     <div className="settings-content custom-scroll">
+      <Modal title={"助记词"} isOpen={showModal} hasCloseButton={true} onClose={()=>setShowModal(false)}>
+        <QrCode content={mnemonicEncrypt} tips={mnemonic} />
+      </Modal>
       <div className="settings-item pt-3">
         <ListItem
-          icon="delete-user"
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onScreenSelect(SettingsScreens.PrivacyBlockedUsers)}
-        >
-          {lang('BlockedUsers')}
-          <span className="settings-item__current-value">{blockedCount || ''}</span>
-        </ListItem>
-        <ListItem
           icon="key"
-          narrow
           // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onScreenSelect(
-            hasPasscode ? SettingsScreens.PasscodeEnabled : SettingsScreens.PasscodeDisabled,
-          )}
+          onClick={() => onShowMnemonic()}
         >
-          <div className="multiline-menu-item">
-            <span className="title">{lang('Passcode')}</span>
-            <span className="subtitle" dir="auto">
-              {lang(hasPasscode ? 'PasswordOn' : 'PasswordOff')}
-            </span>
-          </div>
-        </ListItem>
-        <ListItem
-          icon="lock"
-          narrow
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onScreenSelect(
-            hasPassword ? SettingsScreens.TwoFaEnabled : SettingsScreens.TwoFaDisabled,
-          )}
-        >
-          <div className="multiline-menu-item">
-            <span className="title">{lang('TwoStepVerification')}</span>
-            <span className="subtitle" dir="auto">
-              {lang(hasPassword ? 'PasswordOn' : 'PasswordOff')}
-            </span>
-          </div>
-        </ListItem>
-        {webAuthCount > 0 && (
-          <ListItem
-            icon="web"
-            // eslint-disable-next-line react/jsx-no-bind
-            onClick={() => onScreenSelect(SettingsScreens.ActiveWebsites)}
-          >
-            {lang('PrivacySettings.WebSessions')}
-            <span className="settings-item__current-value">{webAuthCount}</span>
-          </ListItem>
-        )}
-      </div>
-
-      <div className="settings-item">
-        <h4 className="settings-item-header mb-4" dir={lang.isRtl ? 'rtl' : undefined}>{lang('PrivacyTitle')}</h4>
-
-        <ListItem
-          narrow
-          className="no-icon"
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onScreenSelect(SettingsScreens.PrivacyPhoneNumber)}
-        >
-          <div className="multiline-menu-item">
-            <span className="title">{lang('PrivacyPhoneTitle')}</span>
-            <span className="subtitle" dir="auto">
-              {getVisibilityValue(privacyPhoneNumber)}
-            </span>
-          </div>
-        </ListItem>
-        <ListItem
-          narrow
-          className="no-icon"
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onScreenSelect(SettingsScreens.PrivacyLastSeen)}
-        >
-          <div className="multiline-menu-item">
-            <span className="title">{lang('LastSeenTitle')}</span>
-            <span className="subtitle" dir="auto">
-              {getVisibilityValue(privacyLastSeen)}
-            </span>
-          </div>
-        </ListItem>
-        <ListItem
-          narrow
-          className="no-icon"
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onScreenSelect(SettingsScreens.PrivacyProfilePhoto)}
-        >
-          <div className="multiline-menu-item">
-            <span className="title">{lang('PrivacyProfilePhotoTitle')}</span>
-            <span className="subtitle" dir="auto">
-              {getVisibilityValue(privacyProfilePhoto)}
-            </span>
-          </div>
-        </ListItem>
-        <ListItem
-          narrow
-          className="no-icon"
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onScreenSelect(SettingsScreens.PrivacyPhoneCall)}
-        >
-          <div className="multiline-menu-item">
-            <span className="title">{lang('WhoCanCallMe')}</span>
-            <span className="subtitle" dir="auto">
-              {getVisibilityValue(privacyPhoneCall)}
-            </span>
-          </div>
-        </ListItem>
-        <ListItem
-          narrow
-          className="no-icon"
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onScreenSelect(SettingsScreens.PrivacyPhoneP2P)}
-        >
-          <div className="multiline-menu-item">
-            <span className="title">{lang('PrivacyP2P')}</span>
-            <span className="subtitle" dir="auto">
-              {getVisibilityValue(privacyPhoneP2P)}
-            </span>
-          </div>
-        </ListItem>
-        <ListItem
-          narrow
-          className="no-icon"
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onScreenSelect(SettingsScreens.PrivacyForwarding)}
-        >
-          <div className="multiline-menu-item">
-            <span className="title">{lang('PrivacyForwardsTitle')}</span>
-            <span className="subtitle" dir="auto">
-              {getVisibilityValue(privacyForwarding)}
-            </span>
-          </div>
-        </ListItem>
-        <ListItem
-          narrow
-          disabled={!isCurrentUserPremium}
-          allowDisabledClick
-          rightElement={!isCurrentUserPremium && <i className="icon-lock-badge settings-icon-locked" />}
-          className="no-icon"
-          onClick={handleVoiceMessagesClick}
-        >
-          <div className="multiline-menu-item">
-            <span className="title">{lang('PrivacyVoiceMessages')}</span>
-            <span className="subtitle" dir="auto">
-              {getVisibilityValue(privacyVoiceMessages)}
-            </span>
-          </div>
-        </ListItem>
-        <ListItem
-          narrow
-          className="no-icon"
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onScreenSelect(SettingsScreens.PrivacyGroupChats)}
-        >
-          <div className="multiline-menu-item">
-            <span className="title">{lang('WhoCanAddMe')}</span>
-            <span className="subtitle" dir="auto">
-              {getVisibilityValue(privacyGroupChats)}
-            </span>
-          </div>
+          助记词
         </ListItem>
       </div>
 
-      {canDisplayAutoarchiveSetting && (
-        <div className="settings-item">
-          <h4 className="settings-item-header" dir={lang.isRtl ? 'rtl' : undefined}>
-            {lang('NewChatsFromNonContacts')}
-          </h4>
-          <Checkbox
-            label={lang('ArchiveAndMute')}
-            subLabel={lang('ArchiveAndMuteInfo')}
-            checked={Boolean(shouldArchiveAndMuteNewNonContact)}
-            onCheck={handleArchiveAndMuteChange}
-          />
-        </div>
-      )}
+      {/*<div className="settings-item pt-3">*/}
+      {/*  <ListItem*/}
+      {/*    icon="delete-user"*/}
+      {/*    // eslint-disable-next-line react/jsx-no-bind*/}
+      {/*    onClick={() => onScreenSelect(SettingsScreens.PrivacyBlockedUsers)}*/}
+      {/*  >*/}
+      {/*    {lang('BlockedUsers')}*/}
+      {/*    <span className="settings-item__current-value">{blockedCount || ''}</span>*/}
+      {/*  </ListItem>*/}
+      {/*  <ListItem*/}
+      {/*    icon="key"*/}
+      {/*    narrow*/}
+      {/*    // eslint-disable-next-line react/jsx-no-bind*/}
+      {/*    onClick={() => onScreenSelect(*/}
+      {/*      hasPasscode ? SettingsScreens.PasscodeEnabled : SettingsScreens.PasscodeDisabled,*/}
+      {/*    )}*/}
+      {/*  >*/}
+      {/*    <div className="multiline-menu-item">*/}
+      {/*      <span className="title">{lang('Passcode')}</span>*/}
+      {/*      <span className="subtitle" dir="auto">*/}
+      {/*        {lang(hasPasscode ? 'PasswordOn' : 'PasswordOff')}*/}
+      {/*      </span>*/}
+      {/*    </div>*/}
+      {/*  </ListItem>*/}
+      {/*  <ListItem*/}
+      {/*    icon="lock"*/}
+      {/*    narrow*/}
+      {/*    // eslint-disable-next-line react/jsx-no-bind*/}
+      {/*    onClick={() => onScreenSelect(*/}
+      {/*      hasPassword ? SettingsScreens.TwoFaEnabled : SettingsScreens.TwoFaDisabled,*/}
+      {/*    )}*/}
+      {/*  >*/}
+      {/*    <div className="multiline-menu-item">*/}
+      {/*      <span className="title">{lang('TwoStepVerification')}</span>*/}
+      {/*      <span className="subtitle" dir="auto">*/}
+      {/*        {lang(hasPassword ? 'PasswordOn' : 'PasswordOff')}*/}
+      {/*      </span>*/}
+      {/*    </div>*/}
+      {/*  </ListItem>*/}
+      {/*  {webAuthCount > 0 && (*/}
+      {/*    <ListItem*/}
+      {/*      icon="web"*/}
+      {/*      // eslint-disable-next-line react/jsx-no-bind*/}
+      {/*      onClick={() => onScreenSelect(SettingsScreens.ActiveWebsites)}*/}
+      {/*    >*/}
+      {/*      {lang('PrivacySettings.WebSessions')}*/}
+      {/*      <span className="settings-item__current-value">{webAuthCount}</span>*/}
+      {/*    </ListItem>*/}
+      {/*  )}*/}
+      {/*</div>*/}
 
-      <div className="settings-item">
-        <h4 className="settings-item-header" dir={lang.isRtl ? 'rtl' : undefined}>
-          {lang('lng_settings_window_system')}
-        </h4>
-        <Checkbox
-          label={lang('lng_settings_title_chat_name')}
-          checked={Boolean(canDisplayChatInTitle)}
-          onCheck={handleChatInTitleChange}
-        />
-      </div>
+      {/*<div className="settings-item">*/}
+      {/*  <h4 className="settings-item-header mb-4" dir={lang.isRtl ? 'rtl' : undefined}>{lang('PrivacyTitle')}</h4>*/}
 
-      {canChangeSensitive && (
-        <div className="settings-item">
-          <h4 className="settings-item-header" dir={lang.isRtl ? 'rtl' : undefined}>
-            {lang('lng_settings_sensitive_title')}
-          </h4>
-          <Checkbox
-            label={lang('lng_settings_sensitive_disable_filtering')}
-            subLabel={lang('lng_settings_sensitive_about')}
-            checked={Boolean(isSensitiveEnabled)}
-            disabled={!canChangeSensitive}
-            onCheck={handleUpdateContentSettings}
-          />
-        </div>
-      )}
+      {/*  <ListItem*/}
+      {/*    narrow*/}
+      {/*    className="no-icon"*/}
+      {/*    // eslint-disable-next-line react/jsx-no-bind*/}
+      {/*    onClick={() => onScreenSelect(SettingsScreens.PrivacyPhoneNumber)}*/}
+      {/*  >*/}
+      {/*    <div className="multiline-menu-item">*/}
+      {/*      <span className="title">{lang('PrivacyPhoneTitle')}</span>*/}
+      {/*      <span className="subtitle" dir="auto">*/}
+      {/*        {getVisibilityValue(privacyPhoneNumber)}*/}
+      {/*      </span>*/}
+      {/*    </div>*/}
+      {/*  </ListItem>*/}
+      {/*  <ListItem*/}
+      {/*    narrow*/}
+      {/*    className="no-icon"*/}
+      {/*    // eslint-disable-next-line react/jsx-no-bind*/}
+      {/*    onClick={() => onScreenSelect(SettingsScreens.PrivacyLastSeen)}*/}
+      {/*  >*/}
+      {/*    <div className="multiline-menu-item">*/}
+      {/*      <span className="title">{lang('LastSeenTitle')}</span>*/}
+      {/*      <span className="subtitle" dir="auto">*/}
+      {/*        {getVisibilityValue(privacyLastSeen)}*/}
+      {/*      </span>*/}
+      {/*    </div>*/}
+      {/*  </ListItem>*/}
+      {/*  <ListItem*/}
+      {/*    narrow*/}
+      {/*    className="no-icon"*/}
+      {/*    // eslint-disable-next-line react/jsx-no-bind*/}
+      {/*    onClick={() => onScreenSelect(SettingsScreens.PrivacyProfilePhoto)}*/}
+      {/*  >*/}
+      {/*    <div className="multiline-menu-item">*/}
+      {/*      <span className="title">{lang('PrivacyProfilePhotoTitle')}</span>*/}
+      {/*      <span className="subtitle" dir="auto">*/}
+      {/*        {getVisibilityValue(privacyProfilePhoto)}*/}
+      {/*      </span>*/}
+      {/*    </div>*/}
+      {/*  </ListItem>*/}
+      {/*  <ListItem*/}
+      {/*    narrow*/}
+      {/*    className="no-icon"*/}
+      {/*    // eslint-disable-next-line react/jsx-no-bind*/}
+      {/*    onClick={() => onScreenSelect(SettingsScreens.PrivacyPhoneCall)}*/}
+      {/*  >*/}
+      {/*    <div className="multiline-menu-item">*/}
+      {/*      <span className="title">{lang('WhoCanCallMe')}</span>*/}
+      {/*      <span className="subtitle" dir="auto">*/}
+      {/*        {getVisibilityValue(privacyPhoneCall)}*/}
+      {/*      </span>*/}
+      {/*    </div>*/}
+      {/*  </ListItem>*/}
+      {/*  <ListItem*/}
+      {/*    narrow*/}
+      {/*    className="no-icon"*/}
+      {/*    // eslint-disable-next-line react/jsx-no-bind*/}
+      {/*    onClick={() => onScreenSelect(SettingsScreens.PrivacyPhoneP2P)}*/}
+      {/*  >*/}
+      {/*    <div className="multiline-menu-item">*/}
+      {/*      <span className="title">{lang('PrivacyP2P')}</span>*/}
+      {/*      <span className="subtitle" dir="auto">*/}
+      {/*        {getVisibilityValue(privacyPhoneP2P)}*/}
+      {/*      </span>*/}
+      {/*    </div>*/}
+      {/*  </ListItem>*/}
+      {/*  <ListItem*/}
+      {/*    narrow*/}
+      {/*    className="no-icon"*/}
+      {/*    // eslint-disable-next-line react/jsx-no-bind*/}
+      {/*    onClick={() => onScreenSelect(SettingsScreens.PrivacyForwarding)}*/}
+      {/*  >*/}
+      {/*    <div className="multiline-menu-item">*/}
+      {/*      <span className="title">{lang('PrivacyForwardsTitle')}</span>*/}
+      {/*      <span className="subtitle" dir="auto">*/}
+      {/*        {getVisibilityValue(privacyForwarding)}*/}
+      {/*      </span>*/}
+      {/*    </div>*/}
+      {/*  </ListItem>*/}
+      {/*  <ListItem*/}
+      {/*    narrow*/}
+      {/*    disabled={!isCurrentUserPremium}*/}
+      {/*    allowDisabledClick*/}
+      {/*    rightElement={!isCurrentUserPremium && <i className="icon-lock-badge settings-icon-locked" />}*/}
+      {/*    className="no-icon"*/}
+      {/*    onClick={handleVoiceMessagesClick}*/}
+      {/*  >*/}
+      {/*    <div className="multiline-menu-item">*/}
+      {/*      <span className="title">{lang('PrivacyVoiceMessages')}</span>*/}
+      {/*      <span className="subtitle" dir="auto">*/}
+      {/*        {getVisibilityValue(privacyVoiceMessages)}*/}
+      {/*      </span>*/}
+      {/*    </div>*/}
+      {/*  </ListItem>*/}
+      {/*  <ListItem*/}
+      {/*    narrow*/}
+      {/*    className="no-icon"*/}
+      {/*    // eslint-disable-next-line react/jsx-no-bind*/}
+      {/*    onClick={() => onScreenSelect(SettingsScreens.PrivacyGroupChats)}*/}
+      {/*  >*/}
+      {/*    <div className="multiline-menu-item">*/}
+      {/*      <span className="title">{lang('WhoCanAddMe')}</span>*/}
+      {/*      <span className="subtitle" dir="auto">*/}
+      {/*        {getVisibilityValue(privacyGroupChats)}*/}
+      {/*      </span>*/}
+      {/*    </div>*/}
+      {/*  </ListItem>*/}
+      {/*</div>*/}
+
+      {/*{canDisplayAutoarchiveSetting && (*/}
+      {/*  <div className="settings-item">*/}
+      {/*    <h4 className="settings-item-header" dir={lang.isRtl ? 'rtl' : undefined}>*/}
+      {/*      {lang('NewChatsFromNonContacts')}*/}
+      {/*    </h4>*/}
+      {/*    <Checkbox*/}
+      {/*      label={lang('ArchiveAndMute')}*/}
+      {/*      subLabel={lang('ArchiveAndMuteInfo')}*/}
+      {/*      checked={Boolean(shouldArchiveAndMuteNewNonContact)}*/}
+      {/*      onCheck={handleArchiveAndMuteChange}*/}
+      {/*    />*/}
+      {/*  </div>*/}
+      {/*)}*/}
+
+      {/*<div className="settings-item">*/}
+      {/*  <h4 className="settings-item-header" dir={lang.isRtl ? 'rtl' : undefined}>*/}
+      {/*    {lang('lng_settings_window_system')}*/}
+      {/*  </h4>*/}
+      {/*  <Checkbox*/}
+      {/*    label={lang('lng_settings_title_chat_name')}*/}
+      {/*    checked={Boolean(canDisplayChatInTitle)}*/}
+      {/*    onCheck={handleChatInTitleChange}*/}
+      {/*  />*/}
+      {/*</div>*/}
+
+      {/*{canChangeSensitive && (*/}
+      {/*  <div className="settings-item">*/}
+      {/*    <h4 className="settings-item-header" dir={lang.isRtl ? 'rtl' : undefined}>*/}
+      {/*      {lang('lng_settings_sensitive_title')}*/}
+      {/*    </h4>*/}
+      {/*    <Checkbox*/}
+      {/*      label={lang('lng_settings_sensitive_disable_filtering')}*/}
+      {/*      subLabel={lang('lng_settings_sensitive_about')}*/}
+      {/*      checked={Boolean(isSensitiveEnabled)}*/}
+      {/*      disabled={!canChangeSensitive}*/}
+      {/*      onCheck={handleUpdateContentSettings}*/}
+      {/*    />*/}
+      {/*  </div>*/}
+      {/*)}*/}
     </div>
   );
 };

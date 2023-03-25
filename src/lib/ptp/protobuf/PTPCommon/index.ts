@@ -10,6 +10,7 @@ export { default as PbMenuButton } from './PbMenuButton';
 export { default as PbMessageEntity } from './PbMessageEntity';
 export { default as PbMsg } from './PbMsg';
 export { default as PbPhoto } from './PbPhoto';
+export { default as PbQrCode } from './PbQrCode';
 export { default as PbSettings } from './PbSettings';
 export { default as PbSizes } from './PbSizes';
 export { default as PbText } from './PbText';

@@ -1,4 +1,7 @@
 import PasswordValidator from "password-validator";
+import {sha256} from "ethereum-cryptography/sha256";
+
+const SALT = 'wai ai blockchain auto bot';
 
 export function passwordCheck(password:string){
   const schema = new PasswordValidator();
@@ -11,4 +14,8 @@ export function passwordCheck(password:string){
     .is().not().oneOf(['Passw0rd', 'Password123']); // Blacklist these values
 
   return schema.validate(password)
+}
+
+export function hashSha256(text:string):string{
+  return sha256(Buffer.from(`${text}${SALT}`)).toString("hex")
 }

@@ -11,6 +11,10 @@ enum ERR{
   ERR_AUTH_NEED = 3;
 }
 
+enum QrCodeType{
+  QrCodeType_MNEMONIC = 1;
+}
+
 enum AUTH_TYPE{
   AUTH_TYPE_USERNAME = 0;
   AUTH_TYPE_EMAIL = 1;
@@ -190,4 +194,9 @@ message PbUserSetting {
 message PbChatGpBotConfig {
   optional string init_system_content = 1;
   optional string api_key = 2;
+}
+
+message PbQrCode {
+  required QrCodeType type = 1;
+  required bytes data = 2;
 }

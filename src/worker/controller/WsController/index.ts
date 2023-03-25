@@ -164,6 +164,7 @@ async function handleSession(websocket: WebSocket) {
           pduRsp = new AuthLoginRes({
             err:ERR.NO_ERROR,
             payload:JSON.stringify({
+              address:authLoginReq.address,
               currentUser:userInfo
             })
           }).pack()

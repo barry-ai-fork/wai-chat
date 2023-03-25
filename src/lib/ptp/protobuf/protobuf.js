@@ -696,6 +696,9 @@ var $conv_message = $createConverter([
                 PbPhoto: {
                     '$': {"1":["id","string",""],"2":["thumbnail","default.PTP.Common.PbThumbnail",null],"3":["sizes","<default.PTP.Common.PbSizes",null],"4":["isSpoiler","bool",false]}
                 },
+                PbQrCode: {
+                    '$': {"1":["type","uint32",1],"2":["data","bytes",[]]}
+                },
                 PbSettings: {
                     '$': {"1":["isAutoArchived","bool",false],"2":["canReportSpam","bool",false],"3":["canAddContact","bool",false],"4":["canBlockContact","bool",false]}
                 },
@@ -719,6 +722,9 @@ var $conv_message = $createConverter([
                 },
                 PbVoice: {
                     '$': {"1":["id","string",""],"2":["waveform","[uint32",null],"3":["duration","uint32",0]}
+                },
+                QrCodeType: {
+                    '@': {"QrCodeType_MNEMONIC":1}
                 }
             },
             File: {

@@ -16473,7 +16473,7 @@ export default {
   },
   "PasswordTipsLocalStorage": {
     "key": "PasswordTipsLocalStorage",
-    "value": "消息加密密码不会存储服务器,跟账户助记词直接相关，请牢记消息加密密码和妥善保管助记词"
+    "value": "密码不会存储服务器,跟账户助记词直接相关，请牢记消息密码和妥善保管助记词"
   },
   "PasswordTipsLocalStorage1": {
     "key": "PasswordTipsLocalStorage1",
@@ -16531,8 +16531,8 @@ export default {
     key: 'ChatList.EmptyChatListEditFilter',
     value: '设置分类',
   },
-
-
-
-
+  'Login': {
+    key: 'Login',
+    value: '登录',
+  },
 } as ApiLangPack;

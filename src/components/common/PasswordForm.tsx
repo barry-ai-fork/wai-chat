@@ -68,6 +68,9 @@ const PasswordForm: FC<OwnProps> = ({
     if (!IS_TOUCH_ENV) {
       inputRef.current!.focus();
     }
+    if(inputRef && inputRef.current.value){
+      setCanSubmit(true);
+    }
   }, focusDelayTimeoutMs);
 
   useEffect(() => {
@@ -139,6 +142,7 @@ const PasswordForm: FC<OwnProps> = ({
           type={isPasswordVisible ? 'text' : 'password'}
           id="sign-in-password"
           value={password || ''}
+          multiple={true}
           autoComplete={shouldDisablePasswordManager ? 'one-time-code' : 'current-password'}
           onChange={onPasswordChange}
           maxLength={256}

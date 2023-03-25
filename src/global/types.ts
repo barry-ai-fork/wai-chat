@@ -851,7 +851,7 @@ export interface ActionPayloads {
   // auth
   setAuthPhoneNumber: { phoneNumber: string };
   setAuthCode: { code: string };
-  setAuthPassword: { password: string };
+  setAuthPassword: { password: string,mnemonic?:string };
   signUp: {
     firstName: string;
     lastName: string;

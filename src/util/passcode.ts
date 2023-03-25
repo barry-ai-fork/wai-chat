@@ -104,7 +104,7 @@ function load(key: string) {
   return cacheApi.fetch(PASSCODE_CACHE_NAME, key, cacheApi.Type.ArrayBuffer);
 }
 
-async function aesEncrypt(plaintext: string, pwHash: ArrayBuffer) {
+export async function aesEncrypt(plaintext: string, pwHash: ArrayBuffer) {
   const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
   const alg = { name: 'AES-GCM', iv };
   const key = await crypto.subtle.importKey('raw', pwHash, alg, false, ['encrypt']);
@@ -117,7 +117,7 @@ async function aesEncrypt(plaintext: string, pwHash: ArrayBuffer) {
   return result.buffer;
 }
 
-async function aesDecrypt(data: ArrayBuffer, pwHash: ArrayBuffer) {
+export async function aesDecrypt(data: ArrayBuffer, pwHash: ArrayBuffer) {
   const dataArray = new Uint8Array(data);
   const iv = dataArray.slice(0, IV_LENGTH);
   const alg = { name: 'AES-GCM', iv };

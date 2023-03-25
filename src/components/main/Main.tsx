@@ -82,6 +82,7 @@ import DraftRecipientPicker from './DraftRecipientPicker.async';
 import AttachBotRecipientPicker from './AttachBotRecipientPicker.async';
 
 import './Main.scss';
+import PasswordModal from "../ui/PasswordModal";
 
 export interface OwnProps {
   isMobile?: boolean;
@@ -488,6 +489,7 @@ const Main: FC<OwnProps & StateProps> = ({
       <PaymentModal isOpen={isPaymentModalOpen} onClose={closePaymentModal} />
       <ReceiptModal isOpen={isReceiptModalOpen} onClose={clearReceipt} />
       <DeleteFolderDialog deleteFolderDialogId={deleteFolderDialogId} />
+      <PasswordModal/>
     </div>
   );
 };

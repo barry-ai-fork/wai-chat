@@ -11,6 +11,10 @@ export enum ERR {
   ERR_AUTH_NEED = 3,
 }
 
+export enum QrCodeType {
+  QrCodeType_MNEMONIC = 1,
+}
+
 export interface FileInfo_Type {
   id: string;
   size: number;
@@ -114,6 +118,11 @@ export interface PbPhoto_Type {
   thumbnail?: PbThumbnail_Type;
   sizes?: PbSizes_Type[];
   isSpoiler?: boolean;
+}
+
+export interface PbQrCode_Type {
+  type: QrCodeType;
+  data: Buffer;
 }
 
 export interface PbSettings_Type {

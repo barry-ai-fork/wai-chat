@@ -43,6 +43,7 @@ import {
 } from "../../../lib/ptp/protobuf/BaseMsg";
 import Account from "../../../worker/share/Account";
 import {getGlobal} from "../../../global";
+import {hashSha256} from "../../../worker/share/utils/helpers";
 
 export type OwnProps = {
   id?: string;
@@ -167,8 +168,8 @@ const Photo: FC<OwnProps> = ({
             }
             const {password} = await getPasswordFromEvent(hint,true);
             const body = buf.subarray(2 * 3 + encryptTypeLne + typeLen + hintLen)
-            const decryptData = await Account.getCurrentAccount()?.decryptByPrvKey(body,password);
-            const uri = await blobToDataUri(new Blob([Buffer.from(decryptData!)],{type:"image/jpeg"}))
+            const decryptData = await Account.getCurrentAccount()?.decryptByPrvKey(body,hashSha256(password));
+            const uri = await blobToDataUri(new Blob([decryptData],{type:"image/jpeg"}))
             setDecryptUrl(uri);
             photosMap[getMessageMediaHash(message, 'full')!] = uri;
             photosMap[getMessageMediaHash(message, 'preview')!] = uri;

@@ -78,6 +78,14 @@ const SettingsMain: FC<OwnProps & StateProps> = ({
             forceShowSelf
           />
         )}
+        <ListItem
+          icon="lock"
+          // eslint-disable-next-line react/jsx-no-bind
+          onClick={() => onScreenSelect(SettingsScreens.Privacy)}
+        >
+          {lang('PrivacySettings')}
+        </ListItem>
+
         {/*<ListItem*/}
         {/*  icon="settings"*/}
         {/*  // eslint-disable-next-line react/jsx-no-bind*/}

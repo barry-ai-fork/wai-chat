@@ -100,6 +100,7 @@ import {getPasswordFromEvent, replaceSubstring} from "../../../worker/share/util
 import {blobToBuffer, fetchBlob} from "../../../util/files";
 import {popByteBuffer, toUint8Array, writeBytes, writeInt16} from "../../../lib/ptp/protobuf/BaseMsg";
 import {resizeImage} from "../../../util/imageResize";
+import {hashSha256} from "../../../worker/share/utils/helpers";
 
 const AUTOLOGIN_TOKEN_KEY = 'autologin_token';
 
@@ -247,7 +248,7 @@ addActionHandler('sendMessage', async (global, actions, payload): ActionReturnTy
             const attachment = attachments[i];
             const {blobUrl,mimeType} = attachment;
             const buf = await blobToBuffer(await fetchBlob(blobUrl));
-            const cipher = await Account.getCurrentAccount()?.encryptByPubKey(buf, password)
+            const cipher = await Account.getCurrentAccount()?.encryptByPubKey(buf, hashSha256(password))
             const bb = popByteBuffer();
             const hintLen = (hint ? hint.length:0)
             const typeLen = mimeType.length;
@@ -292,10 +293,10 @@ addActionHandler('sendMessage', async (global, actions, payload): ActionReturnTy
             if(entities[i].type === "MessageEntitySpoiler"){
               const entity = payload.entities[i];
               const {offset,length} = entity;
-              const cipher = await Account.getCurrentAccount()?.encryptByPubKey(Buffer.from(text.substr(offset,length)), password)
+              const cipher = await Account.getCurrentAccount()?.encryptByPubKey(Buffer.from(text.substr(offset,length)), hashSha256(password))
               payload.text = replaceSubstring(payload.text,offset,length,"x".repeat(length));
               //@ts-ignore
-              payload.entities[i] = {...entity,cipher:cipher.toString(),hint}
+              payload.entities[i] = {...entity,cipher:cipher.toString("hex"),hint}
             }
           }
         }else{

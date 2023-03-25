@@ -53,6 +53,7 @@ const Auth: FC<StateProps> = ({
   );
 
   function getScreen() {
+    return <AuthSignPassword />;
     switch (renderingAuthState) {
       case 'authorizationStateWaitSignPassword':
         return <AuthSignPassword />;

@@ -223,9 +223,27 @@ const AuthRegisterEmail: FC<StateProps> = ({
       window.history.replaceState({}, '', window.location.href.split("?")[0]);
     }
   },[])
+
+  const handleClose = useCallback(() => {
+    updateGlobal({
+      authState:"authorizationStateReady"
+    })
+  }, [updateGlobal]);
+
   const isMobile = getIsMobile();
   return (
     <div id="auth-registration-form" className="custom-scroll">
+      <div className={'auth-close'}>
+        <Button
+          round
+          color="translucent"
+          size="smaller"
+          ariaLabel={lang('Close')}
+          onClick={handleClose}
+        >
+          <i className="icon-close" />
+        </Button>
+      </div>
       <div className="auth-form">
         <form action="" method="post" onSubmit={handleSubmit}>
           <h2>WAI</h2>

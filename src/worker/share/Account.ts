@@ -12,6 +12,7 @@ import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
 import {AuthLoginReq_Type} from "../../lib/ptp/protobuf/PTPAuth/types";
 import {getActionCommandsName} from "../../lib/ptp/protobuf/ActionCommands";
 import {decrypt, encrypt} from "ethereum-cryptography/aes";
+import {hashSha256} from "./utils/helpers";
 
 const KEY_PREFIX = "KEY_";
 const SESSION_PREFIX = "SI_";
@@ -136,13 +137,24 @@ export default class Account {
   getUid() {
     return this.uid;
   }
+
+  async verifyPwd(pwd:string){
+    const hash = hashSha256(pwd);
+    const entropy = await this.getEntropy();
+    const address = Account.getAddressFromEntropy(entropy,hash)
+    return address === this.getAddress();
+  }
+
+  static getAddressFromEntropy(entropy:string,pasword?:string){
+    let wallet = new Wallet(Mnemonic.fromEntropy(entropy),pasword);
+    const ethWallet = wallet.getPTPWallet(0);
+    return ethWallet.address;
+  }
   async getAccountAddress() {
     const address = this.getAddress();
     if (!address) {
       const entropy = await this.getEntropy();
-      let wallet = new Wallet(Mnemonic.fromEntropy(entropy));
-      const ethWallet = wallet.getPTPWallet(0);
-      this.address = ethWallet.address;
+      this.address = Account.getAddressFromEntropy(entropy);
       return this.address!;
     } else {
       return address;
@@ -152,20 +164,35 @@ export default class Account {
     let mnemonic = new Mnemonic();
     this.entropy = mnemonic.toEntropy();
   }
+
   async encryptByPubKey(plain:Buffer,password?:string):Promise<Buffer>{
     const entropy = await this.getEntropy();
     let wallet = new Wallet(Mnemonic.fromEntropy(entropy),password);
-    let { pubKey_ } = wallet.getPTPWallet(0);
-    const encrypted = EthEcies.encrypt(pubKey_, plain);
-    return encrypted
+    let { pubKey_,address } = wallet.getPTPWallet(0);
+    return EthEcies.encrypt(pubKey_, plain)
   }
 
   async decryptByPrvKey(cipher:Buffer,password?:string ):Promise<Buffer>{
     const entropy = await this.getEntropy();
     let wallet = new Wallet(Mnemonic.fromEntropy(entropy),password);
-    let { prvKey } = wallet.getPTPWallet(0);
-    const decrypted = EthEcies.decrypt(prvKey, cipher);
-    return decrypted
+    let { prvKey,address } = wallet.getPTPWallet(0);
+    return EthEcies.decrypt(prvKey, cipher)
+  }
+
+  async setEntropy(entropy:string) {
+    this.entropy = entropy;
+    const key = sha256(
+      Buffer.from(`${KEY_PREFIX}${this.getAccountId()}`)
+    ).toString('hex');
+    let cipher = encrypt(
+      Buffer.from(entropy, 'hex'),
+      Buffer.from(key.substring(0, 16)),
+      Buffer.from(key.substring(16, 32))
+    );
+    await Account.getKv().put(
+      `${KEY_PREFIX}${key}`,
+      cipher.toString('hex')
+    );
   }
 
   async getEntropy() {
@@ -285,14 +312,16 @@ export default class Account {
       return null;
     }
   }
-
+  static genAccountId(){
+    return +(new Date())
+  }
   static getCurrentAccountId() {
     if(currentAccountId){
       return currentAccountId;
     }else{
       let accountId:number | string | null = localStorage.getItem("CurrentAccountId");
       if(!accountId){
-        accountId = +(new Date());
+        accountId = Account.genAccountId();
       }else{
         accountId = parseInt(accountId)
         Account.getKv().put("CurrentAccountId",String(accountId));
@@ -303,6 +332,8 @@ export default class Account {
   }
 
   static setCurrentAccountId(accountId: number) {
+    const accountIdsStr =  localStorage.getItem("AccountIds");;
+    accountIds = accountIdsStr ? JSON.parse(accountIdsStr) : []
     if(!accountIds.includes(accountId)){
       accountIds.push(accountId);
       Account.getKv().put("AccountIds",JSON.stringify(accountIds));

@@ -99,12 +99,15 @@ const PasswordModal: FC<OwnProps> = ({}: OwnProps) => {
             onSubmit={handleSubmit}
           />
         </div>
-        <div className="help_text pt-2 pb-4 pr-2">
-          <ul>
-            <li>{lang("PasswordTipsLocalStorage")}</li>
-            <li>{lang("PasswordTipsLocalStorage1")}</li>
-          </ul>
-        </div>
+        {
+          showHitInput &&
+          <div className="help_text pt-2 pb-4 pr-2">
+            <ul>
+              <li>{lang("PasswordTipsLocalStorage")}</li>
+              <li>{lang("PasswordTipsLocalStorage1")}</li>
+            </ul>
+          </div>
+        }
       </div>
     </Modal>
   );

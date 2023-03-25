@@ -122,7 +122,8 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
     requestNextSettingsScreen,
     skipLockOnUnload,
     openUrl,
-    signOut
+    signOut,
+    updateGlobal
   } = getActions();
 
   const lang = useLang();
@@ -247,8 +248,22 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
   }, [openUrl]);
 
   const handleSignOutClick = useCallback(() => {
-    signOut({ forceInitApi: true });
-  }, [signOut]);
+    openChat({ id: undefined }, { forceOnHeavyAnimation: true });
+    setTimeout(()=>{
+      signOut({ forceInitApi: true });
+      updateGlobal({
+        authState:"authorizationStateWaitSignPassword"
+      })
+      },300)
+  }, [openChat,signOut]);
+
+  const handleLoginClick = useCallback(() => {
+    updateGlobal({
+      authState:"authorizationStateWaitSignPassword"
+    })
+  }, [updateGlobal]);
+
+
   const handleLockScreen = useCallback(() => {
     lockScreen();
   }, [lockScreen]);
@@ -372,15 +387,20 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
         </MenuItem>
       )}
       {
-        currentUserId &&
+        currentUserId ?
 
         <MenuItem
           icon="logout"
           onClick={handleSignOutClick}
         >
           {lang('SignOut')}
-        </MenuItem>
-
+        </MenuItem>:
+          <MenuItem
+            icon="user"
+            onClick={handleLoginClick}
+          >
+            {lang('Login')}
+          </MenuItem>
       }
     </>
   ), [

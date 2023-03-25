@@ -5,6 +5,7 @@ import type { FC } from '../../lib/teact/teact';
 import React, {
   memo, useCallback, useEffect, useRef,
 } from '../../lib/teact/teact';
+import useDebouncedCallback from "../../hooks/useDebouncedCallback";
 
 type OwnProps = {
   ref?: RefObject<HTMLTextAreaElement>;
@@ -78,7 +79,7 @@ const TextArea: FC<OwnProps> = ({
     if (!textarea) return;
     textarea.style.height = '0';
     textarea.style.height = `${textarea.scrollHeight}px`;
-  }, []);
+  }, [value]);
 
   const handleChange = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
     if (!noReplaceNewlines) {
@@ -99,6 +100,7 @@ const TextArea: FC<OwnProps> = ({
         className="form-control"
         id={id}
         dir="auto"
+        rows={3}
         value={value || ''}
         tabIndex={tabIndex}
         placeholder={placeholder}

@@ -1,3 +1,4 @@
+import {sha256} from "ethereum-cryptography/sha256";
 
 
 export function generateRandomString(length:number) {
@@ -206,7 +207,7 @@ export const getPasswordFromEvent = async (hint?:string,hideHitInput?:boolean)=>
         hint,
         hideHitInput,
         callback:({password,hint}:{password:string,hint?:string})=>{
-          resolve({password:sha1(password),hint})
+          resolve({password,hint})
         }
       }
     });
