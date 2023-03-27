@@ -1,7 +1,7 @@
-import {SendRes} from "../../../lib/ptp/protobuf/PTPMsg";
-import {ERR, PbChatGpBotConfig_Type, PbMsg_Type} from "../../../lib/ptp/protobuf/PTPCommon/types";
-import {ENV, kv} from "../../helpers/env";
-import {USER_CONFIG} from "../../helpers/context";
+import {SendRes} from "../../../../lib/ptp/protobuf/PTPMsg";
+import {ERR, PbChatGpBotConfig_Type, PbMsg_Type} from "../../../../lib/ptp/protobuf/PTPCommon/types";
+import {ENV, kv} from "../../../helpers/env";
+import {USER_CONFIG} from "../../../helpers/context";
 import {
   Pdu,
   popByteBuffer,
@@ -11,11 +11,13 @@ import {
   wrapByteBuffer,
   writeInt16,
   writeInt32
-} from "../../../lib/ptp/protobuf/BaseMsg";
-import {UserIdAccountIdMap} from "../../controller/WsController";
-import {ApiMessage} from "../../../api/types";
-import {PbChatGpBotConfig, PbMsg} from "../../../lib/ptp/protobuf/PTPCommon";
-import {AiChatHistory, AiChatRole} from "../../types";
+} from "../../../../lib/ptp/protobuf/BaseMsg";
+import {UserIdAccountIdMap} from "../../../controller/WsController";
+import {ApiMessage} from "../../../../api/types";
+import {PbChatGpBotConfig, PbMsg} from "../../../../lib/ptp/protobuf/PTPCommon";
+import {AiChatHistory, AiChatRole} from "../../../types";
+import ChatMsg from "../ChatMsg";
+import UserMsg from "../UserMsg";
 
 type MsgType = "newMessage" | "updateMessageSendSucceeded" | 'updateMessage';
 
@@ -35,6 +37,9 @@ export class Msg extends PbMsg{
   public senderMsgId?:number
   public receiverMsgId?:number
   public chatMsgId?:number
+  private chatMsg?: ChatMsg;
+  private senderUserMsg?: UserMsg;
+  private pairUserMsg?: UserMsg;
 
   static getStorageKey(user_id:string,chatId:string){
     const chatIsNotGroupOrChannel = !chatId.startsWith("-")
@@ -52,6 +57,9 @@ export class Msg extends PbMsg{
     return !chatId.startsWith("-");
   }
   init(user_id:string,chatId:string,isBotChat?:boolean,senderId?:string){
+
+    this.chatMsg = new ChatMsg(chatId);
+
     this.senderId = senderId ? senderId : this.user_id;
     this.user_id = user_id;
     this.chatId = chatId;
@@ -59,7 +67,19 @@ export class Msg extends PbMsg{
     this.storageKey = Msg.getStorageKey(user_id,chatId)
     this.isSelfChat = user_id === chatId;
     this.isBotChat = isBotChat;
-    this.isPairChat = !isBotChat && !this.isSelfChat && this.chatIsNotGroupOrChannel
+    this.isPairChat = !this.isSelfChat && this.chatIsNotGroupOrChannel
+
+    if(user_id === senderId){
+      this.senderUserMsg = new UserMsg(user_id,chatId!);
+      if(this.isPairChat){
+        this.pairUserMsg = new UserMsg(chatId,user_id!);
+      }
+    }else{
+      this.senderUserMsg = new UserMsg(chatId,user_id!);
+      if(this.isPairChat){
+        this.pairUserMsg = new UserMsg(user_id,chatId!);
+      }
+    }
   }
 
   setMsgFromApiMessage(msg:ApiMessage) {
@@ -84,10 +104,10 @@ export class Msg extends PbMsg{
       if(!this.msg.date){
         this.msg.date = Msg.genMsgDate()
       }
-      if(!this.senderMsgId){
+      if(!this.chatMsgId){
         await this.genMsgId()
       }
-      this.msg!.id = this.senderMsgId!
+      this.msg!.id = this.user_id === this.senderId ? this.senderMsgId! : this.receiverMsgId!;
       this.msg.isOutgoing = this.user_id === this.senderId
       const pdu = new SendRes({
         err:ERR.NO_ERROR,
@@ -104,6 +124,7 @@ export class Msg extends PbMsg{
   setMsgDate(){
     this.msg!.date = Msg.genMsgDate();
   }
+
   async sendPhoto(photo:{id:string,},msgType:MsgType = 'updateMessageSendSucceeded',other:Record<string, any> = {},msgId?:number){
     if(!this.msg){
       this.initMsg();
@@ -189,6 +210,7 @@ export class Msg extends PbMsg{
     this.isBotChat = !!readInt16(bb);
     this.receiverMsgId = readInt32(bb);
   }
+
   getMsgHeader(){
     if(this.chatMsgId && this.senderMsgId){
       const bb = popByteBuffer();
@@ -202,46 +224,37 @@ export class Msg extends PbMsg{
     }
   }
 
-  static async getAllKeys(user_id:string,chatId:string){
-    const keys = await kv.list({
-      prefix:`U_C_${user_id}_${chatId}_`
-    });
-    return keys.map(key=>key.name);
-  }
-
-  static async getMsgList(user_id:string,chatId:string,lastMessageId?:number,isUp?:boolean){
-    const keys = await this.getAllKeys(user_id,chatId);
+  static async getMsgList(user_id:string,chatId:string,lastMessageId?:number,limit:number=10,isUp?:boolean){
+    const userMsg = new UserMsg(user_id,chatId);
+    await userMsg.init();
+    const lastMsgId = await userMsg.getLastMsgId();
+    console.log("getMsgList",{chatId,lastMessageId,limit,lastMsgId})
     const rows: Msg[] = [];
+    if(lastMsgId==0){
+      return rows;
+    }
+
     if(!lastMessageId){
       lastMessageId = 0;
     }
-    for (let i = 0; i < keys.length; i++) {
-      const str = await kv.get(keys[i]);
-      const chatMsgId = parseInt(str);
-      let msgObj:Msg | null;
-      if(isUp){
-        if(lastMessageId < chatMsgId){
-          msgObj = await Msg.getFromCache(user_id,chatId,chatMsgId);
-          if(msgObj){
-            rows.push(msgObj)
-          }
-        }
+    let chatMsgIds:{chatMsgId:number,msgId:number}[] = []
+    if(isUp){
+      if(lastMessageId < lastMsgId){
+        chatMsgIds = userMsg.getUserChatMsgIdsByMsgId(lastMessageId,limit,"UP")
       }
-      else{
-        if(lastMessageId > chatMsgId){
-          msgObj = await Msg.getFromCache(user_id,chatId,chatMsgId);
-          if(msgObj){
-            rows.push(msgObj)
-          }
+    }
+
+    if(chatMsgIds.length > 0){
+      for (let i = 0; i < chatMsgIds.length; i++) {
+        const {chatMsgId,msgId} = chatMsgIds[i];
+        const msgObj = await Msg.getFromCache(user_id,chatId,chatMsgId);
+        if(msgObj){
+          msgObj.msg!.id = msgId;
+          rows.push(msgObj)
         }
       }
     }
     return rows;
-  }
-
-  static async getLastMsgId(user_id:string,chatId:string){
-    const chatMsgId =  await kv.get(`U_C_${user_id}_${chatId}`)
-    return chatMsgId ? parseInt(chatMsgId) : 0;
   }
 
   async save(isUpdate?:boolean,stripHasSent?:boolean){
@@ -258,11 +271,9 @@ export class Msg extends PbMsg{
       const data = Buffer.concat([this.getMsgHeader(),buf]).toString("hex");
       await kv.put(`MSG_${this.storageKey}_${this.chatMsgId}`,data);
       if(!isUpdate){
-        await kv.put(`U_C_${this.user_id}_${this.chatId}`,this.chatMsgId.toString());
-        await kv.put(`U_C_${this.user_id}_${this.chatId}_${this.senderMsgId}`,this.chatMsgId.toString());
+        this.senderUserMsg?.adduserChatMsgIds(this.senderMsgId!,this.chatMsgId)
         if(this.isPairChat){
-          await kv.put(`U_C_${this.chatId}_${this.user_id}`,this.chatMsgId.toString());
-          await kv.put(`U_C_${this.chatId}_${this.user_id}_${this.receiverMsgId}`,this.chatMsgId.toString());
+          this.pairUserMsg?.adduserChatMsgIds(this.receiverMsgId!,this.chatMsgId)
         }
       }
     }else{
@@ -284,11 +295,18 @@ export class Msg extends PbMsg{
 
   static async deleteMsg(user_id: string, chatId: string, msgIds: number[] | undefined) {
     if(msgIds && msgIds.length > 0){
-      for (let i = 0; i < msgIds.length; i++) {
-        const msgId = msgIds[i];
-        await kv.delete(`U_C_${user_id}_${chatId}_${msgId}`)
+      const userMsg = new UserMsg(user_id,chatId);
+      const rows = userMsg.getUserChatMsgIds()
+      if(rows){
+        for (let i = 0; i < msgIds.length; i++) {
+          const msgId = msgIds[i];
+          rows.delete(msgId.toString())
+        }
       }
+      userMsg.setUserChatMsgIds(rows)
+      userMsg.saveUserChatMsgIdsToKv()
     }
+
     // const chatMsgIds = await Msg.getChatMsgIds(user_id,chatId,msgIds);
     // if(chatMsgIds && chatMsgIds.length > 0){
     //   for (let i = 0; i < chatMsgIds.length; i++) {
@@ -345,7 +363,6 @@ export class Msg extends PbMsg{
   }
 
   getLastMsgText(){
-
     if(this.msg && this.msg.content.text && this.msg.content.text.text){
       return this.msg.content.text.text;
     }else{
@@ -358,25 +375,11 @@ export class Msg extends PbMsg{
     }
   }
   async genMsgId(){
-    const key = `M_S_I_${this.user_id}`
-    this.senderMsgId = await Msg._genMsgId(key);
+    this.senderMsgId = await this.senderUserMsg?.genMsgId();
     if(this.isPairChat){
-      const key1 = `M_R_I_${this.chatId}`
-      this.receiverMsgId = await Msg._genMsgId(key1);
+      this.receiverMsgId = await this.pairUserMsg?.genMsgId();
     }
-    const key3 = `M_C_I_${this.storageKey}`
-    this.chatMsgId = await Msg._genMsgId(key3);
-  }
-
-  private static async _genMsgId(key:string){
-    let msgId =  await kv.get(key);
-    if(!msgId){
-      msgId = 1;
-    }else{
-      msgId = parseInt(msgId) + 1;
-    }
-    await kv.put(key,msgId.toString())
-    return msgId
+    this.chatMsgId = await this.chatMsg?.genMsgId();
   }
 
   async updateAiMsg(role:AiChatRole){

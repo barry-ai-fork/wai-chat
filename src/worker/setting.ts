@@ -1,4 +1,4 @@
-export const TEXT_AI_THINKING = "思考中..."
+export const TEXT_AI_THINKING = "..."
 export const BYPASS_API = [
   "sendMessage","editMessage","deleteMessages","downloadMedia",
   "uploadProfilePhoto"

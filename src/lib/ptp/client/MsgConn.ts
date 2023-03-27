@@ -72,6 +72,7 @@ export default class MsgConn {
   }
 
   async close() {
+    this.notifyState(MsgClientState.closed);
     if (this.client && this.isConnect()) {
       this.client.close();
     }

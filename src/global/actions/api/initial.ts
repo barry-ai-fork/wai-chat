@@ -198,7 +198,7 @@ addActionHandler('initApi', async (global, actions): Promise<void> => {
                   }
                 });
               }
-            }else if(msgClientState === MsgClientState.connecting){
+            }else if(msgClientState === MsgClientState.connecting || msgClientState === MsgClientState.closed){
               connectionState = "connectionStateConnecting"
             }else{
               connectionState = "connectionStateBroken";

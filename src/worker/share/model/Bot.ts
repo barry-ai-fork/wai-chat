@@ -1,5 +1,5 @@
-import {ApiBotCommand, ApiBotMenuButton} from "../../api/types";
-import {PbBotInfo_Type} from "../../lib/ptp/protobuf/PTPCommon/types";
+import {ApiBotCommand, ApiBotMenuButton} from "../../../api/types";
+import {PbBotInfo_Type} from "../../../lib/ptp/protobuf/PTPCommon/types";
 
 export class Bot{
   private msg: PbBotInfo_Type

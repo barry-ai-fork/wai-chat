@@ -1,5 +1,3 @@
-import {ENV} from "../helpers/env";
-import {sendMessageToChatGPT} from "../helpers/openai";
 import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
 import Account from "../share/Account";
 import {
@@ -11,18 +9,18 @@ import {
   MsgUpdateRes,
   SendReq
 } from "../../lib/ptp/protobuf/PTPMsg";
-import {Msg} from "../share/Msg";
-import {User} from "../share/User";
-import {TEXT_AI_THINKING} from "../setting";
+import {Msg} from "../share/model/Msg";
+import {User} from "../share/model/User";
 import {ActionCommands} from "../../lib/ptp/protobuf/ActionCommands";
 import {ERR} from "../../lib/ptp/protobuf/PTPCommon/types";
-import BotMsg from "../share/Msg/BotMsg";
+import BotMsg from "../share/model/Msg/BotMsg";
+import UserMsg from "../share/model/UserMsg";
 
 export async function msgHandler(pdu:Pdu,account:Account){
   switch (pdu.getCommandId()){
     case ActionCommands.CID_MsgListReq:
       const handleMsgListReq = async (pdu:Pdu)=>{
-        const {lastMessageId,chatId} = MsgListReq.parseMsg(pdu);
+        const {lastMessageId,limit,chatId} = MsgListReq.parseMsg(pdu);
         // console.log(payload)
         console.log("CID_MsgListReq",{chatId})
         const user_id = account.getUid();
@@ -33,7 +31,7 @@ export async function msgHandler(pdu:Pdu,account:Account){
           messages:[]
         }
         if(user_id){
-          const rows = await Msg.getMsgList(user_id,chatId,lastMessageId,true);
+          const rows = await Msg.getMsgList(user_id,chatId,lastMessageId,limit,true);
           rows.forEach((msg:any)=>{
             // @ts-ignore
             return res.messages.push(msg.msg);
@@ -55,12 +53,17 @@ export async function msgHandler(pdu:Pdu,account:Account){
   switch (pdu.getCommandId()){
     case ActionCommands.CID_MsgUpdateReq:
       const msgUpdateReq = MsgUpdateReq.parseMsg(pdu);
-      const chatMsgIds = await Msg.getChatMsgIds(msgUpdateReq.user_id,msgUpdateReq.chat_id,[msgUpdateReq.msg_id])
-      for (let i = 0; i < chatMsgIds.length; i++) {
-        const msgUpdate = await Msg.getFromCache(msgUpdateReq.user_id,msgUpdateReq.chat_id,chatMsgIds[i])
-        if(msgUpdate){
-          msgUpdate.setMsgText(msgUpdateReq.text)
-          await msgUpdate.save(true)
+      const userMsg = new UserMsg(msgUpdateReq.user_id,msgUpdateReq.chat_id);
+      const rows = userMsg.getUserChatMsgIds()
+      if(rows){
+        const chatMsgId = rows.get(msgUpdateReq.msg_id.toString())
+        if(chatMsgId){
+          const msg = await Msg.getFromCache(msgUpdateReq.user_id,msgUpdateReq.chat_id,chatMsgId)
+          if(msg){
+            msg.chatMsgId = chatMsgId;
+            msg.setMsgText(msgUpdateReq.text)
+            await msg.save(true,true)
+          }
         }
       }
       account.sendPdu(new MsgUpdateRes({
@@ -92,10 +95,9 @@ export async function msgHandler(pdu:Pdu,account:Account){
     botInfo = chatUser?.isBot() ? chatUser?.getUserInfo()!.fullInfo?.botInfo! : null
   }
   msgSendByUser.init(user_id,chatId,!!botInfo,user_id)
-  await msgSendByUser.genMsgId();
   await msgSendByUser.send("updateMessageSendSucceeded",{localMsgId:id},seq_num)
 
-  msgSendByUser.save().catch(console.error)
+  await msgSendByUser.save()
   if(botInfo){
     await new BotMsg(user_id,chatId,msgSendByUser,botInfo).process()
   }

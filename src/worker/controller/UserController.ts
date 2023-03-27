@@ -1,13 +1,14 @@
 import {ENV} from "../helpers/env";
-import {User} from "../share/User";
-import {Bot} from "../share/Bot";
-import {Chat} from "../share/Chat";
+import {User} from "../share/model/User";
+import {Bot} from "../share/model/Bot";
+import {Chat} from "../share/model/Chat";
 import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
 import Account from "../share/Account";
 import UploadProfilePhotoReq from "../../lib/ptp/protobuf/PTPAuth/UploadProfilePhotoReq";
 import UploadProfilePhotoRes from "../../lib/ptp/protobuf/PTPAuth/UploadProfilePhotoRes";
 import { ERR } from "../../lib/ptp/protobuf/PTPCommon/types";
 import {UpdateProfileReq, UpdateUsernameReq} from "../../lib/ptp/protobuf/PTPAuth";
+import UserChat from "../share/model/UserChat";
 
 let initSystemBot_down = false;
 
@@ -149,6 +150,9 @@ export async function initSystemBot(bots:any[],force?:boolean){
         type:"chatTypePrivate",
         isVerified:true,
       })
+      const userChat = new UserChat(id);
+      await userChat.init();
+      userChat.addUserChatIds(id)
       await chat.save();
     }
   }

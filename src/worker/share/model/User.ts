@@ -1,18 +1,20 @@
-import {ApiUser, ApiUserStatus} from "../../api/types";
-import {ENV, kv} from "../helpers/env";
+import {ApiUser, ApiUserStatus} from "../../../api/types";
+import {ENV, kv} from "../../helpers/env";
 import {Chat} from "./Chat";
-import {UserIdAccountIdMap} from "../controller/WsController";
+import {UserIdAccountIdMap} from "../../controller/WsController";
 import {Msg} from "./Msg";
-import {PbChatFolder, PbUser, PbUserSetting} from "../../lib/ptp/protobuf/PTPCommon";
-import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
+import {PbUser, PbUserSetting} from "../../../lib/ptp/protobuf/PTPCommon";
+import {Pdu} from "../../../lib/ptp/protobuf/BaseMsg";
 import {
   PbBotInfo_Type,
   PbChatFolder_Type,
   PbFullInfo_Type,
   PbUser_Type,
   PbUserSetting_Type
-} from "../../lib/ptp/protobuf/PTPCommon/types";
-import {unique} from "../../util/iteratees";
+} from "../../../lib/ptp/protobuf/PTPCommon/types";
+import {unique} from "../../../util/iteratees";
+import UserChat from "./UserChat";
+import UserMsg from "./UserMsg";
 
 export class User extends PbUser{
   declare public msg?:PbUser_Type;
@@ -104,23 +106,12 @@ export class User extends PbUser{
     const str = await kv.get(`US_${this.msg!.id}`);
     return PbUserSetting.parseMsg(new Pdu(Buffer.from(str,'hex')));
   }
-  static async getChatIds(user_id?:string){
-    const rows = await kv.list({
-      prefix:`U_C_${user_id}_`
-    })
-    const res = [];
-    for (let i = 0; i < rows.length; i++) {
-      const key = rows[i];
-      const chatId = key.name.replace(`U_C_${user_id}_`,"");
-      const chatMsgId = await kv.get(key.name)
-      res.push({chatId,chatMsgId:parseInt(chatMsgId)})
-    }
-    res.sort((a,b)=>b.chatMsgId - a.chatMsgId)
-    const chatIds = [];
-    for (let i = 0; i < res.length; i++) {
-      chatIds.push(res[i].chatId)
-    }
-    return chatIds
+  static UserChatIds:Record<string, string[]> = {}
+
+  static async getChatIds(user_id:string){
+    const userChat = new UserChat(user_id!)
+    await userChat.init();
+    return userChat.getUserChatIds()
   }
 
   static async getChatsByChatIds(chatIds:string[]){
@@ -135,10 +126,10 @@ export class User extends PbUser{
   }
 
   static async getChats(user_id?:string){
-    const chatIds = await User.getChatIds(user_id);
+    const chatIds = await User.getChatIds(user_id!);
     const chats = [];
-    for (let i = 0; i < chatIds.length; i++) {
-      const chat = await Chat.getFromCache(chatIds[i])
+    for (let i = 0; i < chatIds!.length; i++) {
+      const chat = await Chat.getFromCache(chatIds![i])
       chats.push(chat)
     }
     return chats
@@ -202,9 +193,7 @@ export class User extends PbUser{
     let chatIds = User.getPublicBots();
     let userStatusesById:Record<string, ApiUserStatus>  = {};
     let chatFolders:any = User.getDefaultChatFolder();
-
     let chats = []
-
     if(user_id){
       const user = await User.init(user_id)
       const userSetting = await user.getUserSetting();
@@ -215,17 +204,29 @@ export class User extends PbUser{
       })
       chatFolders.orderedIds = userSetting.chatFolderOrderedIds!;
       const chatIds1 = await User.getChatIds(user_id)
-      if(!chatIds1.includes(user_id)){
-        chatIds1.push(user_id)
+      if(!chatIds1!.includes(user_id)){
+        chatIds1!.push(user_id)
       }
 
-      chatIds = unique(chatIds.concat(chatIds1));
+      chatIds = unique(chatIds.concat(chatIds1!));
       chats = await User.getChatsByChatIds(chatIds);
       for (let i = 0; i < chats.length; i++) {
         const chat = chats[i]
-        const chatMsgId = await Msg.getLastMsgId(user_id,chat.id!)
-        const lastMessage = chatMsgId ? await Msg.getFromCache(user_id,chat.id!,chatMsgId): undefined;
-        chats[i]!.lastMessage = lastMessage ? lastMessage.msg : undefined
+        const userMsg = new UserMsg(user_id,chat.id!);
+        await userMsg.init();
+
+        const msgId = await userMsg.getLastMsgId();
+        if(msgId){
+          const chatMsgId = await userMsg.getLastChatMsgId(msgId);
+          if(chatMsgId){
+            const lastMessage = await Msg.getFromCache(user_id,chat.id!,chatMsgId!);
+            if(lastMessage){
+              lastMessage!.msg!.id = msgId;
+              chats[i]!.lastMessage = lastMessage.msg
+            }
+          }
+        }
+        console.log("lastMessage",msgId,chats[i]!.lastMessage)
       }
     }else{
       chats = await User.getChatsByChatIds(chatIds);
@@ -297,12 +298,15 @@ export class User extends PbUser{
     }
     let chat = await Chat.getFromCache(user_id);
     if(!chat){
-      chat = new Chat({
+      chat = new Chat()
+      chat.setChatInfo({
         id:user_id,
-        type:Chat.chatTypePrivate,
+        type:"chatTypePrivate",
         title:""
       })
       await chat.save();
+      const userChat = new UserChat(user_id)
+      userChat.addUserChatIds(user_id)
     }
     return user;
   }

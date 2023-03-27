@@ -16481,7 +16481,7 @@ export default {
   },
   "PasswordTipsLocalPlaceholder": {
     "key": "PasswordTipsLocalPlaceholder",
-    "value": "请输入消息加密密码"
+    "value": "请输入密码"
   },
   "PasswordTipsLoginPlaceholder": {
     "key": "PasswordTipsLoginPlaceholder",

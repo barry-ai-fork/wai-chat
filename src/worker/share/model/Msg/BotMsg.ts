@@ -1,9 +1,9 @@
-import {Msg} from "../Msg";
-import {TEXT_AI_THINKING} from "../../setting";
-import {sendMessageToChatGPT} from "../../helpers/openai";
-import {PbBotInfo_Type} from "../../../lib/ptp/protobuf/PTPCommon/types";
-import {AiChatHistory, AiChatRole} from "../../types";
-import { ENV } from "../../helpers/env";
+import {TEXT_AI_THINKING} from "../../../setting";
+import {sendMessageToChatGPT} from "../../../helpers/openai";
+import {PbBotInfo_Type} from "../../../../lib/ptp/protobuf/PTPCommon/types";
+import {AiChatHistory, AiChatRole} from "../../../types";
+import { ENV } from "../../../helpers/env";
+import {Msg} from "./";
 
 export default class {
   private user_id: string;
@@ -88,13 +88,13 @@ export default class {
           return;
       }
     }else{
-        switch (msgSendByUser.getMsgText()) {
-          case "/start":
-            await msgModelBotReply.sendText(botInfo['description']!)
-            break
-          default:
-            return;
-        }
+      switch (msgSendByUser.getMsgText()) {
+        case "/start":
+          await msgModelBotReply.sendText(botInfo['description']!)
+          break
+        default:
+          return;
+      }
     }
   }
   async process(){

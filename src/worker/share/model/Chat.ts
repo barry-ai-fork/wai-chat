@@ -1,8 +1,8 @@
-import {kv} from "../helpers/env";
-import {ApiChat} from "../../api/types";
-import {PbChat} from "../../lib/ptp/protobuf/PTPCommon";
-import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
-import {PbChat_Type} from "../../lib/ptp/protobuf/PTPCommon/types";
+import {kv} from "../../helpers/env";
+import {ApiChat} from "../../../api/types";
+import {PbChat} from "../../../lib/ptp/protobuf/PTPCommon";
+import {Pdu} from "../../../lib/ptp/protobuf/BaseMsg";
+import {PbChat_Type} from "../../../lib/ptp/protobuf/PTPCommon/types";
 
 export class Chat extends PbChat{
   declare public msg?:PbChat_Type;

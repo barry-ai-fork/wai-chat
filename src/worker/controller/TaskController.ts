@@ -3,7 +3,7 @@ import * as utils from "worktop/utils";
 import {ENV} from "../helpers/env";
 import {RequestForm} from "../types";
 import Account from "../share/Account";
-import {Msg} from "../share/Msg";
+import {Msg} from "../share/model/Msg";
 import {TASK_EXE_USER_ID} from "./WsController";
 
 type Task = {

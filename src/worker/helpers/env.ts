@@ -1,6 +1,7 @@
 import {HS256} from "worktop/jwt";
 import CloudFlareKv from "../share/db/CloudFlareKv";
 import CloudFlareR2 from "../share/storage/CloudFlareR2";
+import LocalStorage from "../share/db/LocalStorage";
 
 export const ENV:{
   IS_PROD: boolean,
@@ -70,4 +71,11 @@ export function initEnv(env:Record<string, any>) {
   kv.init(env[ENV.KV_NAMESPACE_KEY])
   storage = new CloudFlareR2();
   storage.init(env.STORAGE)
+}
+
+export function initKvTest() {
+  //@ts-ignore
+  kv = new LocalStorage();
+  //@ts-ignore
+  kv.init()
 }

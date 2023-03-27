@@ -18,7 +18,4 @@ module.exports = {
   globals: {
     APP_REVISION: "jest-test",
   },
-  babelConfig: {
-    plugins: ['jest-babel-plugin']
-  }
 };

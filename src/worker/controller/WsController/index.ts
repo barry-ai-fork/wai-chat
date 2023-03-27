@@ -19,7 +19,7 @@ import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
 import {LoadChatsReq, LoadChatsRes} from "../../../lib/ptp/protobuf/PTPChats";
 import {OtherNotify} from "../../../lib/ptp/protobuf/PTPOther";
 import {msgHandler} from "../MsgController";
-import {User} from "../../share/User";
+import {User} from "../../share/model/User";
 
 const accountIdStart = +(new Date());
 export const UserIdAccountIdMap:Record<string, Account[]> = {}

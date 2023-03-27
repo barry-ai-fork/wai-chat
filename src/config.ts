@@ -37,7 +37,9 @@ export const LEGACY_SESSION_KEY = 'GramJs:sessionId';
 export const PASSCODE_CACHE_NAME = 'tt-passcode';
 
 export const GLOBAL_STATE_CACHE_DISABLED = false;
-export const GLOBAL_STATE_CACHE_KEY = 'tt-global-state';
+
+export const GLOBAL_STATE_CACHE_KEY = 'tt-global-state-v1.17';
+
 export const GLOBAL_STATE_CACHE_USER_LIST_LIMIT = 500;
 export const GLOBAL_STATE_CACHE_CHAT_LIST_LIMIT = 200;
 export const GLOBAL_STATE_CACHE_CHATS_WITH_MESSAGES_LIMIT = 30;
