@@ -14,6 +14,7 @@ export interface MsgListReq_Type {
   chatId: string;
   lastMessageId: number;
   limit: number;
+  isUp?: boolean;
 }
 export interface MsgListRes_Type {
   payload: string;

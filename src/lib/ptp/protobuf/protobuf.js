@@ -749,7 +749,7 @@ var $conv_message = $createConverter([
                     '$': {"100":["err","uint32",0]}
                 },
                 MsgListReq: {
-                    '$': {"1":["chatId","string",""],"2":["lastMessageId","uint32",0],"3":["limit","uint32",0]}
+                    '$': {"1":["chatId","string",""],"2":["lastMessageId","uint32",0],"3":["limit","uint32",0],"4":["isUp","bool",false]}
                 },
                 MsgListRes: {
                     '$': {"1":["payload","string",""],"100":["err","uint32",0]}

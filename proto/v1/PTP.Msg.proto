@@ -41,6 +41,7 @@ message MsgListReq{
   required string chatId = 1;
   required uint32 lastMessageId = 2;
   required uint32 limit = 3;
+  optional bool isUp = 4;
 }
 
 message MsgListRes{

@@ -228,7 +228,7 @@ export class Msg extends PbMsg{
     const userMsg = new UserMsg(user_id,chatId);
     await userMsg.init();
     const lastMsgId = await userMsg.getLastMsgId();
-    console.log("getMsgList",{chatId,lastMessageId,limit,lastMsgId})
+    console.log("getMsgList",{chatId,lastMessageId,limit,lastMsgId,isUp})
     const rows: Msg[] = [];
     if(lastMsgId==0){
       return rows;
@@ -241,6 +241,10 @@ export class Msg extends PbMsg{
     if(isUp){
       if(lastMessageId < lastMsgId){
         chatMsgIds = userMsg.getUserChatMsgIdsByMsgId(lastMessageId,limit,"UP")
+      }
+    }else{
+      if(lastMessageId > 0){
+        chatMsgIds = userMsg.getUserChatMsgIdsByMsgId(lastMessageId,limit,"DOWN")
       }
     }
 

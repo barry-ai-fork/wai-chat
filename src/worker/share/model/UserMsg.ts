@@ -82,14 +82,20 @@ export default class UserMsg {
     }
   }
 
-  getUserChatMsgIdsByMsgId(msgId:number,limit:number = 10,type:'UP'|"DOWN" = "UP") {
+  getUserChatMsgIdsByMsgId(msgId:number,limit:number = 10,type: 'UP'|"DOWN" = "UP") {
     const msgIds = UserMsg.userChatMsgIds.get(this.user_chat_id)
     console.log("getUserChatMsgIdsByMsgId",this.user_chat_id,msgIds)
     if(msgIds){
       const chatMsgIds:{chatMsgId:number,msgId:number}[] = [];
       msgIds.forEach((chatMsgId,msgId1)=>{
-        if(Number(msgId1) > msgId){
-          chatMsgIds.push({chatMsgId,msgId:Number(msgId1)})
+        if(type === 'UP'){
+          if(Number(msgId1) > msgId){
+            chatMsgIds.push({chatMsgId,msgId:Number(msgId1)})
+          }
+        }else {
+          if(Number(msgId1) <= msgId){
+            chatMsgIds.push({chatMsgId,msgId:Number(msgId1)})
+          }
         }
       })
       chatMsgIds.sort((a,b)=> a.msgId - b.msgId)
@@ -98,6 +104,7 @@ export default class UserMsg {
       return []
     }
   }
+
   getUserChatMsgIds() {
     return UserMsg.userChatMsgIds.get(this.user_chat_id)
   }

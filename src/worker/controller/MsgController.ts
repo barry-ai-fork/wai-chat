@@ -20,7 +20,7 @@ export async function msgHandler(pdu:Pdu,account:Account){
   switch (pdu.getCommandId()){
     case ActionCommands.CID_MsgListReq:
       const handleMsgListReq = async (pdu:Pdu)=>{
-        const {lastMessageId,limit,chatId} = MsgListReq.parseMsg(pdu);
+        const {lastMessageId,isUp,limit,chatId} = MsgListReq.parseMsg(pdu);
         // console.log(payload)
         console.log("CID_MsgListReq",{chatId})
         const user_id = account.getUid();
@@ -31,7 +31,7 @@ export async function msgHandler(pdu:Pdu,account:Account){
           messages:[]
         }
         if(user_id){
-          const rows = await Msg.getMsgList(user_id,chatId,lastMessageId,limit,true);
+          const rows = await Msg.getMsgList(user_id,chatId,lastMessageId,limit,isUp);
           rows.forEach((msg:any)=>{
             // @ts-ignore
             return res.messages.push(msg.msg);

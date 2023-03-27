@@ -53,7 +53,7 @@ import {
 } from '../../reducers';
 import {
   selectChat,
-  selectChatMessage,
+  selectChatMessage, selectChatMessages,
   selectCurrentChat,
   selectCurrentMessageList,
   selectDraft,
@@ -1067,11 +1067,16 @@ async function loadViewportMessages<T extends GlobalState>(
     setGlobal(global)
   }
   const lastMessageId = chat?.lastMessage ? chat?.lastMessage.id : 0;
-
+  const messages1 = selectChatMessages(global,chat!.id)
+  let isUp = true;
+  if(Object.keys(messages1).length === 0){
+    isUp = false;
+  }
   const pdu = await MsgConn.getMsgClient()?.sendPduWithCallback(new MsgListReq({
     lastMessageId,
     chatId:chat.id,
     limit: MESSAGE_LIST_SLICE,
+    isUp
   }).pack());
   const res = MsgListRes.parseMsg(pdu!)
   if(res.err !== ERR.NO_ERROR){
