@@ -1,18 +1,23 @@
-import type { FC } from '../../lib/teact/teact';
+import type {FC} from '../../lib/teact/teact';
 import React, {memo, useCallback, useState} from '../../lib/teact/teact';
-import { getActions, withGlobal } from '../../global';
+import {getActions, withGlobal} from '../../global';
 
-import type { GlobalState } from '../../global/types';
+import type {GlobalState} from '../../global/types';
 
-import { pick } from '../../util/iteratees';
+import {pick} from '../../util/iteratees';
 import useLang from '../../hooks/useLang';
 
 import MonkeyPassword from '../common/PasswordMonkey';
 import PasswordForm from '../common/PasswordForm';
 import Button from "../ui/Button";
-import {passwordCheck} from "../../worker/share/utils/helpers";
+import {hashSha256, passwordCheck} from "../../worker/share/utils/helpers";
 import TextArea from "../ui/TextArea";
 import Mnemonic from "../../lib/ptp/wallet/Mnemonic";
+import {Decoder} from '@nuintun/qrcode';
+import {PbQrCode} from "../../lib/ptp/protobuf/PTPCommon";
+import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
+import {QrCodeType} from "../../lib/ptp/protobuf/PTPCommon/types";
+import {aesDecrypt} from "../../util/passcode";
 
 type StateProps = Pick<GlobalState, 'authIsLoading' | 'authError' | 'authHint'>;
 
@@ -42,6 +47,29 @@ const AuthSignPassword: FC<StateProps> = ({
     setMnemonic(mnemonicObj.getWords());
   }, [setMnemonic]);
 
+  const handleUploadChange = useCallback((e) => {
+    const file = e.target.files[0];
+    const qrcode = new Decoder();
+    const blob = new Blob([file], { type: file.type });
+    const blobUrl = URL.createObjectURL(blob);
+
+    qrcode
+      .scan(blobUrl)
+      .then(result => {
+        setMnemonic(result.data)
+      })
+      .catch(error => {
+          alert("二维码解析失败")
+      });
+
+  }, [setMnemonic]);
+
+
+  const handleUploadQrcode = useCallback(() => {
+    // @ts-ignore
+    document.querySelector("#upload_qrcode").click()
+  }, [setMnemonic]);
+
   const onChangeMnemonic = useCallback((e) => {
     setMnemonicError("")
     setMnemonic(e.target.value);
@@ -57,10 +85,33 @@ const AuthSignPassword: FC<StateProps> = ({
     }
     let mnemonic_ = mnemonic.trim();
     if(showMnemonic){
-      if(getMaxLengthIndicator() !== "12"){
-        return setMnemonicError("助记词需12个单词")
+      if(mnemonic.startsWith('wai://')){
+        const qrcodeData = mnemonic.replace('wai://','')
+        const qrcodeDataBuf = Buffer.from(qrcodeData,'hex')
+        const decodeRes = PbQrCode.parseMsg(new Pdu(qrcodeDataBuf))
+        if(decodeRes){
+          const {type,data} = decodeRes;
+          if(type !== QrCodeType.QrCodeType_MNEMONIC){
+            return setMnemonicError("解析二维码失败")
+          }
+          try {
+            const res = await aesDecrypt(data,Buffer.from(hashSha256(password),"hex"))
+            if(res){
+              mnemonic_ = res.toString()
+            }else{
+              return setMnemonicError("解析二维码失败")
+            }
+          }catch (e){
+            return setMnemonicError("解密二维码失败")
+          }
+        }else{
+          return setMnemonicError("解析二维码失败")
+        }
+      }else{
+        if(getMaxLengthIndicator() !== "12"){
+          return setMnemonicError("助记词需12个单词")
+        }
       }
-
       const m = new Mnemonic(mnemonic_);
       if(!m.checkMnemonic()){
         return setMnemonicError("助记词不合法，请输入12个单词,用空格分割")
@@ -125,6 +176,14 @@ const AuthSignPassword: FC<StateProps> = ({
         {
           showMnemonic &&
           <Button isText onClick={handleGenMnemonic}>助记词生成</Button>
+        }
+        {
+          showMnemonic &&(
+            <>
+              <input style={"display:none"} onChange={handleUploadChange} type="file" id={"upload_qrcode"}/>
+              <Button isText onClick={handleUploadQrcode}>二维码登录</Button></>
+          )
+
         }
         <Button isText onClick={handleShowMnemonic}>{showMnemonic ? "密码登录" : "助记词登录"}</Button>
 
