@@ -27,7 +27,7 @@
     "statoscope:validate": "statoscope validate --input  public/build-stats.json",
     "statoscope:validate-diff": "statoscope validate --input input.json --reference reference.json",
     "postinstall": "(cd dev/eslint-multitab && npm i)",
-    "clean:prod": "rm -rf dist/*.map dist/statoscope-report.html dist/build-stats.json public/build-stats.json public/statoscope-report.html dist/img-apple-64 dist/img-apple-160"
+    "clean:prod": "rm -rf  dist/statoscope-report.html dist/build-stats.json public/build-stats.json public/statoscope-report.html dist/img-apple-64 dist/img-apple-160"
   },
   "engines": {
     "node": "^18",
