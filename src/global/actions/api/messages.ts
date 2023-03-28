@@ -1078,6 +1078,9 @@ async function loadViewportMessages<T extends GlobalState>(
     limit: MESSAGE_LIST_SLICE,
     isUp
   }).pack());
+  if(!pdu){
+    return
+  }
   const res = MsgListRes.parseMsg(pdu!)
   if(res.err !== ERR.NO_ERROR){
     return;
