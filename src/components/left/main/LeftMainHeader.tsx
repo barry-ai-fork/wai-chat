@@ -2,7 +2,7 @@ import type { FC } from '../../../lib/teact/teact';
 import React, {
   memo, useCallback, useEffect, useMemo,
 } from '../../../lib/teact/teact';
-import { getActions, withGlobal } from '../../../global';
+import { getActions, getGlobal, withGlobal } from '../../../global';
 
 import type { AnimationLevel, ISettings } from '../../../types';
 import { LeftColumnContent, SettingsScreens } from '../../../types';
@@ -250,15 +250,27 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
   }, [openUrl]);
 
   const handleClearCache = useCallback(async () => {
-    updateGlobal({
-      message:{},
-      chats:{},
-    })
-    await cacheApi.clear(LANG_CACHE_NAME);
-    await cacheApi.clear(ASSET_CACHE_NAME);
-    setTimeout(()=>{
-      location.reload();
-    },1000)
+    openChat({ id: undefined }, { forceOnHeavyAnimation: true });
+    setTimeout(async ()=>{
+      const {chats,messages} = getGlobal();
+      Object.values(chats.byId).forEach(chat=>{
+        chat.lastMessage = undefined
+        messages.byChatId[chat.id].byId = {}
+        messages.byChatId[chat.id].threadsById['-1'].lastViewportIds = []
+        messages.byChatId[chat.id].threadsById['-1'].listedIds = []
+        messages.byChatId[chat.id].threadsById['-1'].lastScrollOffset = undefined
+      })
+      updateGlobal({
+        messages,
+        chats
+      })
+
+      await cacheApi.clear(LANG_CACHE_NAME);
+      await cacheApi.clear(ASSET_CACHE_NAME);
+      setTimeout(()=>{
+        location.reload();
+      },500)
+    },500)
   }, [openUrl]);
   const handleSignOutClick = useCallback(() => {
     openChat({ id: undefined }, { forceOnHeavyAnimation: true });
@@ -378,7 +390,7 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
         icon="stop"
         onClick={handleClearCache}
       >
-        清楚缓存
+        清除缓存
       </MenuItem>
       {/* {IS_BETA && ( */}
       {/*   <MenuItem */}

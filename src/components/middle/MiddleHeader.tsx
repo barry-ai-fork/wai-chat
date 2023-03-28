@@ -509,6 +509,9 @@ export default memo(withGlobal<OwnProps>(
     const isChatWithBot = chat && selectIsChatWithBot(global, chat);
     const canRestartBot = Boolean(isChatWithBot && selectIsUserBlocked(global, chatId));
     const canStartBot = isChatWithBot && !canRestartBot && Boolean(selectIsChatBotNotStarted(global, chatId));
+
+    // console.log(chatId,{isChatWithBot,canRestartBot},Boolean(selectIsChatBotNotStarted(global, chatId)),canStartBot)
+
     const canSubscribe = Boolean(
       chat && (isMainThread || chat.isForum) && (isChatChannel(chat) || isChatSuperGroup(chat)) && chat.isNotJoined,
     );

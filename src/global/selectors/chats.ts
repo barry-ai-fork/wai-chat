@@ -103,7 +103,6 @@ export function selectIsChatBotNotStarted<T extends GlobalState>(global: T, chat
   if (!chat || !bot) {
     return false;
   }
-
   if (chat.lastMessage && isHistoryClearMessage(chat.lastMessage)) {
     return true;
   }

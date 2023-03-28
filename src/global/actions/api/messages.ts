@@ -155,13 +155,13 @@ addActionHandler('loadViewportMessages', (global, actions, payload): ActionRetur
       });
     }
   } else {
+
     const offsetId = direction === LoadMoreDirection.Backwards ? viewportIds[0] : viewportIds[viewportIds.length - 1];
     const isOutlying = Boolean(outlyingIds);
     const historyIds = (isOutlying ? outlyingIds : listedIds)!;
     const {
       newViewportIds, areSomeLocal, areAllLocal,
     } = getViewportSlice(historyIds, offsetId, direction);
-
     if (areSomeLocal) {
       global = safeReplaceViewportIds(global, chatId, threadId, newViewportIds, tabId);
     }
@@ -1082,12 +1082,12 @@ async function loadViewportMessages<T extends GlobalState>(
   if((ids1.length > 1 && ids1[ids1.length - 1] < lastMessageId) || Object.keys(messages1).length === 0){
     isUp = false;
   }
-  console.log({chatId:chat.id,lastMessageId,isUp})
   let result;
   try{
     if(loadViewportMessagesCache[chat.id]){
       return
     }
+    console.log("[MsgListReq]",{chatId:chat.id,lastMessageId,isUp})
     loadViewportMessagesCache[chat.id] = true;
     const pdu = await MsgConn.getMsgClient()?.sendPduWithCallback(new MsgListReq({
       lastMessageId,
@@ -1121,10 +1121,19 @@ async function loadViewportMessages<T extends GlobalState>(
     return;
   }
 
-  const {
+  let {
     messages, users, chats, repliesThreadInfos,
   } = result;
-  console.log(messages)
+
+  if(messages.length > 0 && lastMessageId < messages[messages.length - 1].id){
+    chat.lastMessage = messages[messages.length - 1];
+    if(!chats){
+      chats = []
+    }
+    chats.push(chat)
+  }
+
+  console.log("[MsgListRes]",messages)
   global = getGlobal();
 
   const localMessages = chatId === SERVICE_NOTIFICATIONS_USER_ID
