@@ -1079,9 +1079,10 @@ async function loadViewportMessages<T extends GlobalState>(
   })
 
   if((ids1.length > 1 && ids1[ids1.length - 1] < lastMessageId) || Object.keys(messages1).length === 0){
+    console.log(ids1[ids1.length - 1],lastMessageId)
     isUp = false;
   }
-
+  console.log({chatId:chat.id,lastMessageId,isUp})
   const pdu = await MsgConn.getMsgClient()?.sendPduWithCallback(new MsgListReq({
     lastMessageId,
     chatId:chat.id,
@@ -1113,7 +1114,7 @@ async function loadViewportMessages<T extends GlobalState>(
   const {
     messages, users, chats, repliesThreadInfos,
   } = result;
-
+  console.log(messages)
   global = getGlobal();
 
   const localMessages = chatId === SERVICE_NOTIFICATIONS_USER_ID
