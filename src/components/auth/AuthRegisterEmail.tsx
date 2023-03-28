@@ -15,7 +15,7 @@ import InputText from '../ui/InputText';
 import PasswordForm from "../common/PasswordForm";
 import {sha1} from '../../lib/gramjs/Helpers';
 
-import {parseQueryFromUrl} from "../../worker/helpers/network";
+import {parseQueryFromUrl} from "../../worker/share/utils/utils";
 import {BASE_API, SESSION_TOKEN, TEST_PWD, TEST_USERNAME} from "../../config";
 import MsgConn, {MsgClientState} from "../../lib/ptp/client/MsgConn";
 import {getIsMobile} from "../../hooks/useAppLayout";

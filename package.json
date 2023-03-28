@@ -27,11 +27,7 @@
     "statoscope:validate": "statoscope validate --input  public/build-stats.json",
     "statoscope:validate-diff": "statoscope validate --input input.json --reference reference.json",
     "postinstall": "(cd dev/eslint-multitab && npm i)",
-    "clean:prod": "rm -rf dist/*.map dist/statoscope-report.html dist/build-stats.json public/build-stats.json public/statoscope-report.html dist/img-apple-64 dist/img-apple-160",
-    "cf:deploy": "wrangler publish src/worker/index.ts -c wrangler.prod.toml",
-    "cf:dev": "wrangler dev src/worker/index.ts --local --persist-to=./wrangler-local-state",
-    "cf:start-stackblitz": "WRANGLER_SEND_METRICS=false wrangler dev src/worker/index.ts --local",
-    "log": "wrangler tail --format=pretty"
+    "clean:prod": "rm -rf dist/*.map dist/statoscope-report.html dist/build-stats.json public/build-stats.json public/statoscope-report.html dist/img-apple-64 dist/img-apple-160"
   },
   "engines": {
     "node": "^18",
@@ -59,15 +55,15 @@
     "@babel/preset-typescript": "^7.18.6",
     "@faker-js/faker": "^7.6.0",
     "@glen/jest-raw-loader": "^2.0.0",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@types/jest": "^29.2.3",
     "@playwright/test": "^1.28.1",
     "@statoscope/cli": "^5.24.0",
     "@statoscope/webpack-plugin": "^5.20.1",
-    "@testing-library/jest-dom": "^5.16.5",
     "@types/bn.js": "^5.1.1",
     "@types/croppie": "^2.6.1",
     "@types/elliptic": "^6.4.14",
     "@types/hast": "^2.3.4",
-    "@types/jest": "^29.2.3",
     "@types/pouchdb": "^6.4.0",
     "@types/react": "^18.0.25",
     "@types/react-dom": "^18.0.9",
@@ -129,15 +125,12 @@
     "typescript": "^4.9.3",
     "webpack": "^5.75.0",
     "webpack-dev-server": "^4.11.1",
-    "whatwg-fetch": "^3.6.2",
-    "wrangler": "^2.0.0"
+    "whatwg-fetch": "^3.6.2"
   },
   "dependencies": {
     "@aws-sdk/client-sns": "^3.245.0",
-    "@cloudflare/kv-asset-handler": "~0.1.2",
     "@cryptography/aes": "^0.1.1",
     "@nuintun/qrcode": "^3.3.1",
-    "@tsndr/cloudflare-worker-jwt": "^2.0.1",
     "async-mutex": "^0.4.0",
     "big-integer": "github:painor/BigInteger.js",
     "bip39": "^3.0.4",
@@ -159,9 +152,7 @@
     "path-browserify": "^1.0.1",
     "pouchdb": "^8.0.1",
     "protobufjs": "^7.2.2",
-    "qr-code-styling": "github:zubiden/qr-code-styling#dbbfed0",
-    "query-string": "^7.0.1",
-    "worktop": "0.8.0-next.14"
+    "qr-code-styling": "github:zubiden/qr-code-styling#dbbfed0"
   },
   "optionalDependencies": {
     "fsevents": "2.3.2"

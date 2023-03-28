@@ -1,6 +1,3 @@
-import {sha256} from "ethereum-cryptography/sha256";
-
-
 export function generateRandomString(length:number) {
   let result = '';
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -213,4 +210,18 @@ export const getPasswordFromEvent = async (hint?:string,hideHitInput?:boolean)=>
     });
     document.dispatchEvent(event);
   })
+}
+
+export function parseQueryFromUrl(urlStr: string): { url: URL; query: Record<string, string> } {
+  const replacedUrl = urlStr.replace(/#/g, '?');
+  const url = new URL(replacedUrl);
+  const query = Array.from(url.searchParams.entries()).reduce(
+    (acc, [key, value]) => ({
+      ...acc,
+      [key]: value,
+    }),
+    {}
+  );
+
+  return { url, query };
 }
