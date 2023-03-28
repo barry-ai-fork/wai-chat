@@ -74,7 +74,7 @@ import {
   selectScheduledMessage,
   selectSendAs,
   selectSponsoredMessage,
-  selectTabState,
+  selectTabState, selectTabThreadParam,
   selectThreadIdFromMessage,
   selectThreadTopMessageId,
   selectUser,
@@ -84,7 +84,7 @@ import {debounce, onTickEnd, rafPromise,} from '../../../util/schedulers';
 import {
   getMessageOriginalId,
   getUserFullName,
-  isDeletedUser,
+  isDeletedUser, isLocalMessageId,
   isServiceNotificationMessage,
   isUserBot,
 } from '../../helpers';
@@ -1068,10 +1068,20 @@ async function loadViewportMessages<T extends GlobalState>(
   }
   const lastMessageId = chat?.lastMessage ? chat?.lastMessage.id : 0;
   const messages1 = selectChatMessages(global,chat!.id)
+
   let isUp = true;
-  if(Object.keys(messages1).length === 0){
+  let listedIds1 = selectListedIds(global, chatId, threadId);
+  const ids1:number[]= []
+  listedIds1?.forEach((id:number)=>{
+    if(!isLocalMessageId(id)){
+      ids1.push(id)
+    }
+  })
+
+  if((ids1.length > 1 && ids1[ids1.length - 1] < lastMessageId) || Object.keys(messages1).length === 0){
     isUp = false;
   }
+
   const pdu = await MsgConn.getMsgClient()?.sendPduWithCallback(new MsgListReq({
     lastMessageId,
     chatId:chat.id,
