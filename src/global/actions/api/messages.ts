@@ -1028,6 +1028,7 @@ addActionHandler('loadCustomEmojis', async (global, actions, payload): Promise<v
   setGlobal(global);
 });
 
+const loadViewportMessagesCache:Record<string, boolean> = {};
 async function loadViewportMessages<T extends GlobalState>(
   global: T,
   chat: ApiChat,
@@ -1083,20 +1084,30 @@ async function loadViewportMessages<T extends GlobalState>(
     isUp = false;
   }
   console.log({chatId:chat.id,lastMessageId,isUp})
-  const pdu = await MsgConn.getMsgClient()?.sendPduWithCallback(new MsgListReq({
-    lastMessageId,
-    chatId:chat.id,
-    limit: MESSAGE_LIST_SLICE,
-    isUp
-  }).pack());
-  if(!pdu){
-    return
+  let result;
+  try{
+    if(loadViewportMessagesCache[chat.id]){
+      return
+    }
+    loadViewportMessagesCache[chat.id] = true;
+    const pdu = await MsgConn.getMsgClient()?.sendPduWithCallback(new MsgListReq({
+      lastMessageId,
+      chatId:chat.id,
+      limit: MESSAGE_LIST_SLICE,
+      isUp
+    }).pack());
+    if(!pdu){
+      return
+    }
+    const res = MsgListRes.parseMsg(pdu!)
+    if(res.err !== ERR.NO_ERROR){
+      return;
+    }
+    result = JSON.parse(res!.payload)
+  }catch (e){
+
   }
-  const res = MsgListRes.parseMsg(pdu!)
-  if(res.err !== ERR.NO_ERROR){
-    return;
-  }
-  const result = JSON.parse(res!.payload)
+  delete loadViewportMessagesCache[chat.id]
 
   // console.log(result)
   // const result = await callApi('fetchMessages', {

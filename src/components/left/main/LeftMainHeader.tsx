@@ -11,12 +11,12 @@ import type { TabState, GlobalState } from '../../../global/types';
 
 import {
   ANIMATION_LEVEL_MAX,
-  APP_NAME, APP_VERSION,
+  APP_NAME, APP_VERSION, ASSET_CACHE_NAME,
   BETA_CHANGELOG_URL,
   DEBUG,
-  FEEDBACK_URL,
+  FEEDBACK_URL, GLOBAL_STATE_CACHE_KEY,
   IS_BETA,
-  IS_TEST,
+  IS_TEST, LANG_CACHE_NAME,
   PRODUCTION_HOSTNAME,
 } from '../../../config';
 import { IS_PWA } from '../../../util/environment';
@@ -48,6 +48,8 @@ import ConnectionStatusOverlay from '../ConnectionStatusOverlay';
 import StatusButton from './StatusButton';
 
 import './LeftMainHeader.scss';
+import * as cacheApi from '../../../util/cacheApi';
+import {clear} from "../../../util/cacheApi";
 
 type OwnProps = {
   shouldHideSearch?: boolean;
@@ -247,6 +249,17 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
     openUrl({ url: FEEDBACK_URL });
   }, [openUrl]);
 
+  const handleClearCache = useCallback(async () => {
+    updateGlobal({
+      message:{},
+      chats:{},
+    })
+    await cacheApi.clear(LANG_CACHE_NAME);
+    await cacheApi.clear(ASSET_CACHE_NAME);
+    setTimeout(()=>{
+      location.reload();
+    },1000)
+  }, [openUrl]);
   const handleSignOutClick = useCallback(() => {
     openChat({ id: undefined }, { forceOnHeavyAnimation: true });
     setTimeout(()=>{
@@ -360,6 +373,12 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
         onClick={handleBugReportClick}
       >
         {lang('ReportBug')}
+      </MenuItem>
+      <MenuItem
+        icon="stop"
+        onClick={handleClearCache}
+      >
+        清楚缓存
       </MenuItem>
       {/* {IS_BETA && ( */}
       {/*   <MenuItem */}
