@@ -1080,7 +1080,6 @@ async function loadViewportMessages<T extends GlobalState>(
   })
 
   if((ids1.length > 1 && ids1[ids1.length - 1] < lastMessageId) || Object.keys(messages1).length === 0){
-    console.log(ids1[ids1.length - 1],lastMessageId)
     isUp = false;
   }
   console.log({chatId:chat.id,lastMessageId,isUp})
@@ -1107,7 +1106,7 @@ async function loadViewportMessages<T extends GlobalState>(
   }catch (e){
 
   }
-  delete loadViewportMessagesCache[chat.id]
+  setTimeout(()=>{delete loadViewportMessagesCache[chat.id]},2000)
 
   // console.log(result)
   // const result = await callApi('fetchMessages', {

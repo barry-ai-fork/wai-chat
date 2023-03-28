@@ -1381,6 +1381,9 @@ export interface ActionPayloads {
     chatId: string;
     messageId: number;
   } & WithTabId;
+  toggleMessageSelectAll: {
+    chatId: string;
+  } & WithTabId;
   enterMessageSelectMode: ({
     messageId: number;
   } & WithTabId) | undefined;

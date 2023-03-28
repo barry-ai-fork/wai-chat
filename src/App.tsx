@@ -24,6 +24,7 @@ import LockScreen from './components/main/LockScreen.async';
 import AppInactive from './components/main/AppInactive';
 import Transition from './components/ui/Transition';
 import UiLoader from './components/common/UiLoader';
+import IconView from "./components/left/components/component/IconView";
 // import Test from './components/test/TestNoRedundancy';
 
 type StateProps = {
@@ -175,6 +176,11 @@ const App: FC<StateProps> = ({
 
   // eslint-disable-next-line consistent-return
   function renderContent(isActive: boolean) {
+    // return (
+    //   <div style={"background-color:white"} id="auth-password-form" className="custom-scroll">
+    //     <IconView/>
+    //   </div>
+    // );
     switch (activeKey) {
       case AppScreens.auth:
         return <Auth />;

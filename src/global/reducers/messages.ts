@@ -25,7 +25,7 @@ import {
   selectChatMessage,
   selectCurrentMessageList,
   selectChat,
-  selectTabState,
+  selectTabState, selectThreadParam, selectSelectedMessagesCount,
 } from '../selectors';
 import {
   areSortedArraysEqual, omit, pickTruthy, unique,
@@ -554,6 +554,24 @@ export function updateFocusDirection<T extends GlobalState>(
     focusedMessage: {
       ...selectTabState(global, tabId).focusedMessage,
       direction,
+    },
+  }, tabId);
+}
+
+
+
+export function toggleMessageSelectAll<T extends GlobalState>(
+  global: T,
+  chatId: string,
+  ...[tabId = getCurrentTabId()]: TabArgs<T>
+): T {
+
+  let messageIds = selectThreadParam(global,chatId,MAIN_THREAD_ID,"lastViewportIds")!
+
+  return updateTabState(global, {
+    selectedMessages: {
+      chatId,
+      messageIds,
     },
   }, tabId);
 }

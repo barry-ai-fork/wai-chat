@@ -1,6 +1,6 @@
 .message-content {
   position: relative;
-  max-width: calc(100vw);
+  max-width: var(--max-width);
 
   @media (max-width: 600px) {
     max-width: min(29rem, calc(100vw - 6.25rem));

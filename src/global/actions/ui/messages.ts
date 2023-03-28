@@ -22,7 +22,7 @@ import {
   replaceThreadParam,
   replaceTabThreadParam,
   updateFocusDirection,
-  updateFocusedMessage, updateFocusedMessageReached,
+  updateFocusedMessage, updateFocusedMessageReached, toggleMessageSelectAll,
 } from '../../reducers';
 import {
   selectCurrentChat,
@@ -625,6 +625,13 @@ addActionHandler('downloadSelectedMessages', (global, actions, payload): ActionR
   messages.forEach((message) => actions.downloadMessageMedia({ message, tabId }));
 });
 
+
+addActionHandler('toggleMessageSelectAll', (global, actions, payload): ActionReturnType => {
+  const { chatId, tabId = getCurrentTabId() } = payload || {};
+  return toggleMessageSelectAll(global, chatId, tabId);
+});
+
+
 addActionHandler('enterMessageSelectMode', (global, actions, payload): ActionReturnType => {
   const { messageId, tabId = getCurrentTabId() } = payload || {};
   const openChat = selectCurrentChat(global, tabId);
@@ -634,6 +641,7 @@ addActionHandler('enterMessageSelectMode', (global, actions, payload): ActionRet
 
   return enterMessageSelectMode(global, openChat.id, messageId, tabId);
 });
+
 
 addActionHandler('toggleMessageSelection', (global, actions, payload): ActionReturnType => {
   const {

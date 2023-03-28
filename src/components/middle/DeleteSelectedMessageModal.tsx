@@ -85,7 +85,7 @@ const DeleteSelectedMessageModal: FC<OwnProps & StateProps> = ({
       onClose={onClose}
       onEnter={canDeleteForAll ? undefined : handleDeleteMessageForSelf}
       className="delete"
-      title={lang('Conversation.DeleteManyMessages')}
+      title={"删除消息"}
     >
       <p>{lang('AreYouSureDeleteFewMessages')}</p>
       {willDeleteForCurrentUserOnly && (
@@ -95,13 +95,13 @@ const DeleteSelectedMessageModal: FC<OwnProps & StateProps> = ({
         <p>This will delete them for everyone in this chat.</p>
       )}
       <div className={canDeleteForAll ? 'dialog-buttons-column' : 'dialog-buttons'}>
-        {canDeleteForAll && (
-          <Button color="danger" className="confirm-dialog-button" isText onClick={handleDeleteMessageForAll}>
-            {contactName
-              ? renderText(lang('ChatList.DeleteForEveryone', contactName))
-              : lang('Conversation.DeleteMessagesForEveryone')}
-          </Button>
-        )}
+        {/*{canDeleteForAll && (*/}
+        {/*  <Button color="danger" className="confirm-dialog-button" isText onClick={handleDeleteMessageForAll}>*/}
+        {/*    {contactName*/}
+        {/*      ? renderText(lang('ChatList.DeleteForEveryone', contactName))*/}
+        {/*      : lang('Conversation.DeleteMessagesForEveryone')}*/}
+        {/*  </Button>*/}
+        {/*)}*/}
         <Button color="danger" className="confirm-dialog-button" isText onClick={handleDeleteMessageForSelf}>
           {lang(canDeleteForAll ? 'ChatList.DeleteForCurrentUser' : 'Delete')}
         </Button>

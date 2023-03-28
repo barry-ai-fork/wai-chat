@@ -61,6 +61,7 @@ const MessageSelectToolbar: FC<OwnProps & StateProps> = ({
 }) => {
   const {
     exitMessageSelectMode,
+    toggleMessageSelectAll,
     openForwardMenuForSelectedMessages,
     downloadSelectedMessages,
     copySelectedMessages,
@@ -76,6 +77,7 @@ const MessageSelectToolbar: FC<OwnProps & StateProps> = ({
   const handleExitMessageSelectMode = useCallback(() => {
     exitMessageSelectMode();
   }, [exitMessageSelectMode]);
+
 
   useEffect(() => {
     return isActive && !isDeleteModalOpen && !isReportModalOpen && !isAnyModalOpen
@@ -166,6 +168,7 @@ const MessageSelectToolbar: FC<OwnProps & StateProps> = ({
             {/*{canDeleteMessages && (*/}
             {/*  renderButton('delete', lang('EditAdminGroupDeleteMessages'), openDeleteModal, true)*/}
             {/*)}*/}
+
             {renderButton('delete', lang('EditAdminGroupDeleteMessages'), openDeleteModal, true)}
 
           </div>
