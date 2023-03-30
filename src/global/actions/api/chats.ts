@@ -1854,6 +1854,10 @@ async function loadChats<T extends GlobalState>(
     }
 
     const result = JSON.parse(res.payload);
+    console.log('[LoadChatsRes]',result)
+    if (!result) {
+      return;
+    }
     const { chatIds } = result;
 
     if (chatIds.length > 0 && chatIds[0] === offsetId) {
@@ -1903,7 +1907,6 @@ async function loadChats<T extends GlobalState>(
       global = replaceUserStatuses(global, result.userStatusesById);
       global = replaceChats(global, buildCollectionByKey(visibleChats.concat(result.chats), 'id'));
       global = updateChatListIds(global, listType, chatIds);
-
     } else if (shouldReplace && listType === 'archived'  && MsgConn?.getMsgClient()?.getState() === MsgClientState.logged) {
       global = addUsers(global, buildCollectionByKey(result.users, 'id'));
       global = addUserStatuses(global, result.userStatusesById);

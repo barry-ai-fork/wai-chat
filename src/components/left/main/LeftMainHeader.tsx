@@ -274,6 +274,7 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
   }, [openUrl]);
   const handleSignOutClick = useCallback(() => {
     openChat({ id: undefined }, { forceOnHeavyAnimation: true });
+    window.history.replaceState({}, '', window.location.href.split("#")[0]);
     setTimeout(()=>{
       signOut({ forceInitApi: true });
       updateGlobal({
@@ -283,6 +284,9 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
   }, [openChat,signOut]);
 
   const handleLoginClick = useCallback(() => {
+
+    openChat({ id: undefined }, { forceOnHeavyAnimation: true });
+    window.history.replaceState({}, '', window.location.href.split("#")[0]);
     updateGlobal({
       authState:"authorizationStateWaitSignPassword"
     })

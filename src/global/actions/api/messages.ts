@@ -1268,6 +1268,10 @@ async function sendMessage<T extends GlobalState>(global: T, params: {
   groupedId?: string;
 },
 ...[tabId = getCurrentTabId()]: TabArgs<T>) {
+
+  if(MsgConn.getMsgClient()?.getState() !== MsgClientState.logged){
+    return
+  }
   let localId: number | undefined;
   const progressCallback = params.attachment ? async (progress: number, localMessage: ApiMessage) => {
     const messageLocalId = localMessage.id;

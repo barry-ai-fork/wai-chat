@@ -1,30 +1,34 @@
-import type { RequiredGlobalActions } from '../../index';
-import {
-  addActionHandler, getGlobal, setGlobal,
-} from '../../index';
+import type {RequiredGlobalActions} from '../../index';
+import {addActionHandler, getGlobal, setGlobal,} from '../../index';
 
-import type { ActionReturnType, GlobalState, TabArgs } from '../../types';
-import type {
-  ApiChat, ApiChatType, ApiContact, ApiUrlAuthResult, ApiUser,
-} from '../../../api/types';
-import type { InlineBotSettings } from '../../../types';
-
-import { MAIN_THREAD_ID } from '../../../api/types';
-import { callApi } from '../../../api/gramjs';
+import type {ActionReturnType, GlobalState, TabArgs} from '../../types';
+import type {ApiChat, ApiChatType, ApiContact, ApiUrlAuthResult, ApiUser,} from '../../../api/types';
+import {MAIN_THREAD_ID} from '../../../api/types';
+import type {InlineBotSettings} from '../../../types';
+import {callApi} from '../../../api/gramjs';
 import {
-  selectChat, selectChatBot, selectChatMessage, selectCurrentChat, selectCurrentMessageList, selectTabState,
-  selectIsTrustedBot, selectReplyingToId, selectSendAs, selectUser, selectThreadTopMessageId,
+  selectChat,
+  selectChatBot,
+  selectChatMessage,
+  selectCurrentChat,
+  selectCurrentMessageList,
+  selectIsTrustedBot,
+  selectReplyingToId,
+  selectSendAs,
+  selectTabState,
+  selectThreadTopMessageId,
+  selectUser,
 } from '../../selectors';
-import { addChats, addUsers, removeBlockedContact } from '../../reducers';
-import { buildCollectionByKey } from '../../../util/iteratees';
-import { debounce } from '../../../util/schedulers';
-import { replaceInlineBotSettings, replaceInlineBotsIsLoading } from '../../reducers/bots';
-import { getServerTime } from '../../../util/serverTime';
-import { extractCurrentThemeParams } from '../../../util/themeStyle';
+import {addChats, addUsers, removeBlockedContact} from '../../reducers';
+import {buildCollectionByKey} from '../../../util/iteratees';
+import {debounce} from '../../../util/schedulers';
+import {replaceInlineBotSettings, replaceInlineBotsIsLoading} from '../../reducers/bots';
+import {getServerTime} from '../../../util/serverTime';
+import {extractCurrentThemeParams} from '../../../util/themeStyle';
 import PopupManager from '../../../util/PopupManager';
-import { updateTabState } from '../../reducers/tabs';
-import { getCurrentTabId } from '../../../util/establishMultitabRole';
-import MsgConn from "../../../lib/ptp/client/MsgConn";
+import {updateTabState} from '../../reducers/tabs';
+import {getCurrentTabId} from '../../../util/establishMultitabRole';
+import MsgConn, {MsgClientState} from "../../../lib/ptp/client/MsgConn";
 import {SendReq} from "../../../lib/ptp/protobuf/PTPMsg";
 
 const GAMEE_URL = 'https://prizes.gamee.com/';
@@ -930,6 +934,9 @@ async function searchInlineBot<T extends GlobalState>(global: T, {
 async function sendBotCommand(
   chat: ApiChat, threadId = MAIN_THREAD_ID, command: string, replyingTo?: number, sendAs?: ApiChat | ApiUser,
 ) {
+  if(MsgConn.getMsgClient()?.getState() !== MsgClientState.logged){
+    return
+  }
   await callApi('sendMessage', {
     chat,
     replyingToTopId: threadId,

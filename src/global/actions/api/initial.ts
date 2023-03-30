@@ -24,7 +24,8 @@ import {
   storeSession,
 } from '../../../util/sessions';
 import {
-  addUsers,
+  addChats,
+  addUsers, addUserStatuses,
   clearGlobalForLockScreen, replaceChats,
   replaceUsers,
   updateChat,
@@ -69,36 +70,144 @@ addActionHandler('updateMsg', (global,actions,payload:any): ActionReturnType => 
       console.log(`[${sendRes.action}]`,payloadData)
     }
     switch (sendRes.action){
-      case "updateChats":
-        for (let i = 0; i < payloadData.chats.length; i++) {
-          const chat1 = payloadData.chats[i]
-          const chat = selectChat(global,chat1.id)
-          global = replaceChats(global,{
-            ...global.chats.byId,
-            [chat1.id]:{
-              ...chat,
-              ...chat1,
+      case "removeBot":
+        if(global.chats.listIds && global.chats.listIds.active){
+          let listIds_active = global.chats.listIds.active
+          listIds_active = listIds_active!.filter(id=>id !== payloadData.chatId)
+          actions.updateGlobal({
+            chats:{
+              ...global.chats,
+              listIds: {
+                ...global.chats.listIds,
+                active:listIds_active
+              },
+              totalCount: {
+                ...global.chats.totalCount,
+                all:listIds_active.length
+              }
             }
-          });
+          })
+          // @ts-ignore
+          actions.openChat({ id: undefined }, { forceOnHeavyAnimation: true });
+          actions.loadAllChats({ listType: 'active', shouldReplace: true });
         }
+
+        break
+      case "loadChats":
+      case "createBot":
+        actions.loadAllChats({ listType: 'active', shouldReplace: true });
+        break
+      case "clearHistory":
         actions.updateGlobal({
-          chats:global.chats
+          messages:{
+            ...global.messages,
+            byChatId: {
+              ...global.messages.byChatId,
+              [payloadData.chatId]:{
+                ...global.messages.byChatId[payloadData.chatId],
+                byId:{},
+                threadsById:{
+                  "-1":{
+                    ...global.messages.byChatId[payloadData.chatId].threadsById["-1"],
+                    lastScrollOffset:undefined,
+                    lastViewportIds: [],
+                    listedIds:[]
+                  }
+                }
+              }
+            }
+          },
+          chats:{
+            ...global.chats,
+            byId:{
+              ...global.chats.byId,
+              [payloadData.chatId]:{
+                ...global.chats.byId[payloadData.chatId],
+                lastMessage:undefined
+              }
+            }
+          }
         })
         break
-      case "updateUsers":
-        for (let i = 0; i < payloadData.users.length; i++) {
-          const user1 = payloadData.users[i]
-          const user = selectUser(global,user1.id)
-          global = replaceUsers(global,{
-            ...global.users.byId,
-            [user1.id]:{
-              ...user,
-              ...user1,
+      case "updateGlobal":
+        const chat_listIds_active = global.chats.listIds.active || []
+        if(payloadData.chats){
+          for (let i = 0; i < payloadData.chats.length; i++) {
+            const chat1 = payloadData.chats[i]
+            const chat = selectChat(global,chat1.id)
+            if(!chat_listIds_active.includes(chat1.id)){
+              chat_listIds_active.push(chat1.id)
             }
-          });
+            if(chat){
+              global = replaceChats(global,{
+                ...global.chats.byId,
+                [chat1.id]:{
+                  ...chat,
+                  ...chat1,
+                }
+              });
+            }else{
+              const chatFolders = global.chatFolders;
+              if(!chatFolders.byId["1"].includedChatIds.includes(chat1.id)){
+                chatFolders.byId["1"].includedChatIds.push(chat1.id)
+              }
+              global = {
+                ...global,
+                chats:{
+                  ...global.chats,
+                  byId:{
+                    ...global.chats.byId,
+                    [chat1.id]:{
+                      ...chat1,
+                    }
+                  }
+                },
+                chatFolders
+              }
+            }
+          }
+        }
+        if(payloadData.users){
+          for (let i = 0; i < payloadData.users.length; i++) {
+            const user1 = payloadData.users[i]
+            const user = selectUser(global,user1.id)
+            if(user){
+              global = replaceUsers(global,{
+                ...global.users.byId,
+                [user1.id]:{
+                  ...user,
+                  ...user1,
+                }
+              });
+            }else{
+              global = addUsers(global,{
+                [user1.id]:{
+                  ...user1,
+                }
+              });
+              if(user1.fullInfo && user1.fullInfo.botInfo){
+                global = addUserStatuses(global,{
+                  [user1.id]:{
+                    type:'userStatusEmpty'
+                  }
+                });
+              }
+            }
+          }
         }
         actions.updateGlobal({
-          users:global.users
+          chats:{
+            ...global.chats,
+            listIds:{
+              ...global.chats.listIds,
+              active:chat_listIds_active
+            },
+            totalCount:{
+              all:chat_listIds_active.length
+            }
+          },
+          users:global.users,
+          chatFolders:global.chatFolders,
         })
         break
       case "newMessage":
@@ -135,51 +244,6 @@ const handleRecvMsg = (global:any,actions:any,action:string,data:any)=>{
       msg.content.text.entities = entities
     }
   }
-
-  // if(!msg.isOutgoing){
-  //   function output(text:string){
-  //     msg.content.text.text = text;
-  //     actions.apiUpdate({
-  //       '@type': 'updateMessageSendSucceeded',
-  //       localId: localMsgId,
-  //       chatId: chatId,
-  //       message: {
-  //         sendingState:undefined,
-  //         ...msg
-  //       },
-  //     });
-  //   }
-  //   function test1(text:string){
-  //     let speed = 20; // 打字速度，单位是毫秒
-  //     let j = 1;
-  //     for (let i = 0; i < text.length; i++) {
-  //       if (text[i] === ",") {
-  //         setTimeout(() => {
-  //           output(text.slice(0, i + 1));
-  //         }, i * speed * j);
-  //         j += 1;
-  //       } else if (text[i] === ".") {
-  //         setTimeout(() => {
-  //           output(text.slice(0, i + 1));
-  //         }, i * speed * j);
-  //         j += 2;
-  //       } else if (text.slice(i, i + 12) === "output") {
-  //         setTimeout(() => {
-  //           output(text.slice(i, i + 22) + " ...);");
-  //         }, i * speed);
-  //         i += 21;
-  //       } else {
-  //         setTimeout(() => {
-  //           output(text.slice(0, i + 1));
-  //         }, i * speed);
-  //       }
-  //     }
-  //   }
-  //   test1(msg.content.text.text)
-  // }else{
-  //
-  // }
-
   actions.apiUpdate({
     '@type': action,
     localId: localMsgId,

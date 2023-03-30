@@ -139,10 +139,7 @@ import BotMenuButton from './BotMenuButton';
 import SymbolMenuButton from './SymbolMenuButton';
 
 import './Composer.scss';
-import PasswordModal from "../../ui/PasswordModal";
-// import WebkitSpeechRecognition from "../../../worker/share/WebkitSpeechRecognition";
 
-// const recognition = new WebkitSpeechRecognition();
 
 type OwnProps = {
   chatId: string;
