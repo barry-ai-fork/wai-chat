@@ -3,7 +3,7 @@ import {addActionHandler, getGlobal, setGlobal,} from '../../index';
 import {callApi, callApiLocal, initApi} from '../../../api/gramjs';
 
 import {
-  CUSTOM_BG_CACHE_NAME,
+  CUSTOM_BG_CACHE_NAME, DEBUG,
   GLOBAL_STATE_CACHE_KEY,
   IS_TEST,
   LANG_CACHE_NAME,
@@ -23,7 +23,15 @@ import {
   loadStoredSession,
   storeSession,
 } from '../../../util/sessions';
-import {addUsers, clearGlobalForLockScreen, updatePasscodeSettings} from '../../reducers';
+import {
+  addUsers,
+  clearGlobalForLockScreen, replaceChats,
+  replaceUsers,
+  updateChat,
+  updateChats,
+  updatePasscodeSettings,
+  updateUsers
+} from '../../reducers';
 import {clearEncryptedSession, encryptSession, forgetPasscode} from '../../../util/passcode';
 import {serializeGlobal} from '../../cache';
 import {parseInitialLocationHash} from '../../../util/routing';
@@ -41,6 +49,7 @@ import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
 import UploadProfilePhotoReq from "../../../lib/ptp/protobuf/PTPAuth/UploadProfilePhotoReq";
 import Mnemonic from "../../../lib/ptp/wallet/Mnemonic";
 import {hashSha256} from "../../../worker/share/utils/helpers";
+import {selectChat, selectUser} from "../../selectors";
 
 addActionHandler('updateGlobal', (global,action,payload): ActionReturnType => {
   return {
@@ -56,7 +65,42 @@ addActionHandler('updateMsg', (global,actions,payload:any): ActionReturnType => 
       return ;
     }
     const payloadData = JSON.parse(sendRes.payload)
+    if(DEBUG){
+      console.log(`[${sendRes.action}]`,payloadData)
+    }
     switch (sendRes.action){
+      case "updateChats":
+        for (let i = 0; i < payloadData.chats.length; i++) {
+          const chat1 = payloadData.chats[i]
+          const chat = selectChat(global,chat1.id)
+          global = replaceChats(global,{
+            ...global.chats.byId,
+            [chat1.id]:{
+              ...chat,
+              ...chat1,
+            }
+          });
+        }
+        actions.updateGlobal({
+          chats:global.chats
+        })
+        break
+      case "updateUsers":
+        for (let i = 0; i < payloadData.users.length; i++) {
+          const user1 = payloadData.users[i]
+          const user = selectUser(global,user1.id)
+          global = replaceUsers(global,{
+            ...global.users.byId,
+            [user1.id]:{
+              ...user,
+              ...user1,
+            }
+          });
+        }
+        actions.updateGlobal({
+          users:global.users
+        })
+        break
       case "newMessage":
       case "updateMessage":
       case "updateMessageSendSucceeded":

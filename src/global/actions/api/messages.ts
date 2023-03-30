@@ -1133,7 +1133,7 @@ async function loadViewportMessages<T extends GlobalState>(
     chats.push(chat)
   }
 
-  console.log("[MsgListRes]",messages)
+  console.log("[MsgListRes]",messages,users)
   global = getGlobal();
 
   const localMessages = chatId === SERVICE_NOTIFICATIONS_USER_ID

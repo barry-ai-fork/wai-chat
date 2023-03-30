@@ -23,6 +23,7 @@ import {
 } from '../../selectors';
 import { updateUnreadReactions } from '../../reducers/reactions';
 import type { ActionReturnType } from '../../types';
+import {isLocalMessageId} from "../../helpers";
 
 const TYPING_STATUS_CLEAR_DELAY = 6000; // 6 seconds
 
@@ -125,12 +126,12 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
       }
 
       const hasMention = Boolean(update.message.id && update.message.hasUnreadMention);
-
-      global = updateChat(global, update.chatId, {
-        unreadCount: chat.unreadCount ? chat.unreadCount + 1 : 1,
-        ...(hasMention && { unreadMentionsCount: (chat.unreadMentionsCount || 0) + 1 }),
-      });
-
+      if(!isLocalMessageId(message.id!)){
+        global = updateChat(global, update.chatId, {
+          unreadCount: chat.unreadCount ? chat.unreadCount + 1 : 1,
+          ...(hasMention && { unreadMentionsCount: (chat.unreadMentionsCount || 0) + 1 }),
+        });
+      }
       if (hasMention) {
         global = updateChat(global, update.chatId, {
           unreadMentions: [...(chat.unreadMentions || []), update.message.id!],
