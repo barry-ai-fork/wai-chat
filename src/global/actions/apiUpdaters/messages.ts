@@ -61,6 +61,7 @@ import { onTickEnd } from '../../../util/schedulers';
 import { updateUnreadReactions } from '../../reducers/reactions';
 import { updateTabState } from '../../reducers/tabs';
 import { getCurrentTabId } from '../../../util/establishMultitabRole';
+import parseMessageInput from "../../../util/parseMessageInput";
 
 const ANIMATION_DELAY = 350;
 
@@ -255,10 +256,16 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
       if (message.isScheduled) {
         global = deleteChatScheduledMessages(global, chatId, [localId]);
       }
-
+      let messageNew = message
+      if (!messageNew.isOutgoing && messageNew.content
+        && messageNew.content.text && messageNew.content.text.text && !messageNew.content.text!.entities) {
+        const {text, entities} = parseMessageInput(messageNew.content.text.text);
+        messageNew.content.text.text = text;
+        messageNew.content.text.entities = entities
+      }
       global = updateChatMessage(global, chatId, message.id, {
         ...currentMessage,
-        ...message,
+        ...messageNew,
         previousLocalId: localId,
       });
 

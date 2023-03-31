@@ -1,5 +1,5 @@
 import BigInt from 'big-integer';
-import { Api as GramJs } from '../../../lib/gramjs';
+import {Api as GramJs} from '../../../lib/gramjs';
 
 import type {
   ApiAppConfig,
@@ -7,13 +7,14 @@ import type {
   ApiError,
   ApiLangString,
   ApiLanguage,
-  ApiNotifyException, ApiPhoto, ApiUser,
+  ApiNotifyException,
+  ApiPhoto,
+  ApiUser,
 } from '../../types';
-import type { ApiPrivacyKey, InputPrivacyRules, LangCode } from '../../../types';
-import type { LANG_PACKS } from '../../../config';
-
+import type {ApiPrivacyKey, InputPrivacyRules, LangCode} from '../../../types';
+import type {LANG_PACKS} from '../../../config';
 import {BLOCKED_LIST_LIMIT, DEFAULT_LANG_PACK, MAX_INT_32, UPLOAD_WORKERS} from '../../../config';
-import { ACCEPTABLE_USERNAME_ERRORS } from './management';
+import {ACCEPTABLE_USERNAME_ERRORS} from './management';
 import {
   buildApiConfig,
   buildApiCountryList,
@@ -24,25 +25,35 @@ import {
   buildPrivacyRules,
 } from '../apiBuilders/misc';
 
-import { buildApiPhoto } from '../apiBuilders/common';
-import { buildApiUser } from '../apiBuilders/users';
-import { buildApiChatFromPreview } from '../apiBuilders/chats';
-import { getApiChatIdFromMtpPeer } from '../apiBuilders/peers';
-import { buildAppConfig } from '../apiBuilders/appConfig';
-import { omitVirtualClassFields } from '../apiBuilders/helpers';
-import {
-  buildInputEntity, buildInputPeer, buildInputPrivacyKey, buildInputPhoto,
-} from '../gramjsBuilders';
-import { getClient, invokeRequest, uploadFile } from './client';
-import { buildCollectionByKey } from '../../../util/iteratees';
-import { getServerTime } from '../../../util/serverTime';
-import { addEntitiesWithPhotosToLocalDb, addPhotoToLocalDb } from '../helpers';
+import {buildApiPhoto} from '../apiBuilders/common';
+import {buildApiUser} from '../apiBuilders/users';
+import {buildApiChatFromPreview} from '../apiBuilders/chats';
+import {getApiChatIdFromMtpPeer} from '../apiBuilders/peers';
+import {buildAppConfig} from '../apiBuilders/appConfig';
+import {omitVirtualClassFields} from '../apiBuilders/helpers';
+import {buildInputEntity, buildInputPeer, buildInputPhoto, buildInputPrivacyKey,} from '../gramjsBuilders';
+import {getClient, invokeRequest, uploadFile} from './client';
+import {buildCollectionByKey} from '../../../util/iteratees';
+import {getServerTime} from '../../../util/serverTime';
+import {addEntitiesWithPhotosToLocalDb, addPhotoToLocalDb} from '../helpers';
 import localDb from '../localDb';
 import {uploadFileV1} from "../../../lib/gramjs/client/uploadFile";
+import {
+  UpdateProfileReq,
+  UpdateProfileRes,
+  UpdateUsernameReq,
+  UpdateUsernameRes,
+  UploadProfilePhotoReq,
+  UploadProfilePhotoRes
+} from "../../../lib/ptp/protobuf/PTPAuth";
+import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
+import {blobToDataUri, fetchBlob, imgToBlob} from "../../../util/files";
+import {resizeImage} from "../../../util/imageResize";
+import Account from "../../../worker/share/Account";
 
 const BETA_LANG_CODES = ['ar', 'fa', 'id', 'ko', 'uz', 'en'];
 
-export function updateProfile({
+export async function updateProfile({
   firstName,
   lastName,
   about,
@@ -51,11 +62,23 @@ export function updateProfile({
   lastName?: string;
   about?: string;
 }) {
-  return invokeRequest(new GramJs.account.UpdateProfile({
-    firstName: firstName || '',
-    lastName: lastName || '',
-    about: about || '',
-  }), true);
+
+  // return invokeRequest(new GramJs.account.UpdateProfile({
+  //   firstName: firstName || '',
+  //   lastName: lastName || '',
+  //   about: about || '',
+  // }), true);
+
+  let pdu = await Account.getCurrentAccount()?.sendPduWithCallback(new UpdateProfileReq({
+      firstName: firstName || '',
+      lastName: lastName || '',
+      about: about || '',
+  }).pack())
+  if(!pdu){
+    return false
+  }
+  const {err} = UpdateProfileRes.parseMsg(pdu)
+  return err === ERR.NO_ERROR
 }
 
 export async function checkUsername(username: string) {
@@ -79,8 +102,16 @@ export async function checkUsername(username: string) {
   }
 }
 
-export function updateUsername(username: string) {
-  return invokeRequest(new GramJs.account.UpdateUsername({ username }), true);
+export async function updateUsername(username: string) {
+  const pdu = await  Account.getCurrentAccount()?.sendPduWithCallback(new UpdateUsernameReq({
+    username
+  }).pack())
+  if(!pdu){
+    return false
+  }
+  const {err} = UpdateUsernameRes.parseMsg(pdu)
+  return err === ERR.NO_ERROR
+  // return invokeRequest(new GramJs.account.UpdateUsername({ username }), true);
 }
 
 export async function updateProfilePhoto(photo?: ApiPhoto, isFallback?: boolean) {
@@ -102,12 +133,22 @@ export async function updateProfilePhoto(photo?: ApiPhoto, isFallback?: boolean)
   return undefined;
 }
 
-export async function uploadProfilePhoto(file: File, isFallback?: boolean, isVideo = false, videoTs = 0) {
+export async function uploadProfilePhoto(file: File, isFallback?: boolean, isVideo = false, videoTs = 0,thumbnail?:string) {
   const inputFile = await uploadFileV1({file,workers: UPLOAD_WORKERS});
-  return  {
+  let pdu = await Account.getCurrentAccount()?.sendPduWithCallback(new UploadProfilePhotoReq({
     id:inputFile.id.toString(),
-    is_video:false
+    is_video:isVideo,
+    thumbnail:thumbnail!
+  }).pack())
+  if(!pdu){
+    return false
   }
+  const {err,payload} = UploadProfilePhotoRes.parseMsg(pdu);
+
+  if(err != ERR.NO_ERROR){
+    return false
+  }
+  return JSON.parse(payload!);
 
   // const params = {
   //   ...(isVideo ? { video: inputFile, videoStartTs: videoTs } : { file: inputFile }),

@@ -13,6 +13,8 @@ import {AuthLoginReq_Type} from "../../lib/ptp/protobuf/PTPAuth/types";
 import {getActionCommandsName} from "../../lib/ptp/protobuf/ActionCommands";
 import {decrypt, encrypt} from "ethereum-cryptography/aes";
 import {hashSha256} from "./utils/helpers";
+import localDb from "../../api/gramjs/localDb";
+import LocalDatabase from "./db/LocalDatabase";
 
 const KEY_PREFIX = "KEY_";
 const SESSION_PREFIX = "SI_";
@@ -29,7 +31,7 @@ export type ISession = {
 let currentAccountId: number;
 let accountIds: number[] = [];
 let accounts: Record<number, Account> = {};
-let kvStore:LocalStorage | CloudFlareKv | undefined = undefined
+let kvStore:LocalStorage | CloudFlareKv | LocalDatabase | undefined = undefined
 
 export default class Account {
   private accountId: number;
@@ -51,7 +53,7 @@ export default class Account {
   static getKv(){
     return kvStore!;
   }
-  static setKvStore(kv:LocalStorage | CloudFlareKv){
+  static setKvStore(kv:LocalStorage | CloudFlareKv | LocalDatabase){
     kvStore = kv;
   }
 
@@ -66,7 +68,7 @@ export default class Account {
   async saveSession(){
     await Account.getKv().put(`${SESSION_PREFIX}${this.accountId}`,JSON.stringify({
       ...this.session,
-      sign:this.session!.sign.toString('hex')
+      sign:Buffer.from(this.session!.sign).toString('hex')
     }))
   }
 
@@ -303,6 +305,10 @@ export default class Account {
   async sendPduWithCallback(pdu: Pdu){
     // @ts-ignore
     return this.msgConn?.sendPduWithCallback(pdu);
+  }
+
+  static setCurrentAccount(account:Account) {
+    currentAccountId = account.getAccountId();
   }
 
   static getCurrentAccount() {

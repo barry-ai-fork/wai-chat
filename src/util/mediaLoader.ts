@@ -171,7 +171,6 @@ async function fetchFromCacheOrRemote(
 
       const onProgress = makeOnProgress(url, mediaSource, sourceBuffer);
       cancellableCallbacks.set(url, onProgress);
-
       void callApi('downloadMedia', { url, mediaFormat }, onProgress);
     });
 
@@ -181,7 +180,6 @@ async function fetchFromCacheOrRemote(
 
   const onProgress = makeOnProgress(url);
   cancellableCallbacks.set(url, onProgress);
-
   const remote = await callApi('downloadMedia', { url, mediaFormat, isHtmlAllowed }, onProgress);
   if (!remote) {
     throw new Error(`Failed to fetch media ${url}`);

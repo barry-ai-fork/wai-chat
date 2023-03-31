@@ -1,12 +1,20 @@
 import {Api as GramJs, connection,} from '../../../lib/gramjs';
-import TelegramClient from '../../../lib/gramjs/client/TelegramClient';
 
 import {Logger as GramJsLogger} from '../../../lib/gramjs/extensions/index';
 import type {TwoFaParams} from '../../../lib/gramjs/client/2fa';
 
-import type {ApiInitialArgs, ApiMediaFormat, ApiOnProgress, ApiSessionData, OnApiUpdate,} from '../../types';
+import type {
+  ApiInitialArgs,
+  ApiMediaFormat,
+  ApiOnProgress,
+  ApiSessionData,
+  ApiUpdateConnectionStateType,
+  ApiUpdateMsgClientStateType,
+  ApiUser,
+  OnApiUpdate,
+} from '../../types';
 
-import {DEBUG, DEBUG_GRAMJS, UPLOAD_WORKERS,} from '../../../config';
+import {APP_VERSION, DEBUG, DEBUG_GRAMJS, UPLOAD_WORKERS,} from '../../../config';
 import {onCurrentUserUpdate,} from './auth';
 import {updater} from '../updater';
 import {setMessageBuilderCurrentUserId} from '../apiBuilders/messages';
@@ -15,7 +23,16 @@ import {buildApiUserFromFull} from '../apiBuilders/users';
 import localDb, {clearLocalDb} from '../localDb';
 import {buildApiPeerId} from '../apiBuilders/peers';
 import {addMessageToLocalDb, log} from '../helpers';
-import MsgConn from "../../../lib/ptp/client/MsgConn";
+import {MsgConnNotify, MsgConnNotifyAction} from "../../../lib/ptp/client/MsgClient";
+import MsgClient, {MsgClientState} from "../../../lib/ptp/client/MsgClient";
+import {Pdu} from "../../../lib/ptp/protobuf/BaseMsg";
+import Account, {ISession} from "../../../worker/share/Account";
+import LocalDatabase from "../../../worker/share/db/LocalDatabase";
+import {ActionCommands} from "../../../lib/ptp/protobuf/ActionCommands";
+import {SendRes} from "../../../lib/ptp/protobuf/PTPMsg";
+import message from "../../../components/middle/message/Message";
+import {selectChat, selectUser} from "../../../global/selectors";
+import {addUsers, addUserStatuses, replaceChats, replaceUsers} from "../../../global/reducers";
 
 const DEFAULT_USER_AGENT = 'Unknown UserAgent';
 const DEFAULT_PLATFORM = 'Unknown platform';
@@ -23,12 +40,104 @@ const APP_CODE_NAME = 'Z';
 
 GramJsLogger.setLevel(DEBUG_GRAMJS ? 'debug' : 'warn');
 
-const gramJsUpdateEventBuilder = { build: (update: object) => update };
-
 let onUpdate: OnApiUpdate;
-let client: TelegramClient;
+let client: MsgClient;
+let account: Account;
 let isConnected = false;
 let currentUserId: string | undefined;
+
+const handleSendRes = async (pdu:Pdu)=> {
+  const {err, payload, action} = SendRes.parseMsg(pdu)
+  const payloadData = JSON.parse(payload)
+  switch (action) {
+    case "removeBot":
+      onUpdate({
+        '@type': 'updateGlobalUpdate',
+        data:{
+          action,
+          payload:{
+            chatId:payloadData.chatId
+          }
+        }
+      });
+      break
+    case "createBot":
+    case "loadChats":
+      onUpdate({
+        '@type': 'updateGlobalUpdate',
+        data:{
+          action,
+        }
+      });
+      break
+    case "clearHistory":
+      onUpdate({
+        '@type': 'updateGlobalUpdate',
+        data:{
+          action,
+          payload:{
+            chatId:payloadData.chatId
+          }
+        }
+      });
+      break
+    case "updateGlobal":
+      onUpdate({
+        '@type': 'updateGlobalUpdate',
+        data:{
+          chats:payloadData.chats,
+          users:payloadData.users
+        }
+      });
+      break
+    case "updateMessage":
+      onUpdate({
+        '@type': 'updateMessage',
+        chatId: String(payloadData.msg.chatId),
+        id: Number(payloadData.msg.id),
+        message: {
+          ...payloadData.msg
+        },
+      });
+      break
+    case "newMessage":
+      onUpdate({
+        '@type': 'newMessage',
+        id: Number(payloadData.msg.id),
+        chatId: String(payloadData.msg.chatId),
+        message: {
+          ...payloadData.msg
+        },
+      });
+      break
+    case "updateMessageSendSucceeded":
+      onUpdate({
+        '@type': 'updateMessageSendSucceeded',
+        localId: Number(payloadData.localMsgId),
+        chatId: String(payloadData.msg.chatId),
+        message: {
+          sendingState: undefined,
+          ...payloadData.msg
+        },
+      });
+      break
+    default:
+      //@ts-ignore
+      onUpdate({'@type': action, ...payloadData});
+      break
+  }
+}
+
+const handleRcvMsg = async (pdu:Pdu)=>{
+  const cmd = pdu.getCommandId();
+  switch (cmd) {
+    case ActionCommands.CID_SendRes:
+      await handleSendRes(pdu)
+      break
+    default:
+      break
+  }
+}
 
 export async function init(_onUpdate: OnApiUpdate, initialArgs: ApiInitialArgs) {
   if (DEBUG) {
@@ -38,9 +147,123 @@ export async function init(_onUpdate: OnApiUpdate, initialArgs: ApiInitialArgs) 
   onUpdate = _onUpdate;
   const {
     userAgent, platform, sessionData, isTest, isMovSupported, isWebmSupported, maxBufferSize, webAuthToken, dcId,
-    mockScenario,
+    mockScenario,payload,
   } = initialArgs;
+  if(DEBUG){
+    console.log("[initialArgs]",{
+      deviceModel: navigator.userAgent || userAgent || DEFAULT_USER_AGENT,
+      systemVersion: platform || DEFAULT_PLATFORM,
+      appVersion: `${APP_VERSION} ${APP_CODE_NAME}`,
+      useWSS: true,
+    })
+  }
+  const {accountId,session,entropy} = payload!;
 
+  client = new MsgClient(accountId);
+
+  const kv = new LocalDatabase();
+  kv.init(localDb);
+  Account.setKvStore(kv)
+  account = Account.getInstance(accountId);
+  Account.setCurrentAccount(account);
+  account.setMsgConn(client)
+  account.setSession(session)
+  await account.setEntropy(entropy)
+
+  client.setMsgHandler(async (accountId:number,notifys:MsgConnNotify[])=>{
+    if(notifys && notifys.length > 0){
+      for (let i = 0; i < notifys.length; i++) {
+        const notify = notifys[i];
+        switch (notify.action){
+          case MsgConnNotifyAction.onConnectionStateChanged:
+            const {msgClientState} = notify.payload;
+            let connectionState:ApiUpdateConnectionStateType;
+            let msgClientState_: ApiUpdateMsgClientStateType
+            if(msgClientState === MsgClientState.connected || msgClientState === MsgClientState.waitingLogin || msgClientState === MsgClientState.logged){
+              connectionState = "connectionStateReady"
+              if(msgClientState === MsgClientState.logged){
+                msgClientState_ = "connectionStateLogged"
+                const account = Account.getInstance(accountId)
+                if(DEBUG){
+                  console.log("[connectionStateLogged]",account.getUid(),account.getUserInfo())
+                }
+                // @ts-ignore
+                const currentUser:ApiUser = account.getUserInfo()!;
+                onUpdate({
+                  '@type': 'updateCurrentUser',
+                  currentUser,
+                  accountId:accountId,
+                  sessionData:account.getSession()
+                });
+              }else if(msgClientState === MsgClientState.waitingLogin){
+                msgClientState_ = "connectionStateWaitingLogin"
+              }else{
+                msgClientState_ = "connectionStateConnected"
+              }
+            }else if(msgClientState === MsgClientState.connecting || msgClientState === MsgClientState.closed){
+              connectionState = "connectionStateConnecting"
+              msgClientState_ = "connectionStateConnecting"
+            }else{
+              connectionState = "connectionStateBroken";
+              msgClientState_ = "connectionStateBroken"
+            }
+
+            onUpdate({
+              '@type': 'updateMsgClientState',
+              msgClientState:msgClientState_,
+            });
+            onUpdate({
+              '@type': 'updateConnectionState',
+              connectionState,
+            });
+
+            break
+          case MsgConnNotifyAction.onData:
+            const payload = notify.payload;
+            handleRcvMsg(payload).catch(console.error)
+            break;
+        }
+      }
+    }
+  })
+
+  try {
+    if (DEBUG) {
+      log('CONNECTING');
+      // eslint-disable-next-line no-restricted-globals
+      (self as any).invoke = invokeRequest;
+    }
+    try {
+      client.connect()
+      await client.waitForMsgServerState(MsgClientState.connected)
+    } catch (err: any) {
+      // eslint-disable-next-line no-console
+      console.error(err);
+      if (err.message !== 'Disconnect' && err.message !== 'Cannot send requests while disconnected') {
+        onUpdate({
+          '@type': 'updateConnectionState',
+          connectionState: 'connectionStateBroken',
+        });
+        return;
+      }
+    }
+
+    if (DEBUG) {
+      // eslint-disable-next-line no-console
+      console.log('>>> FINISH INIT API');
+      log('CONNECTED');
+    }
+
+
+    onUpdate({ '@type': 'updateApiReady' });
+
+    // void fetchCurrentUser();
+  } catch (err) {
+    if (DEBUG) {
+      log('CONNECTING ERROR', err);
+    }
+    throw err;
+  }
 
   //
   // const session = new sessions.CallbackSession(sessionData, onSessionUpdate);
@@ -53,7 +276,7 @@ export async function init(_onUpdate: OnApiUpdate, initialArgs: ApiInitialArgs) 
   // (self as any).isWebmSupported = isWebmSupported;
   // // eslint-disable-next-line no-restricted-globals
   // (self as any).maxBufferSize = maxBufferSize;
-  // debugger
+
   // client = new TelegramClient(
   //   session,
   //   process.env.TELEGRAM_T_API_ID,
@@ -131,14 +354,14 @@ export async function init(_onUpdate: OnApiUpdate, initialArgs: ApiInitialArgs) 
 }
 
 export function setIsPremium({ isPremium }: { isPremium: boolean }) {
-  client.setIsPremium(isPremium);
+  // client.setIsPremium(isPremium);
 }
 
 export async function destroy(noLogOut = false, noClearLocalDb = false) {
-  if (!noLogOut) {
-    await invokeRequest(new GramJs.auth.LogOut());
-  }
-
+  // if (!noLogOut) {
+  //   await invokeRequest(new GramJs.auth.LogOut());
+  // }
+  await Account.getCurrentAccount()?.delSession()
   if (!noClearLocalDb) clearLocalDb();
 
   await client.destroy();
@@ -150,6 +373,7 @@ export async function disconnect() {
 
 export function getClient() {
   return client;
+
 }
 
 function onSessionUpdate(sessionData: ApiSessionData) {
@@ -425,3 +649,18 @@ export async function repairFileReference({
 
   return false;
 }
+
+export async function sendWithCallback(buff:Uint8Array){
+  const newPdu = new Pdu(buff)
+  newPdu.writeData(newPdu.body(),newPdu.getCommandId(),newPdu.getSeqNum(),newPdu.getReversed())
+  const res:Pdu = await Account.getCurrentAccount()?.sendPduWithCallback(newPdu)
+  if(!res){
+    return;
+  }
+  return res.getPbData()
+}
+
+export async function msgClientLogin(payload:ISession){
+  return  await client.login(payload);
+}
+

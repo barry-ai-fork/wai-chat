@@ -13,6 +13,7 @@ export interface ApiInitialArgs {
   webAuthToken?: string;
   dcId?: number;
   mockScenario?: string;
+  payload?: Record<string, any>;
 }
 
 export interface ApiOnProgress {

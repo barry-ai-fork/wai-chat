@@ -57,12 +57,19 @@ export default async function downloadMedia(
   if(url.indexOf("progressive") > 0 || t1[0].indexOf("-") > 1){
     id = t1[t1.length - 1];
   }else{
+    // "profile623415?7116860199581299000"
     if(url.indexOf("profile") === 0){
-      id = url.replace("profile","")
+      if(url.indexOf("?") > -1){
+        id = url.split("?")[1]
+      }else {
+        id = url.replace("profile","")
+      }
     }else if(url.indexOf("avatar") === 0){
       id = url.split("?")[1]
+    }else if(url.indexOf("photo") === 0){
+      id = url.split("?")[0].replace("photo","")
     }else{
-      console.log("[error id] ",url)
+      console.error("[error id] ",url)
       return undefined
     }
   }
@@ -109,17 +116,17 @@ export default async function downloadMedia(
       console.error('[DOWNLOAD FAILED]',e,{url,id})
       return undefined
     }
-
   }
   const parsed = await parseMedia(data, mediaFormat, mimeType);
   if (!parsed) {
     return undefined;
   }
+  //
+  // const canCache = mediaFormat !== ApiMediaFormat.Progressive && (
+  //   mediaFormat !== ApiMediaFormat.BlobUrl || (parsed as Blob).size <= MEDIA_CACHE_MAX_BYTES
+  // );
 
-  const canCache = mediaFormat !== ApiMediaFormat.Progressive && (
-    mediaFormat !== ApiMediaFormat.BlobUrl || (parsed as Blob).size <= MEDIA_CACHE_MAX_BYTES
-  );
-
+  const canCache = mediaFormat !== ApiMediaFormat.Progressive
   if (!MEDIA_CACHE_DISABLED && cacheApi && canCache) {
     const cacheName = url.startsWith('avatar') ? MEDIA_CACHE_NAME_AVATARS : MEDIA_CACHE_NAME;
     void cacheApi.save(cacheName, url, parsed);

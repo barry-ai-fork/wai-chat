@@ -125,6 +125,8 @@ const AuthSignPassword: FC<StateProps> = ({
     getActions().updateGlobal({
       authState:"authorizationStateReady"
     })
+    getActions().loadAllChats({listType:'active',shouldReplace:true})
+
   }, [setAuthPassword]);
 
   return (

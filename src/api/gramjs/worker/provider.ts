@@ -33,6 +33,7 @@ const savedLocalDb: LocalDb = {
   stickerSets: {},
   photos: {},
   webDocuments: {},
+  cache:{}
 };
 
 // TODO Re-use `util/WorkerConnector.ts`

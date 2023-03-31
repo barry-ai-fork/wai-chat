@@ -30,7 +30,6 @@ import {
 } from '../../selectors';
 import {init as initFolderManager} from '../../../util/folderManager';
 import {updateTabState} from '../../reducers/tabs';
-import MsgConn, {MsgClientState} from "../../../lib/ptp/client/MsgConn";
 
 const RELEASE_STATUS_TIMEOUT = 15000; // 15 sec;
 
@@ -56,8 +55,7 @@ addActionHandler('sync', (global, actions): ActionReturnType => {
     setGlobal(global);
     releaseStatusTimeout = undefined;
   }, RELEASE_STATUS_TIMEOUT);
-
-  const { loadAllChats, preloadTopChatMessages } = actions;
+  const { loadAllChats, preloadTopChatMessages, } = actions;
 
   loadAllChats({
     listType: 'active',
@@ -235,28 +233,32 @@ function loadTopMessages(chat: ApiChat, threadId: number, lastReadInboxId?: numb
 }
 
 let previousGlobal: GlobalState | undefined;
-let previousMsgClientState: MsgClientState | undefined;
 // RAF can be unreliable when device goes into sleep mode, so sync logic is handled outside any component
 addCallback((global: GlobalState) => {
-  const { connectionState, authState } = global;
-  const msgConn = MsgConn.getMsgClient();
+  const { connectionState, authState,msgClientState } = global;
+
   const { isMasterTab } = selectTabState(global);
-  if (!isMasterTab || (previousGlobal?.connectionState === connectionState
-    && previousGlobal?.authState === authState)) {
-    if(msgConn && previousMsgClientState !== MsgClientState.logged && msgConn?.getState() === MsgClientState.logged ){
-        getActions().sync();
-    }
-    previousMsgClientState = msgConn?.getState();
+  if (!isMasterTab || (
+    previousGlobal?.connectionState === connectionState
+    && previousGlobal?.authState === authState
+    && previousGlobal?.msgClientState === msgClientState
+  )) {
     previousGlobal = global;
     return;
   }
 
-  if (connectionState === 'connectionStateReady' && authState === 'authorizationStateReady') {
-    // eslint-disable-next-line eslint-multitab-tt/no-getactions-in-actions
-    if(msgConn?.getState() === MsgClientState.logged || msgConn?.getState() === MsgClientState.connected){
-      getActions().sync();
+  if (
+    connectionState === 'connectionStateReady' && authState === 'authorizationStateReady'
+    && (
+      msgClientState === 'connectionStateConnected' ||
+      msgClientState === 'connectionStateLogged'
+    )
+  ) {
+    if(DEBUG){
+      console.log({connectionState,msgClientState,authState})
+      console.log("================> sync")
     }
+    getActions().sync();
   }
-  previousMsgClientState = msgConn?.getState();
   previousGlobal = global;
 });

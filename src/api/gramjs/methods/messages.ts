@@ -1,4 +1,4 @@
-import {Api, Api as GramJs} from '../../../lib/gramjs';
+import {Api as GramJs} from '../../../lib/gramjs';
 import type {
   ApiAttachment,
   ApiChat,
@@ -21,17 +21,18 @@ import type {
 import {MAIN_THREAD_ID, MESSAGE_DELETED,} from '../../types';
 
 import {
-  ALL_FOLDER_ID, BASE_API,
+  ALL_FOLDER_ID,
   DEBUG,
   GIF_MIME_TYPE,
   MAX_INT_32,
-  MENTION_UNREAD_SLICE,
+  MENTION_UNREAD_SLICE, MESSAGE_LIST_SLICE,
   PINNED_MESSAGES_LIMIT,
   REACTION_UNREAD_SLICE,
   SUPPORTED_IMAGE_CONTENT_TYPES,
-  SUPPORTED_VIDEO_CONTENT_TYPES, UPLOAD_WORKERS,
+  SUPPORTED_VIDEO_CONTENT_TYPES,
+  UPLOAD_WORKERS,
 } from '../../../config';
-import {invokeRequest, uploadFile} from './client';
+import {invokeRequest} from './client';
 import {
   buildApiFormattedText,
   buildApiMessage,
@@ -58,7 +59,7 @@ import {
 } from '../gramjsBuilders';
 import localDb from '../localDb';
 import {buildApiChatFromPreview, buildApiSendAsPeerId} from '../apiBuilders/chats';
-import {blobToDataUri, dataUriToBlob, fetchBlob, fetchFile} from '../../../util/files';
+import {blobToDataUri, fetchBlob, fetchFile} from '../../../util/files';
 import {
   addEntitiesWithPhotosToLocalDb,
   addMessageToLocalDb,
@@ -69,10 +70,10 @@ import {interpolateArray} from '../../../util/waveform';
 import {requestChatUpdate} from './chats';
 import {getEmojiOnlyCountForMessage} from '../../../global/helpers/getEmojiOnlyCountForMessage';
 import {getServerTimeOffset} from '../../../util/serverTime';
-import {generateRandomBytes, readBigIntFromBuffer} from "../../../lib/gramjs/Helpers";
 import {uploadFileV1} from "../../../lib/gramjs/client/uploadFile";
-import {UploadReq} from "../../../lib/ptp/protobuf/PTPFile";
-import {resizeImage} from "../../../util/imageResize";
+import {MsgDeleteReq, MsgListReq, MsgListRes, MsgUpdateReq, SendReq, SendRes} from "../../../lib/ptp/protobuf/PTPMsg";
+import Account from '../../../worker/share/Account';
+import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
 
 const FAST_SEND_TIMEOUT = 1000;
 const INPUT_WAVEFORM_LENGTH = 63;
@@ -96,6 +97,7 @@ export async function fetchMessages({
   chat,
   threadId,
   offsetId,
+  lastMessageId,isUp,
   ...pagination
 }: {
   chat: ApiChat;
@@ -103,55 +105,75 @@ export async function fetchMessages({
   offsetId?: number;
   addOffset?: number;
   limit: number;
+  lastMessageId?:number,
+  isUp?:boolean
 }) {
-  const RequestClass = threadId === MAIN_THREAD_ID ? GramJs.messages.GetHistory : GramJs.messages.GetReplies;
-  let result;
-
-  try {
-    result = await invokeRequest(new RequestClass({
-      peer: buildInputPeer(chat.id, chat.accessHash),
-      ...(threadId !== MAIN_THREAD_ID && {
-        msgId: Number(threadId),
-      }),
-      ...(offsetId && {
-        // Workaround for local message IDs overflowing some internal `Buffer` range check
-        offsetId: Math.min(offsetId, MAX_INT_32),
-      }),
-      ...pagination,
-    }), undefined, true);
-  } catch (err: any) {
-    if (err.message === 'CHANNEL_PRIVATE') {
-      onUpdate({
-        '@type': 'updateChat',
-        id: chat.id,
-        chat: {
-          isRestricted: true,
-        },
-      });
-    }
+  const pdu = await Account.getCurrentAccount()?.sendPduWithCallback(new MsgListReq({
+    lastMessageId:lastMessageId!,
+    chatId:chat.id,
+    limit: MESSAGE_LIST_SLICE,
+    isUp
+  }).pack());
+  if(!pdu){
+    return
   }
-
-  if (
-    !result
-    || result instanceof GramJs.messages.MessagesNotModified
-    || !result.messages
-  ) {
-    return undefined;
+  const res = MsgListRes.parseMsg(pdu!)
+  if(res.err !== ERR.NO_ERROR){
+    return;
   }
-
-  updateLocalDb(result);
-
-  const messages = result.messages.map(buildApiMessage).filter(Boolean);
-  const users = result.users.map(buildApiUser).filter(Boolean);
-  const chats = result.chats.map((c) => buildApiChatFromPreview(c)).filter(Boolean);
-  const repliesThreadInfos = messages.map(({ repliesThreadInfo }) => repliesThreadInfo).filter(Boolean);
-
-  return {
-    messages,
-    users,
-    chats,
-    repliesThreadInfos,
-  };
+  const result = JSON.parse(res!.payload)
+  if(!result){
+    return
+  }
+  return result
+  // const RequestClass = threadId === MAIN_THREAD_ID ? GramJs.messages.GetHistory : GramJs.messages.GetReplies;
+  // let result;
+  //
+  // try {
+  //   result = await invokeRequest(new RequestClass({
+  //     peer: buildInputPeer(chat.id, chat.accessHash),
+  //     ...(threadId !== MAIN_THREAD_ID && {
+  //       msgId: Number(threadId),
+  //     }),
+  //     ...(offsetId && {
+  //       // Workaround for local message IDs overflowing some internal `Buffer` range check
+  //       offsetId: Math.min(offsetId, MAX_INT_32),
+  //     }),
+  //     ...pagination,
+  //   }), undefined, true);
+  // } catch (err: any) {
+  //   if (err.message === 'CHANNEL_PRIVATE') {
+  //     onUpdate({
+  //       '@type': 'updateChat',
+  //       id: chat.id,
+  //       chat: {
+  //         isRestricted: true,
+  //       },
+  //     });
+  //   }
+  // }
+  //
+  // if (
+  //   !result
+  //   || result instanceof GramJs.messages.MessagesNotModified
+  //   || !result.messages
+  // ) {
+  //   return undefined;
+  // }
+  //
+  // updateLocalDb(result);
+  //
+  // const messages = result.messages.map(buildApiMessage).filter(Boolean);
+  // const users = result.users.map(buildApiUser).filter(Boolean);
+  // const chats = result.chats.map((c) => buildApiChatFromPreview(c)).filter(Boolean);
+  // const repliesThreadInfos = messages.map(({ repliesThreadInfo }) => repliesThreadInfo).filter(Boolean);
+  //
+  // return {
+  //   messages,
+  //   users,
+  //   chats,
+  //   repliesThreadInfos,
+  // };
 }
 
 export async function fetchMessage({ chat, messageId }: { chat: ApiChat; messageId: number }) {
@@ -328,73 +350,73 @@ export function sendMessage(
     }
     await prevQueue;
     try {
-      if(onProgress){
-        if(attachment){
-          let fileId;
+      if(attachment){
+        let fileId;
+        //@ts-ignore
+        if(media && media!.file && media.file.id) {
           //@ts-ignore
-          if(media && media!.file && media.file.id) {
-            //@ts-ignore
-            fileId = media!.file.id.toString()
+          fileId = media!.file.id.toString()
+        }
+
+        if(localMessage.content.photo || localMessage.content.document){
+
+          const getPhotoInfo = async (attachment:ApiAttachment)=>{
+            const dataUri = await blobToDataUri(await fetchBlob(attachment.thumbBlobUrl! ));
+            const size = {
+              "width": attachment.quick!.width,
+              "height":  attachment.quick!.height,
+            }
+            return{
+              dataUri,size
+            }
           }
 
-          if(localMessage.content.photo || localMessage.content.document){
+          if(localMessage.content.document){
+            localMessage.content.document.id = fileId
 
-            const getPhotoInfo = async (attachment:ApiAttachment)=>{
-              const dataUri = await blobToDataUri(await fetchBlob(attachment.thumbBlobUrl! ));
-              const size = {
-                "width": attachment.quick!.width,
-                "height":  attachment.quick!.height,
-              }
-              return{
-                dataUri,size
-              }
-            }
-
-            if(localMessage.content.document){
-              localMessage.content.document.id = fileId
-
-              if(localMessage.content.document.mimeType.split("/")[0] === "image"){
-                const {size,dataUri} = await getPhotoInfo(attachment);
-                localMessage.content.document.mediaType = "photo";
-                localMessage.content.document.previewBlobUrl = undefined;
-                localMessage.content.document.thumbnail = {
-                  ...size,
-                  dataUri
-                }
-                localMessage.content.document.mediaSize = size;
-              }
-            }
-
-            if(localMessage.content.photo){
+            if(localMessage.content.document.mimeType.split("/")[0] === "image"){
               const {size,dataUri} = await getPhotoInfo(attachment);
-              localMessage.content.photo = {
-                isSpoiler:localMessage.content.photo.isSpoiler,
-                id:fileId,
-                "thumbnail": {
-                  ...size,
-                  dataUri
-                },
-                "sizes": [
-                  {
-                    ...size,
-                    "type": "y"
-                  }
-                ],
+              localMessage.content.document.mediaType = "photo";
+              localMessage.content.document.previewBlobUrl = undefined;
+              localMessage.content.document.thumbnail = {
+                ...size,
+                dataUri
               }
+              localMessage.content.document.mediaSize = size;
             }
           }
 
-          if(localMessage.content.voice){
-            localMessage.content.voice.id = fileId
+          if(localMessage.content.photo){
+            const {size,dataUri} = await getPhotoInfo(attachment);
+            localMessage.content.photo = {
+              isSpoiler:localMessage.content.photo.isSpoiler,
+              id:fileId,
+              "thumbnail": {
+                ...size,
+                dataUri
+              },
+              "sizes": [
+                {
+                  ...size,
+                  "type": "y"
+                }
+              ],
+            }
           }
-          if(localMessage.content.audio){
-            localMessage.content.audio.id = fileId
-          }
-          await onProgress(2,localMessage)
-        }else{
-          await onProgress(2,localMessage)
+        }
+
+        if(localMessage.content.voice){
+          localMessage.content.voice.id = fileId
+        }
+        if(localMessage.content.audio){
+          localMessage.content.audio.id = fileId
         }
       }
+      await Account.getCurrentAccount()?.sendPduWithCallback(new SendReq({
+        payload:JSON.stringify({
+          msg:localMessage
+        })
+      }).pack());
     } catch (error: any) {
       onUpdate({
         '@type': 'updateMessageSendFailed',
@@ -662,6 +684,14 @@ export async function editMessage({
   //   ...(isScheduled && { scheduleDate: message.date }),
   //   ...(noWebPage && { noWebpage: noWebPage }),
   // }), true);
+  //todo
+  await Account.getCurrentAccount()!.sendPdu(new MsgUpdateReq({
+    msg_id:message.id,
+    chat_id:chat.id,
+    user_id:Account.getCurrentAccount()?.getUid()!,
+    text
+  }).pack(),0)
+
 }
 
 export async function rescheduleMessage({
@@ -781,6 +811,14 @@ export async function deleteMessages({
   chat: ApiChat; messageIds: number[]; shouldDeleteForAll?: boolean;
 }) {
   const isChannel = getEntityTypeById(chat.id) === 'channel';
+
+  await Account.getCurrentAccount()?.sendPduWithCallback(new MsgDeleteReq({
+    msg_ids:messageIds,
+    chat_id:chat.id,
+    user_id:Account.getCurrentAccount()?.getUid()!,
+    revoke: shouldDeleteForAll
+  }).pack())
+
   // const result = await invokeRequest(
   //   isChannel
   //     ? new GramJs.channels.DeleteMessages({

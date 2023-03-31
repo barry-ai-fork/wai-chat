@@ -33,6 +33,7 @@ import type {
 } from './calls';
 import type { ApiBotMenuButton } from './bots';
 import type { ApiPrivacyKey, PrivacyVisibility } from '../../types';
+import {ISession} from "../../worker/share/Account";
 
 export type ApiUpdateReady = {
   '@type': 'updateApiReady';
@@ -57,6 +58,17 @@ export type ApiUpdateConnectionStateType = (
   'connectionStateReady' |
   'connectionStateBroken'
 );
+
+
+export type ApiUpdateMsgClientStateType = (
+  'connectionStateConnecting' |
+  'connectionStateConnected' |
+  'connectionStateWaitingLogin' |
+  'connectionStateLogged' |
+  'connectionStateClosed' |
+  'connectionStateBroken'
+  );
+
 
 export type ApiUpdateAuthorizationState = {
   '@type': 'updateAuthorizationState';
@@ -86,9 +98,16 @@ export type ApiUpdateConnectionState = {
   connectionState: ApiUpdateConnectionStateType;
 };
 
+export type ApiUpdateMsgClientState = {
+  '@type': 'updateMsgClientState';
+  msgClientState: ApiUpdateMsgClientStateType;
+};
+
 export type ApiUpdateCurrentUser = {
   '@type': 'updateCurrentUser';
   currentUser: ApiUser;
+  accountId?:number,
+  sessionData?:ISession,
 };
 
 export type ApiUpdateChat = {
@@ -611,7 +630,19 @@ export type ApiUpdateMessageTranslations = {
   toLanguageCode: string;
 };
 
+export type ApiUpdateGlobalUpdate = {
+  '@type': 'updateGlobalUpdate';
+  data: {
+    users?:ApiUser[],
+    chats?:ApiChat[],
+    action?:string,
+    payload?:Record<string, any>
+  }
+};
+
 export type ApiUpdate = (
+  ApiUpdateGlobalUpdate |
+  ApiUpdateMsgClientState |
   ApiUpdateReady | ApiUpdateSession | ApiUpdateWebAuthTokenFailed | ApiUpdateRequestUserUpdate |
   ApiUpdateAuthorizationState | ApiUpdateAuthorizationError | ApiUpdateConnectionState | ApiUpdateCurrentUser |
   ApiUpdateChat | ApiUpdateChatInbox | ApiUpdateChatTypingStatus | ApiUpdateChatFullInfo | ApiUpdatePinnedChatIds |

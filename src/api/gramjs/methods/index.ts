@@ -1,4 +1,6 @@
 export {
+  sendWithCallback,
+  msgClientLogin,
   destroy, disconnect, downloadMedia, fetchCurrentUser, repairFileReference,
 } from './client';
 

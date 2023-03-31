@@ -2,7 +2,7 @@ import type { FC } from '../../lib/teact/teact';
 import React, {
   useEffect, useState, memo, useMemo, useCallback,
 } from '../../lib/teact/teact';
-import { getActions, withGlobal } from '../../global';
+import {getActions, getGlobal, withGlobal} from '../../global';
 
 import type { ApiChat, ApiChatBannedRights } from '../../api/types';
 import { MAIN_THREAD_ID } from '../../api/types';
@@ -346,7 +346,7 @@ const MiddleColumn: FC<OwnProps & StateProps> = ({
         authState:"authorizationStateWaitSignPassword"
       })
     }else{
-      if(Account.getCurrentAccount()?.getUid()){
+      if(getGlobal().msgClientState !== "connectionStateLogged"){
         sendBotCommand({ command: '/start' });
       }else{
         getActions().showNotification({

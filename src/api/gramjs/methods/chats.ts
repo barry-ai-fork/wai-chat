@@ -26,9 +26,9 @@ import {
   ALL_FOLDER_ID,
   MAX_INT_32,
   TOPICS_SLICE,
-  GENERAL_TOPIC_ID,
+  GENERAL_TOPIC_ID, CHAT_LIST_LOAD_SLICE,
 } from '../../../config';
-import { invokeRequest, uploadFile } from './client';
+import {getClient, invokeRequest, uploadFile} from './client';
 import {
   buildApiChatFromDialog,
   getPeerKey,
@@ -61,6 +61,9 @@ import { buildApiPeerId, getApiChatIdFromMtpPeer } from '../apiBuilders/peers';
 import { buildApiPhoto } from '../apiBuilders/common';
 import { buildStickerSet } from '../apiBuilders/symbols';
 import localDb from '../localDb';
+import Account from "../../../worker/share/Account";
+import {LoadChatsReq, LoadChatsRes} from "../../../lib/ptp/protobuf/PTPChats";
+import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
 
 type FullChatData = {
   fullInfo: ApiChatFullInfo;
@@ -89,111 +92,129 @@ export async function fetchChats({
   withPinned?: boolean;
   lastLocalServiceMessage?: ApiMessage;
 }) {
-  const result = await invokeRequest(new GramJs.messages.GetDialogs({
-    offsetPeer: new GramJs.InputPeerEmpty(),
+  const loadChatsRes = await Account.getCurrentAccount()?.sendPduWithCallback(new LoadChatsReq({
     limit,
     offsetDate,
-    folderId: archived ? ARCHIVED_FOLDER_ID : undefined,
-    ...(withPinned && { excludePinned: true }),
-  }));
-  const resultPinned = withPinned
-    ? await invokeRequest(new GramJs.messages.GetPinnedDialogs({
-      folderId: archived ? ARCHIVED_FOLDER_ID : undefined,
-    }))
-    : undefined;
+    archived,
+    withPinned,
+  }).pack())
 
-  if (!result || result instanceof GramJs.messages.DialogsNotModified) {
-    return undefined;
+  if(!loadChatsRes){
+    return;
   }
-
-  if (resultPinned) {
-    updateLocalDb(resultPinned);
+  const res = LoadChatsRes.parseMsg(loadChatsRes);
+  if (!res || res.err !== ERR.NO_ERROR) {
+    return;
   }
-  updateLocalDb(result);
-
-  const lastMessagesByChatId = buildCollectionByKey(
-    (resultPinned ? resultPinned.messages : []).concat(result.messages)
-      .map(buildApiMessage)
-      .filter(Boolean),
-    'chatId',
-  );
-
-  const peersByKey = preparePeers(result);
-  if (resultPinned) {
-    Object.assign(peersByKey, preparePeers(resultPinned, peersByKey));
-  }
-
-  const chats: ApiChat[] = [];
-  const draftsById: Record<string, ApiFormattedText> = {};
-  const replyingToById: Record<string, number> = {};
-
-  const dialogs = (resultPinned ? resultPinned.dialogs : []).concat(result.dialogs);
-
-  const orderedPinnedIds: string[] = [];
-
-  dialogs.forEach((dialog) => {
-    if (
-      !(dialog instanceof GramJs.Dialog)
-      // This request can return dialogs not belonging to specified folder
-      || (!archived && dialog.folderId === ARCHIVED_FOLDER_ID)
-      || (archived && dialog.folderId !== ARCHIVED_FOLDER_ID)
-    ) {
-      return;
-    }
-
-    const peerEntity = peersByKey[getPeerKey(dialog.peer)];
-    const chat = buildApiChatFromDialog(dialog, peerEntity);
-
-    if (
-      chat.id === SERVICE_NOTIFICATIONS_USER_ID
-      && lastLocalServiceMessage
-      && (!lastMessagesByChatId[chat.id] || lastLocalServiceMessage.date > lastMessagesByChatId[chat.id].date)
-    ) {
-      chat.lastMessage = lastLocalServiceMessage;
-    } else {
-      chat.lastMessage = lastMessagesByChatId[chat.id];
-    }
-
-    chat.isListed = true;
-
-    chats.push(chat);
-
-    if (withPinned && dialog.pinned) {
-      orderedPinnedIds.push(chat.id);
-    }
-
-    if (dialog.draft) {
-      const { formattedText, replyingToId } = buildMessageDraft(dialog.draft) || {};
-      if (formattedText) {
-        draftsById[chat.id] = formattedText;
-      }
-      if (replyingToId) {
-        replyingToById[chat.id] = replyingToId;
-      }
-    }
-  });
-
-  const chatIds = chats.map((chat) => chat.id);
-
-  const { users, userStatusesById } = buildApiUsersAndStatuses((resultPinned?.users || []).concat(result.users));
-
-  let totalChatCount: number;
-  if (result instanceof GramJs.messages.DialogsSlice) {
-    totalChatCount = result.count;
-  } else {
-    totalChatCount = chatIds.length;
-  }
-
-  return {
-    chatIds,
-    chats,
-    users,
-    userStatusesById,
-    draftsById,
-    replyingToById,
-    orderedPinnedIds: withPinned ? orderedPinnedIds : undefined,
-    totalChatCount,
-  };
+  const result = JSON.parse(res.payload);
+  console.log('[LoadChatsRes]',result)
+  return result;
+  //
+  // const result = await invokeRequest(new GramJs.messages.GetDialogs({
+  //   offsetPeer: new GramJs.InputPeerEmpty(),
+  //   limit,
+  //   offsetDate,
+  //   folderId: archived ? ARCHIVED_FOLDER_ID : undefined,
+  //   ...(withPinned && { excludePinned: true }),
+  // }));
+  // const resultPinned = withPinned
+  //   ? await invokeRequest(new GramJs.messages.GetPinnedDialogs({
+  //     folderId: archived ? ARCHIVED_FOLDER_ID : undefined,
+  //   }))
+  //   : undefined;
+  //
+  // if (!result || result instanceof GramJs.messages.DialogsNotModified) {
+  //   return undefined;
+  // }
+  //
+  // if (resultPinned) {
+  //   updateLocalDb(resultPinned);
+  // }
+  // updateLocalDb(result);
+  //
+  // const lastMessagesByChatId = buildCollectionByKey(
+  //   (resultPinned ? resultPinned.messages : []).concat(result.messages)
+  //     .map(buildApiMessage)
+  //     .filter(Boolean),
+  //   'chatId',
+  // );
+  //
+  // const peersByKey = preparePeers(result);
+  // if (resultPinned) {
+  //   Object.assign(peersByKey, preparePeers(resultPinned, peersByKey));
+  // }
+  //
+  // const chats: ApiChat[] = [];
+  // const draftsById: Record<string, ApiFormattedText> = {};
+  // const replyingToById: Record<string, number> = {};
+  //
+  // const dialogs = (resultPinned ? resultPinned.dialogs : []).concat(result.dialogs);
+  //
+  // const orderedPinnedIds: string[] = [];
+  //
+  // dialogs.forEach((dialog) => {
+  //   if (
+  //     !(dialog instanceof GramJs.Dialog)
+  //     // This request can return dialogs not belonging to specified folder
+  //     || (!archived && dialog.folderId === ARCHIVED_FOLDER_ID)
+  //     || (archived && dialog.folderId !== ARCHIVED_FOLDER_ID)
+  //   ) {
+  //     return;
+  //   }
+  //
+  //   const peerEntity = peersByKey[getPeerKey(dialog.peer)];
+  //   const chat = buildApiChatFromDialog(dialog, peerEntity);
+  //
+  //   if (
+  //     chat.id === SERVICE_NOTIFICATIONS_USER_ID
+  //     && lastLocalServiceMessage
+  //     && (!lastMessagesByChatId[chat.id] || lastLocalServiceMessage.date > lastMessagesByChatId[chat.id].date)
+  //   ) {
+  //     chat.lastMessage = lastLocalServiceMessage;
+  //   } else {
+  //     chat.lastMessage = lastMessagesByChatId[chat.id];
+  //   }
+  //
+  //   chat.isListed = true;
+  //
+  //   chats.push(chat);
+  //
+  //   if (withPinned && dialog.pinned) {
+  //     orderedPinnedIds.push(chat.id);
+  //   }
+  //
+  //   if (dialog.draft) {
+  //     const { formattedText, replyingToId } = buildMessageDraft(dialog.draft) || {};
+  //     if (formattedText) {
+  //       draftsById[chat.id] = formattedText;
+  //     }
+  //     if (replyingToId) {
+  //       replyingToById[chat.id] = replyingToId;
+  //     }
+  //   }
+  // });
+  //
+  // const chatIds = chats.map((chat) => chat.id);
+  //
+  // const { users, userStatusesById } = buildApiUsersAndStatuses((resultPinned?.users || []).concat(result.users));
+  //
+  // let totalChatCount: number;
+  // if (result instanceof GramJs.messages.DialogsSlice) {
+  //   totalChatCount = result.count;
+  // } else {
+  //   totalChatCount = chatIds.length;
+  // }
+  //
+  // return {
+  //   chatIds,
+  //   chats,
+  //   users,
+  //   userStatusesById,
+  //   draftsById,
+  //   replyingToById,
+  //   orderedPinnedIds: withPinned ? orderedPinnedIds : undefined,
+  //   totalChatCount,
+  // };
 }
 
 export function fetchFullChat(chat: ApiChat) {

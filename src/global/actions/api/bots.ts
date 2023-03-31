@@ -28,8 +28,7 @@ import {extractCurrentThemeParams} from '../../../util/themeStyle';
 import PopupManager from '../../../util/PopupManager';
 import {updateTabState} from '../../reducers/tabs';
 import {getCurrentTabId} from '../../../util/establishMultitabRole';
-import MsgConn, {MsgClientState} from "../../../lib/ptp/client/MsgConn";
-import {SendReq} from "../../../lib/ptp/protobuf/PTPMsg";
+import MsgClient,{MsgClientState} from "../../../lib/ptp/client/MsgClient";
 
 const GAMEE_URL = 'https://prizes.gamee.com/';
 const TOP_PEERS_REQUEST_COOLDOWN = 60; // 1 min
@@ -37,7 +36,6 @@ const runDebouncedForSearch = debounce((cb) => cb(), 500, false);
 
 addActionHandler('clickBotInlineButton', (global, actions, payload): ActionReturnType => {
   const { messageId, button, tabId = getCurrentTabId() } = payload;
-
   switch (button.type) {
     case 'command':
       actions.sendBotCommand({ command: button.text, tabId });
@@ -184,7 +182,7 @@ addActionHandler('sendBotCommand', (global, actions, payload): ActionReturnType 
   const chat = chatId ? selectChat(global, chatId) : selectCurrentChat(global, tabId);
   const currentMessageList = selectCurrentMessageList(global, tabId);
 
-  if (!chat || !currentMessageList) {
+  if (!chat || !currentMessageList || global.msgClientState !== 'connectionStateLogged') {
     return;
   }
 
@@ -934,22 +932,13 @@ async function searchInlineBot<T extends GlobalState>(global: T, {
 async function sendBotCommand(
   chat: ApiChat, threadId = MAIN_THREAD_ID, command: string, replyingTo?: number, sendAs?: ApiChat | ApiUser,
 ) {
-  if(MsgConn.getMsgClient()?.getState() !== MsgClientState.logged){
-    return
-  }
+
   await callApi('sendMessage', {
     chat,
     replyingToTopId: threadId,
     text: command,
     replyingTo,
     sendAs,
-  },async (progress,localMessage)=>{
-    await MsgConn.getMsgClient()
-      ?.sendPduWithCallback(new SendReq({
-        payload:JSON.stringify({
-          msg:localMessage
-        })
-      }).pack());
   });
 }
 

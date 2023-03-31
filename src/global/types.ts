@@ -6,6 +6,7 @@ import type {
   ApiUserStatus,
   ApiUpdateAuthorizationStateType,
   ApiUpdateConnectionStateType,
+  ApiUpdateMsgClientStateType,
   ApiStickerSet,
   ApiSticker,
   ApiWebPage,
@@ -546,6 +547,7 @@ export type TabState = {
 };
 
 export type GlobalState = {
+  msgClientState?: ApiUpdateMsgClientStateType;
   config?: ApiConfig;
   appConfig?: ApiAppConfig;
   hasWebAuthTokenFailed?: boolean;
@@ -865,6 +867,8 @@ export interface ActionPayloads {
     isFallback?: boolean;
     videoTs?: number;
     isVideo?: boolean;
+    thumbnail?:string
+
   };
   goToAuthQrCode: undefined;
 

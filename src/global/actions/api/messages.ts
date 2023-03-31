@@ -53,7 +53,8 @@ import {
 } from '../../reducers';
 import {
   selectChat,
-  selectChatMessage, selectChatMessages,
+  selectChatMessage,
+  selectChatMessages,
   selectCurrentChat,
   selectCurrentMessageList,
   selectDraft,
@@ -74,7 +75,7 @@ import {
   selectScheduledMessage,
   selectSendAs,
   selectSponsoredMessage,
-  selectTabState, selectTabThreadParam,
+  selectTabState,
   selectThreadIdFromMessage,
   selectThreadTopMessageId,
   selectUser,
@@ -84,7 +85,8 @@ import {debounce, onTickEnd, rafPromise,} from '../../../util/schedulers';
 import {
   getMessageOriginalId,
   getUserFullName,
-  isDeletedUser, isLocalMessageId,
+  isDeletedUser,
+  isLocalMessageId,
   isServiceNotificationMessage,
   isUserBot,
 } from '../../helpers';
@@ -92,9 +94,7 @@ import {translate} from '../../../util/langProvider';
 import {ensureProtocol} from '../../../util/ensureProtocol';
 import {updateTabState} from '../../reducers/tabs';
 import {getCurrentTabId} from '../../../util/establishMultitabRole';
-import MsgConn, {MsgClientState, MsgConnNotifyAction} from "../../../lib/ptp/client/MsgConn";
-import {MsgDeleteReq, MsgListReq, MsgListRes, MsgUpdateReq, SendReq} from "../../../lib/ptp/protobuf/PTPMsg";
-import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
+import {SendReq} from "../../../lib/ptp/protobuf/PTPMsg";
 import Account from "../../../worker/share/Account";
 import {getPasswordFromEvent, replaceSubstring} from "../../../worker/share/utils/utils";
 import {blobToBuffer, fetchBlob} from "../../../util/files";
@@ -230,7 +230,7 @@ addActionHandler('sendMessage', async (global, actions, payload): ActionReturnTy
   const { tabId = getCurrentTabId() } = payload;
   const currentMessageList = selectCurrentMessageList(global, tabId);
 
-  if (!currentMessageList || MsgConn.getMsgClient()?.getState() !== MsgClientState.logged) {
+  if (!currentMessageList || global.msgClientState !== "connectionStateLogged") {
     return undefined;
   }
   const { chatId, threadId, type } = currentMessageList;
@@ -414,12 +414,6 @@ addActionHandler('editMessage', (global, actions, payload): ActionReturnType => 
   void callApi('editMessage', {
     chat, message, text, entities, noWebPage: selectNoWebPage(global, chatId, threadId),
   });
-  MsgConn.getMsgClient()?.send(new MsgUpdateReq({
-    msg_id:message.id,
-    chat_id:chat.id,
-    user_id:global.currentUserId!,
-    text
-  }).pack().getPbData())
 
   actions.setEditingId({ messageId: undefined, tabId });
 });
@@ -545,13 +539,6 @@ addActionHandler('deleteMessages', async (global, actions, payload): ActionRetur
   const chat = selectChat(global, chatId)!;
 
   try {
-    await MsgConn.getMsgClient()
-      ?.sendPduWithCallback(new MsgDeleteReq({
-        msg_ids:messageIds,
-        chat_id:chatId,
-        user_id:global.currentUserId!,
-        revoke:shouldDeleteForAll
-      }).pack());
     void callApi('deleteMessages', { chat, messageIds, shouldDeleteForAll });
     const {lastMessage} = global.chats.byId[chatId];
 
@@ -1029,6 +1016,7 @@ addActionHandler('loadCustomEmojis', async (global, actions, payload): Promise<v
 });
 
 const loadViewportMessagesCache:Record<string, boolean> = {};
+
 async function loadViewportMessages<T extends GlobalState>(
   global: T,
   chat: ApiChat,
@@ -1089,34 +1077,19 @@ async function loadViewportMessages<T extends GlobalState>(
     }
     console.log("[MsgListReq]",{chatId:chat.id,lastMessageId,isUp})
     loadViewportMessagesCache[chat.id] = true;
-    const pdu = await MsgConn.getMsgClient()?.sendPduWithCallback(new MsgListReq({
-      lastMessageId,
-      chatId:chat.id,
+    result = await callApi('fetchMessages', {
+      chat: selectChat(global, chatId)!,
+      offsetId,
+      addOffset,
       limit: MESSAGE_LIST_SLICE,
+      threadId,
+      lastMessageId,
       isUp
-    }).pack());
-    if(!pdu){
-      return
-    }
-    const res = MsgListRes.parseMsg(pdu!)
-    if(res.err !== ERR.NO_ERROR){
-      return;
-    }
-    result = JSON.parse(res!.payload)
+    });
   }catch (e){
 
   }
-  setTimeout(()=>{delete loadViewportMessagesCache[chat.id]},2000)
-
-  // console.log(result)
-  // const result = await callApi('fetchMessages', {
-  //   chat: selectChat(global, chatId)!,
-  //   offsetId,
-  //   addOffset,
-  //   limit: MESSAGE_LIST_SLICE,
-  //   threadId,
-  // });
-
+  setTimeout(()=>{delete loadViewportMessagesCache[chat.id]},1000)
   if (!result) {
     return;
   }
@@ -1269,9 +1242,6 @@ async function sendMessage<T extends GlobalState>(global: T, params: {
 },
 ...[tabId = getCurrentTabId()]: TabArgs<T>) {
 
-  if(MsgConn.getMsgClient()?.getState() !== MsgClientState.logged){
-    return
-  }
   let localId: number | undefined;
   const progressCallback = params.attachment ? async (progress: number, localMessage: ApiMessage) => {
     const messageLocalId = localMessage.id;
@@ -1292,50 +1262,8 @@ async function sendMessage<T extends GlobalState>(global: T, params: {
       },
     };
     setGlobal(global);
-    if(progress === 2){
-      try{
-        await MsgConn.getMsgClient()
-          ?.sendPduWithCallback(new SendReq({
-            payload:JSON.stringify({
-              msg:localMessage
-            })
-          }).pack());
-      }catch (error){
-        console.error("send Msg error")
-        MsgConn.getMsgClient()?.notify([
-          {
-            action: MsgConnNotifyAction.onSendMsgError,
-            payload: {
-              chatId: localMessage.chatId,
-              localId: localMessage.id,
-              error: "send MSG error",
-            },
-          },
-        ]);
-      }
-    }
-
   } : async (progress: number, localMessage: any)=>{
-    try{
-      await MsgConn.getMsgClient()
-        ?.sendPduWithCallback(new SendReq({
-          payload:JSON.stringify({
-            msg:localMessage
-          })
-        }).pack());
-    }catch (error){
-      console.error("send Msg error")
-      MsgConn.getMsgClient()?.notify([
-        {
-          action: MsgConnNotifyAction.onSendMsgError,
-          payload: {
-            chatId: localMessage.chatId,
-            localId: localMessage.id,
-            error: "send MSG error",
-          },
-        },
-      ]);
-    }
+
   }
 
   // @optimization
@@ -1359,6 +1287,7 @@ async function sendMessage<T extends GlobalState>(global: T, params: {
     params.replyingToTopId = selectThreadTopMessageId(global, params.chat.id, threadId)!;
   }
   await callApi('sendMessage', params, progressCallback);
+  // @ts-ignore
   if (progressCallback && localId) {
     uploadProgressCallbacks.delete(localId);
   }

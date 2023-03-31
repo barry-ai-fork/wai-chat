@@ -82,10 +82,6 @@ import * as langProvider from '../../../util/langProvider';
 import {selectCurrentLimit} from '../../selectors/limits';
 import {updateTabState} from '../../reducers/tabs';
 import {getCurrentTabId} from '../../../util/establishMultitabRole';
-import Account from "../../../worker/share/Account";
-import {LoadChatsReq, LoadChatsRes} from "../../../lib/ptp/protobuf/PTPChats";
-import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
-import MsgConn, {MsgClientState} from "../../../lib/ptp/client/MsgConn";
 
 const TOP_CHAT_MESSAGES_PRELOAD_INTERVAL = 100;
 const INFINITE_LOOP_MARKER = 100;
@@ -260,17 +256,17 @@ addActionHandler('loadAllChats', async (global, actions, payload): Promise<void>
         // eslint-disable-next-line no-console
         console.error('`actions/loadAllChats`: Infinite loop detected');
       }
-
       return;
     }
 
     global = getGlobal();
-    //
-    // if (global.connectionState !== 'connectionStateReady' || global.authState !== 'authorizationStateReady') {
-    //   return;
-    // }
 
-    if (global.connectionState !== 'connectionStateReady') {
+    if (
+      !(
+        global.msgClientState === 'connectionStateLogged' ||
+        global.msgClientState === 'connectionStateWaitingLogin'||
+        global.msgClientState === 'connectionStateConnected'
+      ) ) {
       return;
     }
 
@@ -1837,24 +1833,13 @@ async function loadChats<T extends GlobalState>(
 
   let lastLocalServiceMessage = selectLastServiceNotification(global)?.message;
   try {
-    const loadChatsRes = await Account.getCurrentAccount()?.sendPduWithCallback(new LoadChatsReq({
+    const result = await callApi('fetchChats', {
       limit: CHAT_LIST_LOAD_SLICE,
       offsetDate,
       archived: listType === 'archived',
       withPinned: shouldReplace,
-      // lastLocalServiceMessage:JSON.stringify(lastLocalServiceMessage),
-    }).pack())
-
-    if(!loadChatsRes){
-      return;
-    }
-    const res = LoadChatsRes.parseMsg(loadChatsRes);
-    if (!res || res.err !== ERR.NO_ERROR) {
-      return;
-    }
-
-    const result = JSON.parse(res.payload);
-    console.log('[LoadChatsRes]',result)
+      lastLocalServiceMessage,
+    });
     if (!result) {
       return;
     }
@@ -1871,7 +1856,7 @@ async function loadChats<T extends GlobalState>(
       ...global,
       chatFolders:result.chatFolders
     }
-    if (shouldReplace && listType === 'active' && MsgConn?.getMsgClient()?.getState() === MsgClientState.logged) {
+    if (shouldReplace && listType === 'active' && global.msgClientState === 'connectionStateLogged') {
       // Always include service notifications chat
       // if (!chatIds.includes(SERVICE_NOTIFICATIONS_USER_ID)) {
       //   const result2 = await callApi('fetchChat', {
@@ -1907,7 +1892,7 @@ async function loadChats<T extends GlobalState>(
       global = replaceUserStatuses(global, result.userStatusesById);
       global = replaceChats(global, buildCollectionByKey(visibleChats.concat(result.chats), 'id'));
       global = updateChatListIds(global, listType, chatIds);
-    } else if (shouldReplace && listType === 'archived'  && MsgConn?.getMsgClient()?.getState() === MsgClientState.logged) {
+    } else if (shouldReplace && listType === 'archived'   && global.msgClientState === 'connectionStateLogged') {
       global = addUsers(global, buildCollectionByKey(result.users, 'id'));
       global = addUserStatuses(global, result.userStatusesById);
       global = updateChats(global, buildCollectionByKey(result.chats, 'id'));

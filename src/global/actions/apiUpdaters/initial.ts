@@ -10,7 +10,7 @@ import type {
   ApiUpdateAuthorizationError,
   ApiUpdateConnectionState,
   ApiUpdateSession,
-  ApiUpdateCurrentUser, ApiUpdateServerTimeOffset,
+  ApiUpdateCurrentUser, ApiUpdateServerTimeOffset, ApiUpdateMsgClientStateType,
 } from '../../../api/types';
 import { SESSION_USER_KEY } from '../../../config';
 import { subscribe } from '../../../util/notifications';
@@ -23,6 +23,8 @@ import { clearWebTokenAuth } from '../../../util/routing';
 import { getCurrentTabId } from '../../../util/establishMultitabRole';
 import { updateTabState } from '../../reducers/tabs';
 import { setServerTimeOffset } from '../../../util/serverTime';
+import {ApiUpdateMsgClientState} from "../../../api/types";
+import Account from "../../../worker/share/Account";
 
 addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
   switch (update['@type']) {
@@ -44,6 +46,10 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
 
     case 'updateConnectionState':
       onUpdateConnectionState(global, actions, update);
+      break;
+
+    case 'updateMsgClientState':
+      onUpdateMsgClientState(global, actions, update);
       break;
 
     case 'updateSession':
@@ -89,7 +95,6 @@ function onUpdateApiReady<T extends GlobalState>(global: T) {
 
 function onUpdateAuthorizationState<T extends GlobalState>(global: T, update: ApiUpdateAuthorizationState) {
   global = getGlobal();
-
   const wasAuthReady = global.authState === 'authorizationStateReady';
   const authState = update.authorizationState;
 
@@ -213,6 +218,23 @@ function onUpdateConnectionState<T extends GlobalState>(
   }
 }
 
+function onUpdateMsgClientState<T extends GlobalState>(
+  global: T, actions: RequiredGlobalActions, update: ApiUpdateMsgClientState,
+) {
+  const { msgClientState } = update;
+  global = getGlobal();
+
+  if (msgClientState === global.msgClientState) {
+    return;
+  }
+
+  global = {
+    ...global,
+    msgClientState,
+  };
+  setGlobal(global);
+}
+
 function onUpdateSession<T extends GlobalState>(global: T, actions: RequiredGlobalActions, update: ApiUpdateSession) {
   const { sessionData } = update;
   global = getGlobal();
@@ -231,7 +253,14 @@ function onUpdateServerTimeOffset(update: ApiUpdateServerTimeOffset) {
 }
 
 function onUpdateCurrentUser<T extends GlobalState>(global: T, update: ApiUpdateCurrentUser) {
-  const { currentUser } = update;
+  const { currentUser,accountId,sessionData } = update;
+  if(accountId){
+    const account = Account.getInstance(accountId);
+    account.setSession(sessionData);
+    account.setUid(currentUser.id)
+    account.setUserInfo(currentUser)
+    account.saveSession().catch(console.error)
+  }
 
   global = {
     ...updateUser(global, currentUser.id, currentUser),
