@@ -17,6 +17,9 @@ import { addEntitiesWithPhotosToLocalDb, addUserToLocalDb, deserializeBytes } fr
 import { omitVirtualClassFields } from '../apiBuilders/helpers';
 import { buildCollectionByKey } from '../../../util/iteratees';
 import { buildApiUrlAuthResult } from '../apiBuilders/misc';
+import Account from "../../../worker/share/Account";
+import AnswerCallbackButtonRes from '../../../lib/ptp/protobuf/PTPMsg/AnswerCallbackButtonRes';
+import {AnswerCallbackButtonReq} from "../../../lib/ptp/protobuf/PTPMsg";
 
 let onUpdate: OnApiUpdate;
 
@@ -29,14 +32,14 @@ export async function answerCallbackButton({
 }: {
   chatId: string; accessHash?: string; messageId: number; data?: string; isGame?: boolean;
 }) {
-  const result = await invokeRequest(new GramJs.messages.GetBotCallbackAnswer({
-    peer: buildInputPeer(chatId, accessHash),
-    msgId: messageId,
-    data: data ? deserializeBytes(data) : undefined,
-    game: isGame || undefined,
-  }));
-
-  return result ? omitVirtualClassFields(result) : undefined;
+  const pdu = await Account.getCurrentAccount()?.sendPduWithCallback(new AnswerCallbackButtonReq({
+    chatId,accessHash,messageId,data,isGame
+  }).pack())
+  if(!pdu){
+    return undefined
+  }
+  const result = AnswerCallbackButtonRes.parseMsg(pdu)
+  return result
 }
 
 export async function fetchTopInlineBots() {
@@ -175,27 +178,30 @@ export async function requestWebView({
   sendAs?: ApiUser | ApiChat;
   isFromBotMenu?: boolean;
 }) {
-  const result = await invokeRequest(new GramJs.messages.RequestWebView({
-    silent: isSilent || undefined,
-    peer: buildInputPeer(peer.id, peer.accessHash),
-    bot: buildInputPeer(bot.id, bot.accessHash),
-    replyToMsgId: replyToMessageId,
-    url,
-    startParam,
-    themeParams: theme ? buildInputThemeParams(theme) : undefined,
-    fromBotMenu: isFromBotMenu || undefined,
-    platform: 'webz',
-    ...(threadId && { topMsgId: threadId }),
-    ...(sendAs && { sendAs: buildInputPeer(sendAs.id, sendAs.accessHash) }),
-  }));
-
-  if (result instanceof GramJs.WebViewResultUrl) {
-    return {
-      url: result.url,
-      queryId: result.queryId.toString(),
+  // const result = await invokeRequest(new GramJs.messages.RequestWebView({
+  //   silent: isSilent || undefined,
+  //   peer: buildInputPeer(peer.id, peer.accessHash),
+  //   bot: buildInputPeer(bot.id, bot.accessHash),
+  //   replyToMsgId: replyToMessageId,
+  //   url,
+  //   startParam,
+  //   themeParams: theme ? buildInputThemeParams(theme) : undefined,
+  //   fromBotMenu: isFromBotMenu || undefined,
+  //   platform: 'webz',
+  //   ...(threadId && { topMsgId: threadId }),
+  //   ...(sendAs && { sendAs: buildInputPeer(sendAs.id, sendAs.accessHash) }),
+  // }));
+  //
+  // if (result instanceof GramJs.WebViewResultUrl) {
+  //   return {
+  //     url: result.url,
+  //     queryId: result.queryId.toString(),
+  //   };
+  // }
+  return {
+      url: `https://webappcontent.telegram.org/cafe/?mode=menu#tgWebAppData=query_id%3DAAHFY2V2AgAAAMVjZXb0KFJb%26user%3D%257B%2522id%2522%253A6281323461%252C%2522first_name%2522%253A%2522Wai%2522%252C%2522last_name%2522%253A%2522Chat%2522%252C%2522username%2522%253A%2522wai_chat%2522%252C%2522language_code%2522%253A%2522en%2522%257D%26auth_date%3D1680293757%26hash%3D513a7167671bc1e80c1d95c168231a1a4f32511942a2bfae25c2640e1c925a7f&tgWebAppVersion=6.4&tgWebAppPlatform=webz&tgWebAppThemeParams=%7B"bg_color"%3A"%23212121"%2C"text_color"%3A"%23ffffff"%2C"hint_color"%3A"%23aaaaaa"%2C"link_color"%3A"%238774e1"%2C"button_color"%3A"%238774e1"%2C"button_text_color"%3A"%23ffffff"%2C"secondary_bg_color"%3A"%230f0f0f"%7D`,
+      queryId: "sss",
     };
-  }
-
   return undefined;
 }
 

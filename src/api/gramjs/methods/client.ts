@@ -28,7 +28,7 @@ import MsgClient, {MsgClientState} from "../../../lib/ptp/client/MsgClient";
 import {Pdu} from "../../../lib/ptp/protobuf/BaseMsg";
 import Account, {ISession} from "../../../worker/share/Account";
 import LocalDatabase from "../../../worker/share/db/LocalDatabase";
-import {ActionCommands} from "../../../lib/ptp/protobuf/ActionCommands";
+import {ActionCommands, getActionCommandsName} from "../../../lib/ptp/protobuf/ActionCommands";
 import {SendRes} from "../../../lib/ptp/protobuf/PTPMsg";
 import message from "../../../components/middle/message/Message";
 import {selectChat, selectUser} from "../../../global/selectors";
@@ -49,6 +49,10 @@ let currentUserId: string | undefined;
 const handleSendRes = async (pdu:Pdu)=> {
   const {err, payload, action} = SendRes.parseMsg(pdu)
   const payloadData = JSON.parse(payload)
+
+  if(DEBUG){
+    console.log("[handleSendRes]",getActionCommandsName(pdu.getCommandId()),action,payloadData)
+  }
   switch (action) {
     case "removeBot":
       onUpdate({

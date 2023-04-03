@@ -38,7 +38,7 @@ export const PASSCODE_CACHE_NAME = 'tt-passcode';
 
 export const GLOBAL_STATE_CACHE_DISABLED = false;
 
-export const GLOBAL_STATE_CACHE_KEY = 'tt-global-state-v1.1.8';
+export const GLOBAL_STATE_CACHE_KEY = 'tt-global-state-v1.1.9';
 
 export const GLOBAL_STATE_CACHE_USER_LIST_LIMIT = 500;
 export const GLOBAL_STATE_CACHE_CHAT_LIST_LIMIT = 200;

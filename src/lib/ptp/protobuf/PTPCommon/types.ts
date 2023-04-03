@@ -35,6 +35,7 @@ export interface PbBotInfo_Type {
   isChatGpt?: boolean;
   menuButton?: PbMenuButton_Type;
   commands?: PbCommands_Type[];
+  photo?: PbPhoto_Type;
 }
 
 export interface PbChat_Type {
@@ -68,6 +69,7 @@ export interface PbChatFolder_Type {
 export interface PbChatGpBotConfig_Type {
   init_system_content?: string;
   api_key?: string;
+  max_history_length?: number;
 }
 
 export interface PbCommands_Type {
@@ -94,6 +96,8 @@ export interface PbFullInfo_Type {
 
 export interface PbMenuButton_Type {
   type: string;
+  text?: string;
+  url?: string;
 }
 
 export interface PbMessageEntity_Type {
