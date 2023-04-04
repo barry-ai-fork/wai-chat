@@ -27,7 +27,8 @@
     "statoscope:validate": "statoscope validate --input  public/build-stats.json",
     "statoscope:validate-diff": "statoscope validate --input input.json --reference reference.json",
     "postinstall": "(cd dev/eslint-multitab && npm i)",
-    "clean:prod": "rm -rf  dist/statoscope-report.html dist/build-stats.json public/build-stats.json public/statoscope-report.html dist/img-apple-64 dist/img-apple-160"
+    "clean:prod": "rm -rf  dist/statoscope-report.html dist/build-stats.json public/build-stats.json public/statoscope-report.html dist/img-apple-64 dist/img-apple-160",
+    "dev:pages-api": "wrangler pages dev public"
   },
   "engines": {
     "node": "^18",
@@ -125,7 +126,8 @@
     "typescript": "^4.9.3",
     "webpack": "^5.75.0",
     "webpack-dev-server": "^4.11.1",
-    "whatwg-fetch": "^3.6.2"
+    "whatwg-fetch": "^3.6.2",
+    "@cloudflare/workers-types": "^3.0.0"
   },
   "dependencies": {
     "@aws-sdk/client-sns": "^3.245.0",

@@ -193,7 +193,6 @@ addActionHandler('setAuthPassword', async (global, actions, payload): ActionRetu
     await callApi('destroy');
     actions.initApi();
     try {
-      debugger
       await waitForMsgServerState("connectionStateWaitingLogin")
     }catch (e){
         setGlobal({
@@ -265,6 +264,12 @@ addActionHandler('setAuthPassword', async (global, actions, payload): ActionRetu
         authState:"authorizationStateReady",
         authIsLoading: false,
         authError: undefined,
+      })
+    }else{
+      setGlobal({
+        ...getGlobal(),
+        authIsLoading: false,
+        authError: "登录失败",
       })
     }
 
