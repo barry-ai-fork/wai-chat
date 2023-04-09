@@ -1,7 +1,7 @@
 import type { ApiLimitType } from './global/types';
 
-export const CLOUD_MESSAGE_ENABLE = process.env.CLOUD_MESSAGE_ENABLE === "true";
-export const CLOUD_MESSAGE_API = process.env.CLOUD_MESSAGE_API;
+export const CLOUD_MESSAGE_ENABLE = false
+export const CLOUD_MESSAGE_API = ""
 export const AI_PROXY_API = process.env.AI_PROXY_API;
 
 export const TEST_USERNAME = process.env.TEST_USERNAME;
