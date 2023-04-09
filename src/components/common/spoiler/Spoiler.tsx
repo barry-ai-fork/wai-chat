@@ -14,6 +14,7 @@ import Account from "../../../worker/share/Account";
 import useLang from "../../../hooks/useLang";
 import {hashSha256} from "../../../worker/share/utils/helpers";
 import {getActions} from "../../../global";
+import {UseLocalDb} from "../../../worker/setting";
 
 type OwnProps = {
   children?: React.ReactNode;
@@ -63,24 +64,25 @@ const Spoiler: FC<OwnProps> = ({
       tempText = contentRef.current!.innerText;
       //@ts-ignore
       const {hint,cipher} = entity;
-      const {password} = await getPasswordFromEvent(hint,true);
-      if(password === ""){
-        return;
-      }else{
-        try {
-          let plain = await Account.getCurrentAccount()?.decryptByPrvKey(Buffer.from(cipher,'hex'),hashSha256(password))
-          if(!plain){
+      if(cipher){
+        const {password} = await getPasswordFromEvent(hint,true,'messageEncryptPassword');
+        if(password === ""){
+          return;
+        }else{
+          try {
+            let plain = await Account.getCurrentAccount()?.decryptData(Buffer.from(cipher,'hex'),password)
+            if(!plain){
+              showNotification({message:lang("DecryptError")});
+              return
+            }
+            contentRef.current!.innerText = plain.toString();
+          }catch (e){
             showNotification({message:lang("DecryptError")});
             return
           }
-          contentRef.current!.innerText = plain.toString();
-        }catch (e){
-          showNotification({message:lang("DecryptError")});
-          return
         }
       }
     }
-
     actionsByMessageId.get(messageId!)?.forEach((actions) => actions.reveal());
 
     const totalContentLength = actionsByMessageId.get(messageId!)
@@ -90,8 +92,10 @@ const Spoiler: FC<OwnProps> = ({
 
     setTimeout(() => {
       actionsByMessageId.get(messageId!)?.forEach((actions) => actions.conceal());
-      contentRef.current!.innerText = tempText;
-      tempText = ""
+      if(UseLocalDb){
+        contentRef.current!.innerText = tempText;
+        tempText = ""
+      }
       conceal();
     }, timeoutMs);
   }, [conceal, messageId]);

@@ -127,7 +127,6 @@ const SettingsFoldersMain: FC<OwnProps & StateProps> = ({
 
     return folderIds.map((id) => {
       const folder = foldersById[id];
-
       if (id === ALL_FOLDER_ID) {
         return {
           id,
@@ -187,7 +186,6 @@ const SettingsFoldersMain: FC<OwnProps & StateProps> = ({
   const canCreateNewFolder = useMemo(() => {
     return !isPremium || Object.keys(foldersById).length < maxFolders - 1;
   }, [foldersById, isPremium, maxFolders]);
-
   return (
     <div className="settings-content no-border custom-scroll">
       <div className="settings-content-header">
@@ -271,7 +269,7 @@ const SettingsFoldersMain: FC<OwnProps & StateProps> = ({
                   narrow
                   secondaryIcon="more"
                   multiline
-                  contextActions={[
+                  contextActions={folder.id === 1 ? undefined : [
                     {
                       handler: () => {
                         openDeleteChatFolderModal({ folderId: folder.id });

@@ -16505,7 +16505,7 @@ export default {
   },
   'ChatList.DeleteForCurrentUser': {
     key: 'ChatList.DeleteForCurrentUser',
-    value: '只是删除我的记录',
+    value: '删除',
   },
   'lng_media_download': {
     key: 'lng_media_download',

@@ -29,6 +29,7 @@ type OwnProps = {
 };
 
 type StateProps = {
+  session?:string;
   isCurrentUserPremium?: boolean;
   hasPassword?: boolean;
   hasPasscode?: boolean;
@@ -50,6 +51,7 @@ type StateProps = {
 };
 
 const SettingsPrivacy: FC<OwnProps & StateProps> = ({
+  session,
   isActive,
   isCurrentUserPremium,
   hasPassword,
@@ -133,12 +135,12 @@ const SettingsPrivacy: FC<OwnProps & StateProps> = ({
   const [mnemonic,setMnemonic] = useState("");
   const [mnemonicEncrypt,setMnemonicEncrypt] = useState("");
   const onShowMnemonic = useCallback(async ()=>{
-    const {password} = await getPasswordFromEvent(undefined,true)
+    const {password} = await getPasswordFromEvent(undefined,true,'showMnemonic')
     if(!password){
       return
     }
     const account = Account.getCurrentAccount();
-    const res = await account?.verifyPwd(password);
+    const res = await account?.verifySession(session,password);
     if(!res){
       return showNotification({message:"密码不正确"})
     }
@@ -200,6 +202,22 @@ const SettingsPrivacy: FC<OwnProps & StateProps> = ({
         >
           助记词
         </ListItem>
+          {/*<ListItem*/}
+          {/*  icon="key"*/}
+          {/*  narrow*/}
+          {/*  // eslint-disable-next-line react/jsx-no-bind*/}
+          {/*  onClick={() => onScreenSelect(*/}
+          {/*    hasPasscode ? SettingsScreens.PasscodeEnabled : SettingsScreens.PasscodeDisabled,*/}
+          {/*  )}*/}
+          {/*>*/}
+          {/*  <div className="multiline-menu-item">*/}
+          {/*    <span className="title">{lang('Passcode')}</span>*/}
+          {/*    <span className="subtitle" dir="auto">*/}
+          {/*      {lang(hasPasscode ? 'PasswordOn' : 'PasswordOff')}*/}
+          {/*    </span>*/}
+          {/*  </div>*/}
+          {/*</ListItem>*/}
+
       </div>
 
       {/*<div className="settings-item pt-3">*/}
@@ -422,9 +440,11 @@ export default memo(withGlobal<OwnProps>(
         hasPasscode,
       },
       appConfig,
+      session,
     } = global;
 
     return {
+      session,
       isCurrentUserPremium: selectIsCurrentUserPremium(global),
       hasPassword,
       hasPasscode: Boolean(hasPasscode),

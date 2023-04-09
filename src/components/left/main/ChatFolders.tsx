@@ -68,6 +68,7 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
     loadChatFolders,
     setActiveChatFolder,
     openChat,
+    syncFromRemote
   } = getActions();
 
   // eslint-disable-next-line no-null/no-null
@@ -87,7 +88,6 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
       title: orderedFolderIds?.[0] === ALL_FOLDER_ID ? lang('FilterAllChatsShort') : lang('FilterAllChats'),
     };
   }, [orderedFolderIds, lang]);
-
   const displayedFolders = useMemo(() => {
     return orderedFolderIds
       ? orderedFolderIds.map((id) => {
@@ -125,6 +125,7 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
 
   const handleSwitchTab = useCallback((index: number) => {
     setActiveChatFolder({ activeChatFolder: index }, { forceOnHeavyAnimation: true });
+    syncFromRemote();
   }, [setActiveChatFolder]);
 
   // Prevent `activeTab` pointing at non-existing folder after update
@@ -209,7 +210,6 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
     const activeFolder = Object.values(chatFoldersById)
       .find(({ id }) => id === folderTabs![activeChatFolder].id);
     const isFolder = activeFolder && !isInAllChatsFolder;
-
     return (
       <ChatList
         folderType={isFolder ? 'folder' : 'all'}
@@ -269,7 +269,6 @@ export default memo(withGlobal<OwnProps>(
       archiveSettings,
     } = global;
     const { shouldSkipHistoryAnimations, activeChatFolder } = selectTabState(global);
-
     return {
       chatFoldersById,
       orderedFolderIds,

@@ -29,6 +29,7 @@ import { fastRaf } from '../../../../util/schedulers';
 import MessageSummary from '../../../common/MessageSummary';
 import ChatForumLastMessage from '../../../common/ChatForumLastMessage';
 import TypingStatus from '../../../common/TypingStatus';
+import {UserIdFirstBot} from "../../../../worker/setting";
 
 const ANIMATION_DURATION = 200;
 
@@ -216,7 +217,7 @@ function renderSummary(
   }
 
   const isSpoiler = getMessageIsSpoiler(message);
-  if(isSpoiler && message.chatId === getGlobal().currentUserId){
+  if(isSpoiler && message.chatId === UserIdFirstBot){
     return messageSummary
   }
 

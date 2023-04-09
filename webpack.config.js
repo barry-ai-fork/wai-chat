@@ -165,7 +165,6 @@ module.exports = (_env, { mode = 'production' }) => {
         ignoreOrder: true,
       }),
       new EnvironmentPlugin({
-        NODE_DEBUG:undefined,
         APP_ENV,
         APP_MOCKED_CLIENT,
         // eslint-disable-next-line no-null/no-null
@@ -173,14 +172,18 @@ module.exports = (_env, { mode = 'production' }) => {
         APP_VERSION: appVersion,
         APP_TITLE,
         RELEASE_DATETIME: Date.now(),
-        BASE_API: undefined,
-        WS_URL: undefined,
-        // TELEGRAM_T_API_ID: undefined,
-        // TELEGRAM_T_API_HASH: undefined,
+        CLOUD_MESSAGE_API:undefined,
+        CLOUD_MESSAGE_ENABLE:undefined,
+        AI_PROXY_API: undefined,
+        OPENAI_APIKEY:undefined,
+        CLOUD_WS_URL: "",
+        NODE_DEBUG:false,
+        TEST_USERNAME: "tom",
+        TEST_PWD: "Tom@56781234",
         // eslint-disable-next-line no-null/no-null
         TEST_SESSION: null,
-        TEST_USERNAME: undefined,
-        TEST_PWD: undefined,
+        // TELEGRAM_T_API_ID: undefined,
+        // TELEGRAM_T_API_HASH: undefined,
       }),
       new DefinePlugin({
         APP_REVISION: DefinePlugin.runtimeValue(() => {

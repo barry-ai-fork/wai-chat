@@ -12,7 +12,7 @@ import type { TabState, GlobalState } from '../../../global/types';
 import {
   ANIMATION_LEVEL_MAX,
   APP_NAME, APP_VERSION, ASSET_CACHE_NAME,
-  BETA_CHANGELOG_URL,
+  BETA_CHANGELOG_URL, CLOUD_MESSAGE_ENABLE,
   DEBUG,
   FEEDBACK_URL, GLOBAL_STATE_CACHE_KEY,
   IS_BETA,
@@ -49,7 +49,7 @@ import StatusButton from './StatusButton';
 
 import './LeftMainHeader.scss';
 import * as cacheApi from '../../../util/cacheApi';
-import {clear} from "../../../util/cacheApi";
+import {UseLocalDb} from "../../../worker/setting";
 
 type OwnProps = {
   shouldHideSearch?: boolean;
@@ -69,6 +69,7 @@ type StateProps =
     searchQuery?: string;
     isLoading: boolean;
     currentUserId?: string;
+    currentAccountAddress?: string;
     globalSearchChatId?: string;
     searchDate?: number;
     theme: ISettings['theme'];
@@ -113,6 +114,7 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
   hasPasscode,
   canInstall,
   archiveSettings,
+  currentAccountAddress,
 }) => {
   const {
     openChat,
@@ -125,7 +127,8 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
     skipLockOnUnload,
     openUrl,
     signOut,
-    updateGlobal
+    updateGlobal,
+    syncFromRemote
   } = getActions();
 
   const lang = useLang();
@@ -198,6 +201,7 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
   }, [hasMenu, isMobile, lang, onReset, shouldSkipTransition]);
 
   const handleSearchFocus = useCallback(() => {
+    syncFromRemote();
     if (!searchQuery) {
       onSearchQuery('');
     }
@@ -251,27 +255,30 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
 
   const handleClearCache = useCallback(async () => {
     openChat({ id: undefined }, { forceOnHeavyAnimation: true });
-    setTimeout(async ()=>{
-      const {chats,messages} = getGlobal();
-      Object.values(chats.byId).forEach(chat=>{
-        chat.lastMessage = undefined
-        messages.byChatId[chat.id].byId = {}
-        messages.byChatId[chat.id].threadsById['-1'].lastViewportIds = []
-        messages.byChatId[chat.id].threadsById['-1'].listedIds = []
-        messages.byChatId[chat.id].threadsById['-1'].lastScrollOffset = undefined
-      })
-      updateGlobal({
-        messages,
-        chats
-      })
+    await cacheApi.clear(LANG_CACHE_NAME);
+    await cacheApi.clear(ASSET_CACHE_NAME);
+    if(!UseLocalDb){
+      setTimeout(async ()=>{
+        const {chats,messages} = getGlobal();
+        Object.values(chats.byId).forEach(chat=>{
+          chat.lastMessage = undefined
+          messages.byChatId[chat.id].byId = {}
+          messages.byChatId[chat.id].threadsById['-1'].lastViewportIds = []
+          messages.byChatId[chat.id].threadsById['-1'].listedIds = []
+          messages.byChatId[chat.id].threadsById['-1'].lastScrollOffset = undefined
+        })
+        updateGlobal({
+          messages,
+          chats
+        })
 
-      await cacheApi.clear(LANG_CACHE_NAME);
-      await cacheApi.clear(ASSET_CACHE_NAME);
-      setTimeout(()=>{
-        location.reload();
       },500)
+    }
+    setTimeout(()=>{
+      location.reload();
     },500)
   }, [openUrl]);
+
   const handleSignOutClick = useCallback(() => {
     openChat({ id: undefined }, { forceOnHeavyAnimation: true });
     window.history.replaceState({}, '', window.location.href.split("#")[0]);
@@ -329,7 +336,7 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
         </MenuItem>
       }
       {
-        currentUserId &&
+        currentUserId && !UseLocalDb &&
         <MenuItem
           icon="saved-messages"
           onClick={handleSelectSaved}
@@ -422,8 +429,9 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
         </MenuItem>
       )}
       {
-        currentUserId ?
-
+        !CLOUD_MESSAGE_ENABLE ?
+          <></>:
+          currentAccountAddress  ?
         <MenuItem
           icon="logout"
           onClick={handleSignOutClick}
@@ -538,7 +546,7 @@ export default memo(withGlobal<OwnProps>(
       query: searchQuery, fetchingStatus, chatId, date,
     } = tabState.globalSearch;
     const {
-      currentUserId, connectionState, isSyncing, archiveSettings,
+      currentUserId, connectionState, isSyncing, archiveSettings,currentAccountAddress
     } = global;
     const { byId: chatsById } = global.chats;
     const { isConnectionStatusMinimized, animationLevel } = global.settings.byKey;
@@ -547,6 +555,7 @@ export default memo(withGlobal<OwnProps>(
       searchQuery,
       isLoading: fetchingStatus ? Boolean(fetchingStatus.messages) : false,
       currentUserId,
+      currentAccountAddress,
       chatsById,
       globalSearchChatId: chatId,
       searchDate: date,

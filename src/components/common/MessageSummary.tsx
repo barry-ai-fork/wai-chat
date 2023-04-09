@@ -40,7 +40,7 @@ function MessageSummary({
   const { text, entities } = message.content.text || {};
 
   const hasSpoilers = entities?.some((e) => e.type === ApiMessageEntityTypes.Spoiler);
-  const hasCustomEmoji = entities?.some((e) => e.type === ApiMessageEntityTypes.CustomEmoji);
+  const hasCustomEmoji = entities?.some && entities?.some((e) => e.type === ApiMessageEntityTypes.CustomEmoji);
   if (!text || (!hasSpoilers && !hasCustomEmoji)) {
     const trimmedText = trimText(getMessageSummaryText(lang, message, noEmoji), truncateLength);
 

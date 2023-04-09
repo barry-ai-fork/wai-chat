@@ -18,13 +18,15 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react"
+    "jsx": "react",
+    "types": ["@cloudflare/workers-types"]
   },
   "include": [
+    "functions",
     "src",
     "tests",
     "plugins",
     "dev",
     "webpack.config.js",
-  ]
+  ],
 }

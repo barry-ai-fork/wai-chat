@@ -5,16 +5,24 @@ import type { ActionReturnType } from '../../types';
 
 import { callApi } from '../../../api/gramjs';
 import {
-  addUsers, updateChat, updateManagement, updateManagementProgress,
+  addUsers,
+  updateChat,
+  updateManagement,
+  updateManagementProgress,
+  updateUsers,
+  updateUserWaitToSync,
 } from '../../reducers';
 import {
   selectChat, selectCurrentMessageList, selectTabState, selectUser,
 } from '../../selectors';
-import { ensureIsSuperGroup } from './chats';
+import {ensureIsSuperGroup, updateLocalUser} from './chats';
 import { getUserFirstOrLastName } from '../../helpers';
 import { buildCollectionByKey } from '../../../util/iteratees';
 import { getCurrentTabId } from '../../../util/establishMultitabRole';
 import * as langProvider from '../../../util/langProvider';
+import {UseLocalDb} from "../../../worker/setting";
+import {blobToDataUri, fetchBlob, imgToBlob} from "../../../util/files";
+import {resizeImage} from "../../../util/imageResize";
 
 addActionHandler('checkPublicLink', async (global, actions, payload): Promise<void> => {
   const { username, tabId = getCurrentTabId() } = payload;
@@ -422,18 +430,24 @@ addActionHandler('uploadContactProfilePhoto', async (global, actions, payload): 
   const {
     userId, file, isSuggest, tabId = getCurrentTabId(),
   } = payload;
-
+  // debugger
   const user = selectUser(global, userId);
   if (!user) return;
 
   global = updateManagementProgress(global, ManagementProgress.InProgress, tabId);
   setGlobal(global);
 
-  const result = await callApi('uploadContactProfilePhoto', {
+  let result;
+  const blob = await imgToBlob(file!);
+  const thumbnailUrl = await resizeImage(blob,40,40,file!.type,0.1);
+  const thumbnail = await blobToDataUri(await fetchBlob(thumbnailUrl));
+  result = await callApi('uploadContactProfilePhoto', {
     user,
     file,
     isSuggest,
+    thumbnail,
   });
+
 
   if (!result) {
     global = getGlobal();
@@ -444,21 +458,27 @@ addActionHandler('uploadContactProfilePhoto', async (global, actions, payload): 
   }
 
   global = getGlobal();
-  global = addUsers(global, buildCollectionByKey(result.users, 'id'));
+  // @ts-ignore
+  global = updateUsers(global, buildCollectionByKey(result.users, 'id'));
   setGlobal(global);
 
   const { id, accessHash } = user;
-  const newUser = await callApi('fetchFullUser', { id, accessHash });
-  if (!newUser) {
+  if(!UseLocalDb){
+    const newUser = await callApi('fetchFullUser', { id, accessHash });
+    if (!newUser) {
+      global = getGlobal();
+      global = updateManagementProgress(global, ManagementProgress.Error, tabId);
+      setGlobal(global);
+      return;
+    }
+    actions.loadProfilePhotos({ profileId: userId });
+  }else{
     global = getGlobal();
-    global = updateManagementProgress(global, ManagementProgress.Error, tabId);
-    setGlobal(global);
-    return;
+    updateLocalUser(result.users[0],false,undefined,global.currentAccountAddress)
   }
 
-  actions.loadProfilePhotos({ profileId: userId });
-
   global = getGlobal();
+  global = updateUserWaitToSync(global,userId)
   global = updateManagementProgress(global, ManagementProgress.Complete, tabId);
   setGlobal(global);
 

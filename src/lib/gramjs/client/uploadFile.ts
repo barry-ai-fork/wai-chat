@@ -7,8 +7,10 @@ import { getUploadPartSize } from '../Utils';
 import errors from '../errors';
 import { Foreman } from '../../../util/foreman';
 import {UploadReq} from "../../ptp/protobuf/PTPFile";
-import {BASE_API, DEBUG} from "../../../config";
+import {CLOUD_MESSAGE_API, DEBUG} from "../../../config";
 import localDb from "../../../api/gramjs/localDb";
+import {UseLocalDb} from "../../../worker/setting";
+import {accountSession} from "../../../api/gramjs/methods/client";
 
 interface OnProgress {
     isCanceled?: boolean;
@@ -65,7 +67,6 @@ export async function uploadFileV1(
         const senderIndex = currentForemanIndex % (
             isPremium ? MAX_CONCURRENT_CONNECTIONS_PREMIUM : MAX_CONCURRENT_CONNECTIONS
         );
-
         await foremans[senderIndex].requestWorker();
 
         if (onProgress?.isCanceled) {
@@ -80,25 +81,31 @@ export async function uploadFileV1(
             // eslint-disable-next-line no-constant-condition
             while (true) {
                 try {
-                    if(DEBUG){
-                        console.log("uploadProfilePhoto",fileIdStr,jMemo,partCount)
+                    if(CLOUD_MESSAGE_API){
+                        if(DEBUG){
+                            console.log("uploadProfilePhoto",fileIdStr,jMemo,partCount)
+                        }
+                        const partBytes = await blobSliceMemo.arrayBuffer();
+                        const buf = Buffer.from(partBytes)
+
+                        const fileInfo = {
+                            id:fileIdStr,
+                            size,
+                            type:file.type,
+                            part:jMemo,
+                            part_total:partCount,
+                            buf
+                        }
+                        const uploadReq = new UploadReq({file:fileInfo})
+                        const body = Buffer.from(uploadReq.pack().getPbData());
+                        await fetch(`${CLOUD_MESSAGE_API}/proto`,{
+                            method: 'POST',
+                            body,
+                            headers:{
+                                Authorization: `Bearer ${accountSession.session}`,
+                            }
+                        })
                     }
-                    const partBytes = await blobSliceMemo.arrayBuffer();
-                    const buf = Buffer.from(partBytes)
-                    const fileInfo = {
-                        id:fileIdStr,
-                        size,
-                        type:file.type,
-                        part:jMemo,
-                        part_total:partCount,
-                        buf
-                    }
-                    const uploadReq = new UploadReq({file:fileInfo})
-                    const body = Buffer.from(uploadReq.pack().getPbData());
-                    await fetch(`${BASE_API}/proto`,{
-                        method: 'POST',
-                        body
-                    })
                 } catch (err) {
                     // if (sender && !sender.isConnected()) {
                     //     await sleep(DISCONNECT_SLEEP);

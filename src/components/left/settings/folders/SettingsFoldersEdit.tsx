@@ -51,8 +51,12 @@ const SUBMIT_TIMEOUT = 500;
 
 const INITIAL_CHATS_LIMIT = 5;
 
-const ERROR_NO_TITLE = 'Please provide a title for this folder.';
-const ERROR_NO_CHATS = 'ChatList.Filter.Error.Empty';
+// const ERROR_NO_TITLE = 'Please provide a title for this folder.';
+// const ERROR_NO_CHATS = 'ChatList.Filter.Error.Empty';
+
+
+const ERROR_NO_TITLE = '请填写名称';
+const ERROR_NO_CHATS = '对话不能为空';
 
 const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
   state,
@@ -136,11 +140,11 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
       dispatch({ type: 'setError', payload: ERROR_NO_TITLE });
       return;
     }
-
-    if (!includedChatIds.length && !Object.keys(includedChatTypes).length) {
-      dispatch({ type: 'setError', payload: ERROR_NO_CHATS });
-      return;
-    }
+    //
+    // if (!includedChatIds.length && !Object.keys(includedChatTypes).length) {
+    //   dispatch({ type: 'setError', payload: ERROR_NO_CHATS });
+    //   return;
+    // }
 
     dispatch({ type: 'setIsLoading', payload: true });
     if (state.mode === 'edit') {

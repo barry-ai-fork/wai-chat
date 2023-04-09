@@ -16,7 +16,7 @@ import PasswordForm from "../common/PasswordForm";
 import {sha1} from '../../lib/gramjs/Helpers';
 
 import {parseQueryFromUrl} from "../../worker/share/utils/utils";
-import {BASE_API, SESSION_TOKEN, TEST_PWD, TEST_USERNAME} from "../../config";
+import {CLOUD_MESSAGE_API, SESSION_TOKEN, TEST_PWD, TEST_USERNAME} from "../../config";
 import {getIsMobile} from "../../hooks/useAppLayout";
 import {isEmailValid} from "../../worker/share/utils/utils";
 import {passwordCheck} from "../../worker/share/utils/helpers";
@@ -102,7 +102,7 @@ const AuthRegisterEmail: FC<StateProps> = ({
       }
       setAuthIsLoading(true)
       try{
-        const response = await fetch(`${BASE_API}/auth/password`, {
+        const response = await fetch(`${CLOUD_MESSAGE_API}/auth/password`, {
           method: 'POST',
           headers: {
             "Accept": 'application/json',
@@ -136,7 +136,7 @@ const AuthRegisterEmail: FC<StateProps> = ({
     }
     setAuthIsLoading(true)
     try{
-      const response = await fetch(`${BASE_API}/auth/${isRegMode?"reg":"login"}`, {
+      const response = await fetch(`${CLOUD_MESSAGE_API}/auth/${isRegMode?"reg":"login"}`, {
         method: 'POST',
         headers: {
           "Accept": 'application/json',
@@ -176,7 +176,7 @@ const AuthRegisterEmail: FC<StateProps> = ({
     const {code,email} = query;
     const handleToken = async ()=>{
       try{
-        const response = await fetch(`${BASE_API}/auth/token`, {
+        const response = await fetch(`${CLOUD_MESSAGE_API}/auth/token`, {
           method: 'POST',
           headers: {
             "Accept": 'application/json',
@@ -295,12 +295,12 @@ const AuthRegisterEmail: FC<StateProps> = ({
         </div>
         <div className="oauth-btn">
           <Button type="button" onClick={()=>{
-            window.location.href = `${BASE_API}/auth/github`;
+            window.location.href = `${CLOUD_MESSAGE_API}/auth/github`;
           }} className="Button translucent round" aria-label="Github" style="">
             <img src={github} alt="Github"/>
           </Button>
           <Button type="button" onClick={()=>{
-            window.location.href = `${BASE_API}/auth/google`;
+            window.location.href = `${CLOUD_MESSAGE_API}/auth/google`;
           }} className="Button translucent round" aria-label="Google" style="">
             <img src={google} alt="Google"/>
           </Button>

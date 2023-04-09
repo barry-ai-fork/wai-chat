@@ -95,12 +95,15 @@ addActionHandler('initApi', async (global, actions): Promise<void> => {
   Account.setKvStore(new LocalStorage())
   const accountId = Account.getCurrentAccountId();
   let account = Account.getInstance(accountId);
-  const session = await account.loadSession()
+  const session = global.session;
+  const currentAccountAddress = global.currentAccountAddress
+
   const entropy = await account.getEntropy();
   void initApi(actions.apiUpdate, {
     payload:{
       entropy,
       session,
+      currentAccountAddress,
       accountId
     },
     userAgent: navigator.userAgent,
@@ -142,153 +145,89 @@ addActionHandler('setAuthCode', (global, actions, payload): ActionReturnType => 
 
 addActionHandler('setAuthPassword', async (global, actions, payload): ActionReturnType => {
   const { password,mnemonic } = payload!;
-  if(global.msgClientState !== 'connectionStateWaitingLogin'){
-    setGlobal({
-      ...global,
-      authIsLoading: false,
-      authError: "连接服务器中...，请稍后再试！",
-    })
-    setTimeout(()=>{
-      setGlobal({
-        ...getGlobal(),
-        authIsLoading: false,
-        authError: undefined,
-      })
-    },3000)
-    return
-  }
-  setGlobal({
-    ...global,
-    authIsLoading: true,
-    authError: undefined,
-  })
-  let account;
+  const {session,currentAccountAddress} = global
   if(mnemonic){
-    function waitForMsgServerState(
-      state: ApiUpdateMsgClientStateType,
-      timeout: number = 30000,
-      startTime: number = 0
-  ) {
-      const timeout_ = 500;
-      return new Promise<boolean>((resolve) => {
-        setTimeout(() => {
-          if (getGlobal().msgClientState === state) {
-            resolve(true);
-          } else if (timeout > 0 && startTime >= timeout) {
-            resolve(false);
-          } else {
-            startTime += timeout_;
-            // eslint-disable-next-line promise/catch-or-return
-            waitForMsgServerState(state, timeout, startTime).then(resolve);
-          }
-        }, timeout_);
-      });
-    }
-
-
-    account = Account.getInstance(Account.genAccountId());
+    const account = Account.getInstance(Account.genAccountId());
     await account.setEntropy(new Mnemonic(mnemonic).toEntropy())
     Account.setCurrentAccountId(account.getAccountId())
     console.log("[change account]",account.getAccountId())
-    await callApi('destroy');
-    actions.initApi();
-    try {
-      await waitForMsgServerState("connectionStateWaitingLogin")
-    }catch (e){
-        setGlobal({
-          ...getGlobal(),
-          authIsLoading: false,
-          authError: "链接重置中,稍后再试！",
-        })
-        return
-    }
-  }else{
-    account = Account.getCurrentAccount();
-  }
-
-  if(!account){
+    const pwd = hashSha256(password)
+    const ts = +(new Date());
+    const {address,sign} = await account.signMessage(ts.toString(),pwd);
     global = getGlobal();
     setGlobal({
       ...global,
+      currentAccountAddress:address,
+      session:sign.toString("hex") + "_" +ts.toString(),
+      authState:"authorizationStateReady",
       authIsLoading: false,
-      authError: "account is not found",
+      authError: undefined,
     })
-    return
-  }
-  try {
-    const pwd = hashSha256(password)
-    const ts = +(new Date());
-    const res1 = await account.signMessage(ts.toString());
-    const res2 = await account.signMessage(
-      ts.toString()+res1!.address,
-      pwd
-    );
-    const pdu = new AuthPreLoginReq({
-      ts,
-      sign1:res1!.sign,
-      address1:res1!.address,
-      sign2:res2!.sign,
-      address2:res2!.address,
-    }).pack();
-    // console.log({res1,res2})
-    const resPre = await callApi("sendWithCallback",pdu.getPbData())
+    await callApi("setSession",{
+      currentAccountAddress:address,
+      session:sign.toString("hex") + "_" +ts.toString(),
+      accountId:account.getAccountId()
+    })
+    actions.loadAllChats({listType:'active'});
+  }else{
+    const account = Account.getCurrentAccount()!;
+    if(session){
+      if(!currentAccountAddress){
+        const address = await account.verifySession(session!,password);
+        global = getGlobal();
+        if(!address){
+          setGlobal({
+            ...global,
+            authIsLoading: false,
+            authError: "密码不正确"
+          })
+        }else{
+          setGlobal({
+            ...global,
+            currentAccountAddress:address,
+            authState:"authorizationStateReady",
+            authIsLoading: false,
+            authError: undefined,
+          })
 
-    const authPreLoginRes = AuthPreLoginRes.parseMsg(new Pdu(resPre))
-    // console.log({authPreLoginRes})
-    if(authPreLoginRes.err !== ERR.NO_ERROR){
-      const global = getGlobal();
+          await callApi("setSession",{
+            currentAccountAddress:address,
+            accountId:account.getAccountId()
+          })
+
+          actions.loadAllChats({listType:'active'});
+        }
+      }
+    }else{
+      const pwd = hashSha256(password)
+      const ts = +(new Date());
+      const {address,sign} = await account.signMessage(ts.toString(),pwd);
+
+      global = getGlobal();
       setGlobal({
         ...global,
-        authIsLoading: false,
-        authError: "request uid error",
-      })
-      return;
-    }
-
-    const res21 = await account.signMessage(
-      authPreLoginRes.ts.toString() + authPreLoginRes.uid,
-      pwd
-    );
-    // console.log(res21)
-    const sessionData = {
-      ts:authPreLoginRes.ts,
-      uid:authPreLoginRes.uid,
-      sign:res21!.sign,
-      address:res21!.address,
-    }
-    const res = await callApi("msgClientLogin",sessionData)
-    if(res){
-      // console.log(sessionData,authLoginRes)
-      setGlobal({
-        ...getGlobal(),
+        currentAccountAddress:address,
+        session:sign.toString("hex") + "_" +ts.toString(),
         authState:"authorizationStateReady",
         authIsLoading: false,
         authError: undefined,
       })
-    }else{
-      setGlobal({
-        ...getGlobal(),
-        authIsLoading: false,
-        authError: "登录失败",
-      })
-    }
 
-  }catch (e){
-    console.error(e)
-    setGlobal({
-      ...getGlobal(),
-      authIsLoading: false,
-      authError: "系统错误请稍后再试",
-    })
-    return;
+      await callApi("setSession",{
+        currentAccountAddress:address,
+        session:sign.toString("hex") + "_" +ts.toString(),
+        accountId:account.getAccountId()
+      })
+      actions.loadAllChats({listType:'active'});
+    }
   }
+
 });
 
 addActionHandler('uploadProfilePhoto', async (global, actions, payload): Promise<void> => {
   const {
     file, isFallback, isVideo, videoTs,
   } = payload!;
-  // debugger
   const res = await callApi('uploadProfilePhoto', file, isFallback, isVideo, videoTs);
   if (!res) return;
 
@@ -348,29 +287,22 @@ addActionHandler('saveSession', (global, actions, payload): ActionReturnType => 
 addActionHandler('signOut', async (global, actions, payload): Promise<void> => {
   setGlobal({
     ...global,
+    currentAccountAddress:"",
     isLoggingOut:true,
     passcode:{},
-    currentUserId:"",
     chats:{
       ...global.chats,
-      byId:{},
       listIds:{
+        ...global.chats.listIds,
         active:[]
       }
     },
   })
-  const account_id = Account.getCurrentAccountId();
-  await Account.getInstance(account_id).delSession();
-  window.localStorage.removeItem(GLOBAL_STATE_CACHE_KEY)
   try {
     await unsubscribe();
-    await callApi('destroy');
-    // await forceWebsync(false);
   } catch (err) {
     // Do nothing
   }
-
-  actions.reset();
 
   if (payload?.forceInitApi) {
     actions.initApi();
@@ -382,28 +314,6 @@ addActionHandler('signOut', async (global, actions, payload): Promise<void> => {
     authState:"authorizationStateWaitPassword",
     isLoggingOut:false,
   })
-
-  // if ('hangUp' in actions) actions.hangUp({ tabId: getCurrentTabId() });
-  // if ('leaveGroupCall' in actions) actions.leaveGroupCall({ tabId: getCurrentTabId() });
-  //
-  // try {
-  //   await unsubscribe();
-  //   await callApi('destroy');
-  //   await forceWebsync(false);
-  // } catch (err) {
-  //   // Do nothing
-  // }
-  //
-  // actions.reset();
-  //
-  // if (payload?.forceInitApi) {
-  //   actions.initApi();
-  // }
-  // setGlobal({
-  //   ...global,
-  //   currentUserId:"",
-  //   authState:"authorizationStateWaitRegistration",
-  // })
 });
 
 addActionHandler('reset', (global, actions): ActionReturnType => {

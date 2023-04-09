@@ -1,6 +1,7 @@
 import type { ApiDocument, ApiPhoto } from './messages';
 import type { ApiBotInfo } from './bots';
 import type { API_CHAT_TYPES } from '../../config';
+import {PbBot_Type, PbUser_Type} from "../../lib/ptp/protobuf/PTPCommon/types";
 
 export interface ApiUser {
   id: string;
@@ -16,6 +17,7 @@ export interface ApiUser {
   usernames?: ApiUsername[];
   phoneNumber: string;
   accessHash?: string;
+  bot?: PbBot_Type;
   hasVideoAvatar?: boolean;
   avatarHash?: string;
   photos?: ApiPhoto[];

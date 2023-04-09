@@ -28,6 +28,6 @@ import type { ApiLangPack } from '../api/types';
 export default ${JSON.stringify(jsonLang,null,2)} as ApiLangPack;
 `))
 }
-
-doGen("values/strings.xml","LangPack-en.ts");
-doGen("values-zh-rCN/strings.xml","LangPack-zh-rCN.ts");
+//
+// doGen("values/strings.xml","fallbackLangPack_en.ts");
+// doGen("values-zh-rCN/strings.xml","fallbackLangPack_zh-rCN.ts");

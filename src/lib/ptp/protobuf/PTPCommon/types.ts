@@ -4,6 +4,13 @@ export enum AUTH_TYPE {
   AUTH_TYPE_MOBILE = 2,
 }
 
+export enum EncryptType {
+  EncryptType_Wallet = 0,
+  EncryptType_Group = 1,
+  EncryptType_Message = 2,
+  EncryptType_Media = 3,
+}
+
 export enum ERR {
   NO_ERROR = 0,
   ERR_SYSTEM = 1,
@@ -24,15 +31,28 @@ export interface FileInfo_Type {
   type: string;
 }
 
+export interface MessageStoreRow_Type {
+  message?: PbMsg_Type;
+  chatId: string;
+  messageId: number;
+  time?: number;
+  buf?: Buffer;
+  encrypt?: boolean;
+}
+
 export interface PbAction_Type {
   text: string;
   type: string;
 }
 
+export interface PbBot_Type {
+  chatGptConfig?: PbChatGpBotConfig_Type;
+  enableAi?: boolean;
+}
+
 export interface PbBotInfo_Type {
   botId: string;
   description?: string;
-  isChatGpt?: boolean;
   menuButton?: PbMenuButton_Type;
   commands?: PbCommands_Type[];
   photo?: PbPhoto_Type;
@@ -70,6 +90,14 @@ export interface PbChatGpBotConfig_Type {
   init_system_content?: string;
   api_key?: string;
   max_history_length?: number;
+  config?: PbChatGptConfig_Type;
+}
+
+export interface PbChatGptConfig_Type {
+  model: string;
+  temperature: number;
+  max_tokens: number;
+  presence_penalty: number;
 }
 
 export interface PbCommands_Type {
@@ -175,7 +203,8 @@ export interface PbUser_Type {
   lastName?: string;
   isSelf?: boolean;
   avatarHash?: string;
-  photos?: PbPhoto_Type;
+  photos?: PbPhoto_Type[];
+  bot?: PbBot_Type;
 }
 
 export interface PbUsernames_Type {
@@ -195,5 +224,28 @@ export interface PbVoice_Type {
   id: string;
   waveform?: number[];
   duration?: number;
+}
+
+export interface UserMessageStoreData_Type {
+  messageIds?: number[];
+  time: number;
+  authUserId: number;
+}
+
+export interface UserStoreData_Type {
+  chatsDeleted?: number[];
+  chats?: number[];
+  chatFolders?: PbChatFolder_Type[];
+  folderIds?: number[];
+  time: number;
+  authUserId: number;
+}
+
+export interface UserStoreRow_Type {
+  buf?: Buffer;
+  userId: string;
+  time?: number;
+  user?: PbUser_Type;
+  encrypt?: boolean;
 }
 

@@ -96,7 +96,7 @@ const QrCode: FC<OwnProps> = ({content,tips}) => {
         </div>
         {!isQrMounted && <div className="qr-loading"><Loading /></div>}
       </div>
-      <div className={'pt-2'} style={"text-align:center"}>{tips}</div>
+      <div className={'pt-2'} style={"text-align:center"}><code>{tips}</code></div>
 
       <Button isText disabled={!isQrMounted} onClick={onDownload}>下载</Button>
     </div>

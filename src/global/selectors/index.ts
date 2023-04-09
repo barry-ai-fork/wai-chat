@@ -10,3 +10,6 @@ export * from './payments';
 export * from './settings';
 export * from './statistics';
 export * from './tabs';
+export * from './tabs';
+export * from './sync';
+

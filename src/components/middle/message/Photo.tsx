@@ -44,6 +44,7 @@ import {
 import Account from "../../../worker/share/Account";
 import {getGlobal} from "../../../global";
 import {hashSha256} from "../../../worker/share/utils/helpers";
+import {UserIdFirstBot} from "../../../worker/setting";
 
 export type OwnProps = {
   id?: string;
@@ -150,7 +151,7 @@ const Photo: FC<OwnProps> = ({
     }
 
     if (isSpoilerShown) {
-      if(message.chatId === getGlobal().currentUserId){
+      if(message.chatId === UserIdFirstBot){
         const data = await fetchBlob(fullMediaData);
         const buf = await blobToBuffer(data);
         const bb = wrapByteBuffer(buf);
@@ -166,9 +167,9 @@ const Photo: FC<OwnProps> = ({
               hint = readBytes(bb,hintLen);
               hint = hint.toString();
             }
-            const {password} = await getPasswordFromEvent(hint,true);
+            const {password} = await getPasswordFromEvent(hint,true,'messageEncryptPassword');
             const body = buf.subarray(2 * 3 + encryptTypeLne + typeLen + hintLen)
-            const decryptData = await Account.getCurrentAccount()?.decryptByPrvKey(body,hashSha256(password));
+            const decryptData = await Account.getCurrentAccount()?.decryptData(body,password);
             const uri = await blobToDataUri(new Blob([decryptData],{type:"image/jpeg"}))
             setDecryptUrl(uri);
             photosMap[getMessageMediaHash(message, 'full')!] = uri;

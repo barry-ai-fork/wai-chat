@@ -50,6 +50,7 @@ import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
 import {blobToDataUri, fetchBlob, imgToBlob} from "../../../util/files";
 import {resizeImage} from "../../../util/imageResize";
 import Account from "../../../worker/share/Account";
+import {UseLocalDb} from "../../../worker/setting";
 
 const BETA_LANG_CODES = ['ar', 'fa', 'id', 'ko', 'uz', 'en'];
 
@@ -135,6 +136,39 @@ export async function updateProfilePhoto(photo?: ApiPhoto, isFallback?: boolean)
 
 export async function uploadProfilePhoto(file: File, isFallback?: boolean, isVideo = false, videoTs = 0,thumbnail?:string) {
   const inputFile = await uploadFileV1({file,workers: UPLOAD_WORKERS});
+  const id = inputFile.id.toString();
+  if(UseLocalDb){
+    return {
+      avatarHash: id,
+        photos: [
+      {
+        id: id,
+        thumbnail: {
+          dataUri: thumbnail,
+          width: 640,
+          height: 640,
+        },
+        sizes: [
+          {
+            width: 160,
+            height: 160,
+            type: 's',
+          },
+          {
+            width: 320,
+            height: 320,
+            type: 'm',
+          },
+          {
+            width: 640,
+            height: 640,
+            type: 'x',
+          },
+        ],
+      },
+    ],
+    }
+  }
   let pdu = await Account.getCurrentAccount()?.sendPduWithCallback(new UploadProfilePhotoReq({
     id:inputFile.id.toString(),
     is_video:isVideo,
@@ -170,13 +204,54 @@ export async function uploadProfilePhoto(file: File, isFallback?: boolean, isVid
 }
 
 export async function uploadContactProfilePhoto({
-  file, isSuggest, user,
+  file, isSuggest, user,thumbnail
 }: {
   file?: File;
   isSuggest?: boolean;
   user: ApiUser;
+  thumbnail?:string
 }) {
-  const inputFile = file ? await uploadFile(file) : undefined;
+  const inputFile = file ? await uploadFileV1({file}) : undefined;
+  if(UseLocalDb){
+    const id = inputFile?.id.toString()
+    return {
+      users: [
+        {
+          ...user,
+          avatarHash: id,
+          photos: [
+            {
+              id: id,
+              thumbnail: {
+                dataUri: thumbnail,
+                width: 640,
+                height: 640,
+              },
+              sizes: [
+                {
+                  width: 160,
+                  height: 160,
+                  type: 's',
+                },
+                {
+                  width: 320,
+                  height: 320,
+                  type: 'm',
+                },
+                {
+                  width: 640,
+                  height: 640,
+                  type: 'x',
+                },
+              ],
+            }
+            ]
+        }
+      ]
+    }
+  }
+
+
   const result = await invokeRequest(new GramJs.photos.UploadContactProfilePhoto({
     userId: buildInputEntity(user.id, user.accessHash) as GramJs.InputUser,
     file: inputFile,

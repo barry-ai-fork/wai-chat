@@ -22,13 +22,15 @@ import {
   updateChat,
   updateChats,
   updateNotifySettings,
-  updateUser,
+  updateUser, updateUserWaitToSync,
 } from '../../reducers';
 import {isUserId} from '../../helpers';
 import {updateTabState} from '../../reducers/tabs';
 import {getCurrentTabId} from '../../../util/establishMultitabRole';
 import {blobToDataUri, fetchBlob, imgToBlob} from "../../../util/files";
 import {resizeImage} from "../../../util/imageResize";
+import {UseLocalDb} from "../../../worker/setting";
+import {updateLocalUser} from "./chats";
 
 addActionHandler('updateProfile', async (global, actions, payload): Promise<void> => {
   const {
@@ -46,6 +48,7 @@ addActionHandler('updateProfile', async (global, actions, payload): Promise<void
     },
   }, tabId);
   setGlobal(global);
+  let shouldUpdateLocalDb = false
   if (photo) {
     const blob = await imgToBlob(photo);
     const thumbnailUrl = await resizeImage(blob,40,40,photo.type,0.1);
@@ -55,6 +58,7 @@ addActionHandler('updateProfile', async (global, actions, payload): Promise<void
       global = getGlobal();
       const currentUser = currentUserId && selectUser(global, currentUserId);
       if(currentUser){
+        shouldUpdateLocalDb = true;
         global = updateUser(
           global,
           currentUser.id,
@@ -70,9 +74,10 @@ addActionHandler('updateProfile', async (global, actions, payload): Promise<void
 
   if (firstName || lastName || about) {
     const result = await callApi('updateProfile', { firstName, lastName, about });
-    if (result) {
+    if (result || UseLocalDb) {
       const currentUser = currentUserId && selectUser(global, currentUserId);
       if (currentUser) {
+        shouldUpdateLocalDb = true;
         global = getGlobal()
         global = updateUser(
           global,
@@ -93,9 +98,11 @@ addActionHandler('updateProfile', async (global, actions, payload): Promise<void
 
   if (username !== undefined) {
     const res = await callApi('updateUsername', username);
-    if (res) {
+    if (res || UseLocalDb) {
+
       const currentUser = currentUserId && selectUser(global, currentUserId);
       if(currentUser){
+        shouldUpdateLocalDb = true;
         const shouldUsernameUpdate = currentUser.usernames?.find((u) => u.isEditable);
         const usernames = shouldUsernameUpdate
           ? currentUser.usernames?.map((u) => (u.isEditable ? { ...u, username } : u))
@@ -106,8 +113,11 @@ addActionHandler('updateProfile', async (global, actions, payload): Promise<void
       }
     }
   }
-
   global = getGlobal();
+  if(shouldUpdateLocalDb && UseLocalDb){
+    updateLocalUser(global.users.byId[global.currentUserId!],false,undefined,global.currentAccountAddress);
+    global = updateUserWaitToSync(global,currentUserId)
+  }
   global = updateTabState(global, {
     profileEdit: {
       progress: ProfileEditProgress.Complete,

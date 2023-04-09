@@ -1,10 +1,12 @@
 import { hdkey as HDKey } from 'ethereumjs-wallet';
 
 import Mnemonic, {MnemonicLangEnum} from './Mnemonic';
+import {EncryptType} from "../protobuf/PTPCommon/types";
 
 export const ETH_HD_PATH = "m/44'/60'/0'";
 export const PTP_HD_PATH = "m/44'/60'/1'";
 export const PTP_GROUP_HD_PATH = "m/44'/60'/1'";
+
 
 export default class Wallet {
   private __masterKey: any | undefined;
@@ -71,9 +73,14 @@ export default class Wallet {
   }
 
   getPTPWallet(childIndex: number, hex?: boolean) {
-    return this.getChild(PTP_HD_PATH, childIndex, 0, !!hex);
+    return this.getChild(PTP_HD_PATH, childIndex, EncryptType.EncryptType_Wallet, !!hex);
   }
+
+  getPTPEncryptWallet(childIndex: number, type:EncryptType) {
+    return this.getChild(PTP_HD_PATH, childIndex, type, false);
+  }
+
   getGroupWallet(childIndex: number, hex?: boolean) {
-    return this.getChild(PTP_GROUP_HD_PATH, childIndex, 1, !!hex);
+    return this.getChild(PTP_GROUP_HD_PATH, childIndex, EncryptType.EncryptType_Group, !!hex);
   }
 }

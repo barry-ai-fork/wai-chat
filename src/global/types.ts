@@ -90,6 +90,7 @@ import type {
 import { typify } from '../lib/teact/teactn';
 import type { P2pMessage } from '../lib/secret-sauce';
 import type { ApiCredentials } from '../components/payment/PaymentModal';
+import {PbBot_Type, PbChatFolder_Type} from "../lib/ptp/protobuf/PTPCommon/types";
 
 export type MessageListType =
   'thread'
@@ -546,7 +547,36 @@ export type TabState = {
   };
 };
 
+export type WaitToSyncType = {
+  messagesDownload?:{
+    byId:Record<string, {
+      time:number,
+    }>;
+  };
+  users?:{
+    byId:Record<string, {
+      isDelete:boolean;
+      time:number,
+    }>;
+  };
+  messages?:{
+    byId:Record<string, {
+      isDelete:boolean;
+      chatId:string,
+      time:number
+    }>;
+  };
+  folders?:{
+    folderIds?:number[];
+    chatFolders?:PbChatFolder_Type[];
+    time?:number;
+  },
+}
+
 export type GlobalState = {
+  session?:string;
+  waitToSync?:Record<string, WaitToSyncType>
+  currentAccountAddress?:string;
   msgClientState?: ApiUpdateMsgClientStateType;
   config?: ApiConfig;
   appConfig?: ApiAppConfig;
@@ -846,6 +876,10 @@ export interface ActionPayloads {
   disconnect: undefined;
   initApi: undefined;
   sync: undefined;
+  syncToRemote: undefined;
+  syncFromRemote: {
+    chatId?:string;
+  };
   saveSession: {
     sessionData?: ApiSessionData;
   };
@@ -1041,6 +1075,7 @@ export interface ActionPayloads {
     listType: 'active' | 'archived';
     onReplace?: VoidFunction;
     shouldReplace?: boolean;
+    addChat?: boolean;
   };
   openChatWithInfo: ActionPayloads['openChat'] & WithTabId;
   openLinkedChat: { id: string } & WithTabId;
@@ -1303,6 +1338,10 @@ export interface ActionPayloads {
     about?: string;
     photo?: File;
     memberIds: string[];
+  } & WithTabId;
+  createChat: {
+    title: string;
+    about?: string;
   } & WithTabId;
   createGroupChat: {
     title: string;

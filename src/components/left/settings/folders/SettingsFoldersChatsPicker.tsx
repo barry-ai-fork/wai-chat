@@ -198,14 +198,14 @@ const SettingsFoldersChatsPicker: FC<OwnProps & StateProps> = ({
       >
         {(!viewportIds || !viewportIds.length || viewportIds.includes(chatIds[0])) && (
           <div key="header">
-            <h4 className="settings-item-header" dir={lang.isRtl ? 'rtl' : undefined}>
-              {lang('FilterChatTypes')}
-            </h4>
-            {chatTypes.map(renderChatType)}
-            <div className="picker-list-divider" />
-            <h4 className="settings-item-header" dir={lang.isRtl ? 'rtl' : undefined}>
-              {lang('FilterChats')}
-            </h4>
+            {/*<h4 className="settings-item-header" dir={lang.isRtl ? 'rtl' : undefined}>*/}
+            {/*  {lang('FilterChatTypes')}*/}
+            {/*</h4>*/}
+            {/*{chatTypes.map(renderChatType)}*/}
+            {/*<div className="picker-list-divider" />*/}
+            {/*<h4 className="settings-item-header" dir={lang.isRtl ? 'rtl' : undefined}>*/}
+            {/*  {lang('FilterChats')}*/}
+            {/*</h4>*/}
           </div>
         )}
 

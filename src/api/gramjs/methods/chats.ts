@@ -868,18 +868,20 @@ export async function editChatFolder({
   id: number;
   folderUpdate: ApiChatFolder;
 }) {
-  // Telegram ignores excluded chats if they also present in the included list
-  folderUpdate.excludedChatIds = folderUpdate.excludedChatIds.filter((chatId) => {
-    return !folderUpdate.includedChatIds.includes(chatId);
-  });
+  // // Telegram ignores excluded chats if they also present in the included list
+  if(folderUpdate.excludedChatIds){
+    folderUpdate.excludedChatIds = folderUpdate.excludedChatIds.filter((chatId) => {
+      return !folderUpdate.includedChatIds.includes(chatId);
+    });
+  }
 
-  const filter = buildFilterFromApiFolder(folderUpdate);
+  // const filter = buildFilterFromApiFolder(folderUpdate);
 
-  const isActionSuccessful = await invokeRequest(new GramJs.messages.UpdateDialogFilter({
-    id,
-    filter,
-  }));
-
+  // const isActionSuccessful = await invokeRequest(new GramJs.messages.UpdateDialogFilter({
+  //   id,
+  //   filter,
+  // }));
+  const isActionSuccessful = true;
   if (isActionSuccessful) {
     onUpdate({
       '@type': 'updateChatFolder',
@@ -890,31 +892,43 @@ export async function editChatFolder({
 }
 
 export async function deleteChatFolder(id: number) {
-  const isActionSuccessful = await invokeRequest(new GramJs.messages.UpdateDialogFilter({
-    id,
-    filter: undefined,
-  }));
-  const recommendedChatFolders = await fetchRecommendedChatFolders();
 
-  if (isActionSuccessful) {
-    onUpdate({
-      '@type': 'updateChatFolder',
-      id,
-      folder: undefined,
-    });
-  }
-  if (recommendedChatFolders) {
-    onUpdate({
-      '@type': 'updateRecommendedChatFolders',
-      folders: recommendedChatFolders,
-    });
-  }
+  onUpdate({
+    '@type': 'updateChatFolder',
+    id,
+    folder: undefined,
+  });
+
+  //
+  // const isActionSuccessful = await invokeRequest(new GramJs.messages.UpdateDialogFilter({
+  //   id,
+  //   filter: undefined,
+  // }));
+  // const recommendedChatFolders = await fetchRecommendedChatFolders();
+  //
+  // if (isActionSuccessful) {
+  //   onUpdate({
+  //     '@type': 'updateChatFolder',
+  //     id,
+  //     folder: undefined,
+  //   });
+  // }
+  // if (recommendedChatFolders) {
+  //   onUpdate({
+  //     '@type': 'updateRecommendedChatFolders',
+  //     folders: recommendedChatFolders,
+  //   });
+  // }
 }
 
 export function sortChatFolders(ids: number[]) {
-  return invokeRequest(new GramJs.messages.UpdateDialogFiltersOrder({
-    order: ids,
-  }));
+  onUpdate({
+    '@type': 'updateChatFoldersOrder',
+    orderedIds:ids
+  });
+  // return invokeRequest(new GramJs.messages.UpdateDialogFiltersOrder({
+  //   order: ids,
+  // }));
 }
 
 export async function toggleDialogUnread({

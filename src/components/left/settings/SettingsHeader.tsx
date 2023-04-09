@@ -194,7 +194,7 @@ const SettingsHeader: FC<OwnProps> = ({
         return (
           <div className="settings-main-header">
             <h3>{lang('FilterEdit')}</h3>
-            {Boolean(editedFolderId) && (
+            {Boolean(editedFolderId) && editedFolderId !== 1 && (
               <DropdownMenu
                 className="settings-more-menu"
                 trigger={SettingsMenuButton}

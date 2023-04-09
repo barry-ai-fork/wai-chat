@@ -2,6 +2,13 @@ import type { ApiDocument, ApiPhoto, ApiReaction } from './messages';
 import type { ApiUser } from './users';
 import type { ApiLimitType, CallbackAction } from '../../global/types';
 
+export interface AccountSession {
+  entropy:string,
+  session?:string,
+  currentAccountAddress?:string,
+  accountId:number
+}
+
 export interface ApiInitialArgs {
   userAgent: string;
   platform?: string;
@@ -13,7 +20,7 @@ export interface ApiInitialArgs {
   webAuthToken?: string;
   dcId?: number;
   mockScenario?: string;
-  payload?: Record<string, any>;
+  payload?: AccountSession;
 }
 
 export interface ApiOnProgress {

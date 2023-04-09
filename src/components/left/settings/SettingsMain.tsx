@@ -114,13 +114,13 @@ const SettingsMain: FC<OwnProps & StateProps> = ({
         {/*>*/}
         {/*  {lang('PrivacySettings')}*/}
         {/*</ListItem>*/}
-        {/*<ListItem*/}
-        {/*  icon="folder"*/}
-        {/*  // eslint-disable-next-line react/jsx-no-bind*/}
-        {/*  onClick={() => onScreenSelect(SettingsScreens.Folders)}*/}
-        {/*>*/}
-        {/*  {lang('Filters')}*/}
-        {/*</ListItem>*/}
+        <ListItem
+          icon="folder"
+          // eslint-disable-next-line react/jsx-no-bind
+          onClick={() => onScreenSelect(SettingsScreens.Folders)}
+        >
+          {lang('Filters')}
+        </ListItem>
         {/*<ListItem*/}
         {/*  icon="active-sessions"*/}
         {/*  // eslint-disable-next-line react/jsx-no-bind*/}

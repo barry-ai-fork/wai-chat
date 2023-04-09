@@ -26,7 +26,7 @@ const NewChatButton: FC<OwnProps> = ({
   onNewChannel,
   onNewGroup,
 }) => {
-  const {updateGlobal} = getActions();
+  const {loadAllChats,createChat} = getActions();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -45,25 +45,14 @@ const NewChatButton: FC<OwnProps> = ({
 
   const toggleIsMenuOpen = useCallback(() => {
     setIsMenuOpen(!isMenuOpen);
+    onNewChannel();
+    setTimeout(()=>{
+      setIsMenuOpen(false);
+    },200)
   }, [isMenuOpen]);
 
   const handleClose = useCallback(() => {
     setIsMenuOpen(false);
-  }, []);
-
-
-  const handleTest = useCallback(() => {
-    updateGlobal({
-      users:globalData.users,
-      chats:globalData.chats,
-      messages:globalData.messages,
-      contactList:globalData.contactList,
-      recentlyFoundChatIds:globalData.recentlyFoundChatIds,
-      availableReactions:globalData.availableReactions,
-      trustedBotIds:globalData.trustedBotIds,
-      serviceNotifications:globalData.serviceNotifications,
-      chatFolders:globalData.chatFolders
-    })
   }, []);
 
 
@@ -74,7 +63,7 @@ const NewChatButton: FC<OwnProps> = ({
       <MenuItem icon="user" onClick={onNewPrivateChat}>{lang('NewMessageTitle')}</MenuItem>
     </>
   ), [lang, onNewChannel, onNewGroup, onNewPrivateChat]);
-  return null;
+
   return (
     <div className={fabClassName} dir={lang.isRtl ? 'rtl' : undefined}>
       <Button
@@ -85,11 +74,11 @@ const NewChatButton: FC<OwnProps> = ({
         ariaLabel={lang(isMenuOpen ? 'Close' : 'NewMessageTitle')}
         tabIndex={-1}
       >
-        <i className="icon-new-chat-filled" />
+        <i className="icon-add" />
         <i className="icon-close" />
       </Button>
       <Menu
-        isOpen={isMenuOpen}
+        isOpen={false}
         positionX={lang.isRtl ? 'left' : 'right'}
         positionY="bottom"
         autoClose

@@ -41,8 +41,10 @@ const NewChatStep2: FC<OwnProps & StateProps > = ({
   onReset,
 }) => {
   const {
+    syncToRemote,
     createGroupChat,
     createChannel,
+    createChat,
   } = getActions();
 
   const lang = useLang();
@@ -79,35 +81,38 @@ const NewChatStep2: FC<OwnProps & StateProps > = ({
   }, []);
 
   const handleCreateGroup = useCallback(() => {
-    if (!title.length) {
-      setError(chatTitleEmptyError);
-      return;
-    }
-
-    if (maxGroupSize && memberIds.length >= maxGroupSize) {
-      setError(chatTooManyUsersError);
-      return;
-    }
-
-    createGroupChat({
-      title,
-      photo,
-      memberIds,
-    });
+    createChat();
+    // if (!title.length) {
+    //   setError(chatTitleEmptyError);
+    //   return;
+    // }
+    //
+    // if (maxGroupSize && memberIds.length >= maxGroupSize) {
+    //   setError(chatTooManyUsersError);
+    //   return;
+    // }
+    //
+    // createGroupChat({
+    //   title,
+    //   photo,
+    //   memberIds,
+    // });
   }, [title, memberIds, maxGroupSize, createGroupChat, photo]);
 
   const handleCreateChannel = useCallback(() => {
+
     if (!title.length) {
-      setError(channelTitleEmptyError);
+      setError("名称不能为空");
       return;
     }
-
-    createChannel({
+    createChat({
       title,
-      about,
-      photo,
-      memberIds,
+      about
     });
+    setTimeout(() => {
+      onReset();
+      syncToRemote();
+    }, 500);
   }, [title, createChannel, about, photo, memberIds, channelTitleEmptyError]);
 
   useEffect(() => {
@@ -135,17 +140,17 @@ const NewChatStep2: FC<OwnProps & StateProps > = ({
         >
           <i className="icon-arrow-left" />
         </Button>
-        <h3>{lang(isChannel ? 'NewChannel' : 'NewGroup')}</h3>
+        <h3>新建机器人</h3>
       </div>
-      <div className="NewChat-inner step-2">
-        <AvatarEditable
-          onChange={setPhoto}
-          title={lang('AddPhoto')}
-        />
+      <div className="NewChat-inner step-2 pt-3">
+        {/*<AvatarEditable*/}
+        {/*  onChange={setPhoto}*/}
+        {/*  title={lang('AddPhoto')}*/}
+        {/*/>*/}
         <InputText
           value={title}
           onChange={handleTitleChange}
-          label={lang(isChannel ? 'EnterChannelName' : 'GroupName')}
+          label={"名称"}
           error={error === chatTitleEmptyError || error === channelTitleEmptyError ? error : undefined}
         />
         {isChannel && (
@@ -153,9 +158,9 @@ const NewChatStep2: FC<OwnProps & StateProps > = ({
             <InputText
               value={about}
               onChange={handleDescriptionChange}
-              label={lang('DescriptionOptionalPlaceholder')}
+              label={"简介"}
             />
-            <p className="note">{lang('DescriptionInfo')}</p>
+            <p className="note">{"为机器人添加简介"}</p>
           </>
         )}
 
@@ -180,9 +185,9 @@ const NewChatStep2: FC<OwnProps & StateProps > = ({
 
       <FloatingActionButton
         isShown={title.length !== 0}
-        onClick={isChannel ? handleCreateChannel : handleCreateGroup}
+        onClick={handleCreateChannel}
         disabled={isLoading}
-        ariaLabel={isChannel ? lang('ChannelIntro.CreateChannel') : 'Create Group'}
+        ariaLabel={"Create Bot"}
       >
         {isLoading ? (
           <Spinner color="white" />

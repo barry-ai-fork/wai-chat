@@ -459,17 +459,17 @@ const RightHeader: FC<OwnProps & StateProps> = ({
               {/*     <i className="icon-add-user" /> */}
               {/*   </Button> */}
               {/* )} */}
-              {/* {canManage && !isInsideTopic && ( */}
-              {/*   <Button */}
-              {/*     round */}
-              {/*     color="translucent" */}
-              {/*     size="smaller" */}
-              {/*     ariaLabel={lang('Edit')} */}
-              {/*     onClick={handleToggleManagement} */}
-              {/*   > */}
-              {/*     <i className="icon-edit" /> */}
-              {/*   </Button> */}
-              {/* )} */}
+               {canManage && !isInsideTopic && (
+                 <Button
+                   round
+                   color="translucent"
+                   size="smaller"
+                   ariaLabel={lang('Edit')}
+                   onClick={handleToggleManagement}
+                 >
+                   <i className="icon-edit" />
+                 </Button>
+               )}
               {canEditTopic && (
                 <Button
                   round

@@ -21,6 +21,7 @@ import Link from '../ui/Link';
 
 import styles from './LockScreen.module.scss';
 import lockPreviewUrl from '../../assets/lock.png';
+import {UseLocalDb} from "../../worker/setting";
 
 export type OwnProps = {
   isLocked?: boolean;
@@ -98,6 +99,9 @@ const LockScreen: FC<OwnProps & StateProps> = ({
   }
 
   function renderLogoutPrompt() {
+    if(UseLocalDb){
+      return <div className={styles.help}></div>
+    }
     return (
       <div className={styles.help}>
         <p>

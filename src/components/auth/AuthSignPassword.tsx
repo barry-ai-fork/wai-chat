@@ -19,10 +19,10 @@ import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
 import {QrCodeType} from "../../lib/ptp/protobuf/PTPCommon/types";
 import {aesDecrypt} from "../../util/passcode";
 
-type StateProps = Pick<GlobalState, 'authIsLoading' | 'authError' | 'authHint'>;
+type StateProps = Pick<GlobalState, 'authIsLoading' | 'authError' | 'authHint'| 'currentAccountAddress' | 'session'>;
 
 const AuthSignPassword: FC<StateProps> = ({
-  authIsLoading, authError, authHint,
+  authIsLoading, authError,session
 }) => {
   const { setAuthPassword, clearAuthError,showAuthError } = getActions();
 
@@ -119,7 +119,7 @@ const AuthSignPassword: FC<StateProps> = ({
     }
 
     setAuthPassword({ password,mnemonic:mnemonic_});
-  }, [setAuthPassword,mnemonic]);
+  }, [setAuthPassword,mnemonic,showMnemonic]);
 
   const handleClose = useCallback(() => {
     getActions().updateGlobal({
@@ -131,17 +131,21 @@ const AuthSignPassword: FC<StateProps> = ({
 
   return (
     <div id="auth-password-form" className="custom-scroll">
-      <div className={'auth-close'}>
-        <Button
-          round
-          color="translucent"
-          size="smaller"
-          ariaLabel={lang('Close')}
-          onClick={handleClose}
-        >
-          <i className="icon-close" />
-        </Button>
-      </div>
+      {
+        !session &&
+        <div className={'auth-close'}>
+          <Button
+            round
+            color="translucent"
+            size="smaller"
+            ariaLabel={lang('Close')}
+            onClick={handleClose}
+          >
+            <i className="icon-close" />
+          </Button>
+        </div>
+      }
+
       <div className="auth-form">
         <MonkeyPassword isPasswordVisible={showPassword} />
         <h1>{showMnemonic ? `助记词导入` : lang('Login.Header.Password')}</h1>
@@ -195,5 +199,5 @@ const AuthSignPassword: FC<StateProps> = ({
 };
 
 export default memo(withGlobal(
-  (global): StateProps => pick(global, ['authIsLoading', 'authError', 'authHint']),
+  (global): StateProps => pick(global, ["session","currentAccountAddress",'authIsLoading', 'authError', 'authHint']),
 )(AuthSignPassword));

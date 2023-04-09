@@ -24,8 +24,10 @@ import {
   ALL_FOLDER_ID,
   DEBUG,
   GIF_MIME_TYPE,
+  LOCAL_MESSAGE_MIN_ID,
   MAX_INT_32,
-  MENTION_UNREAD_SLICE, MESSAGE_LIST_SLICE,
+  MENTION_UNREAD_SLICE,
+  MESSAGE_LIST_SLICE,
   PINNED_MESSAGES_LIMIT,
   REACTION_UNREAD_SLICE,
   SUPPORTED_IMAGE_CONTENT_TYPES,
@@ -40,6 +42,7 @@ import {
   buildLocalForwardedMessage,
   buildLocalMessage,
   buildWebPage,
+  getNextLocalMessageId,
 } from '../apiBuilders/messages';
 import {buildApiUser} from '../apiBuilders/users';
 import {
@@ -71,9 +74,13 @@ import {requestChatUpdate} from './chats';
 import {getEmojiOnlyCountForMessage} from '../../../global/helpers/getEmojiOnlyCountForMessage';
 import {getServerTimeOffset} from '../../../util/serverTime';
 import {uploadFileV1} from "../../../lib/gramjs/client/uploadFile";
-import {MsgDeleteReq, MsgListReq, MsgListRes, MsgUpdateReq, SendReq, SendRes} from "../../../lib/ptp/protobuf/PTPMsg";
+import {MsgListReq, MsgListRes, SendReq} from "../../../lib/ptp/protobuf/PTPMsg";
 import Account from '../../../worker/share/Account';
-import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
+import {ERR, PbBot_Type, PbBotInfo_Type} from "../../../lib/ptp/protobuf/PTPCommon/types";
+import {DEFAULT_PROMPT, UseLocalDb} from "../../../worker/setting";
+import {Message} from "../../../../functions/api/types";
+import {requestChatStream} from "../../../lib/ptp/functions/requests";
+import {parseCodeBlock, parseEntities} from "../../../worker/share/utils/stringParse";
 
 const FAST_SEND_TIMEOUT = 1000;
 const INPUT_WAVEFORM_LENGTH = 63;
@@ -239,6 +246,10 @@ export async function fetchMessage({ chat, messageId }: { chat: ApiChat; message
 
 let queue = Promise.resolve();
 
+const genMsgId = ()=>{
+  return parseInt(getNextLocalMessageId().toString()) % LOCAL_MESSAGE_MIN_ID;
+}
+
 export function sendMessage(
   {
     chat,
@@ -257,6 +268,7 @@ export function sendMessage(
     noWebPage,
     sendAs,
     shouldUpdateStickerSetsOrder,
+    bot
   }: {
     chat: ApiChat;
     text?: string;
@@ -274,6 +286,10 @@ export function sendMessage(
     noWebPage?: boolean;
     sendAs?: ApiUser | ApiChat;
     shouldUpdateStickerSetsOrder?: boolean;
+    bot?: {
+      bot:PbBot_Type,
+      botInfo:PbBotInfo_Type
+    };
   },
   onProgress?: ApiOnProgress,
 ) {
@@ -292,6 +308,8 @@ export function sendMessage(
     scheduledAt,
     sendAs,
   );
+
+
   onUpdate({
     '@type': localMessage.isScheduled ? 'newScheduledMessage' : 'newMessage',
     id: localMessage.id,
@@ -359,7 +377,6 @@ export function sendMessage(
         }
 
         if(localMessage.content.photo || localMessage.content.document){
-
           const getPhotoInfo = async (attachment:ApiAttachment)=>{
             const dataUri = await blobToDataUri(await fetchBlob(attachment.thumbBlobUrl! ));
             const size = {
@@ -412,11 +429,681 @@ export function sendMessage(
           localMessage.content.audio.id = fileId
         }
       }
-      await Account.getCurrentAccount()?.sendPduWithCallback(new SendReq({
-        payload:JSON.stringify({
-          msg:localMessage
-        })
-      }).pack());
+      if(UseLocalDb){
+        const msgId = genMsgId();
+        let message = {
+          ...localMessage,
+          id:msgId!,
+          sendingState: undefined,
+        };
+
+        const commands:string[] = []
+        if(bot?.botInfo && bot?.botInfo.commands){
+          bot?.botInfo.commands.forEach(cmd=>commands.push(cmd.command))
+        }
+        if(message.content && message.content.text && message.content.text.text){
+          // @ts-ignore
+          message.content.text!.entities = [
+            ...message.content.text!.entities||[],
+            ...parseEntities(message.content.text!.text!,commands)
+          ]
+        }
+
+        onUpdate({
+          '@type': "updateMessageSendSucceeded",
+          chatId: localMessage.chatId,
+          localId:localMessage.id,
+          message,
+        });
+
+        if(bot.bot){
+          if(bot.bot.chatGptConfig){
+            if(localMessage.content.text?.text.indexOf("/") === 0 && commands.includes(localMessage.content.text?.text.substring(1))){
+              switch (localMessage.content.text?.text.substring(1)){
+                case "start":
+                  onUpdate({
+                    '@type': "newMessage",
+                    chatId: localMessage.chatId,
+                    id:msgId+1,
+                    message:{
+                      chatId: chat.id,
+                      date: Math.ceil(+(new Date())/1000),
+                      senderId:localMessage.chatId,
+                      id:msgId+1,
+                      isOutgoing:false,
+                      content:{
+                        text:{
+                          text:bot.botInfo?.description!
+                        }
+                      },
+                      sendingState: undefined
+                    },
+                    shouldForceReply:false
+                  });
+                  return
+                case "apiKey":
+                  localDb.botWaitReply['waitReply_'+localMessage.chatId] = {
+                    command:"apiKey",
+                    payload:{
+                      messageId:msgId+1,
+                    }
+                  };
+                  message = {
+                    chatId: chat.id,
+                    date: Math.ceil(+(new Date())/1000),
+                    senderId:localMessage.chatId,
+                    id:msgId+1,
+                    isOutgoing:false,
+                    content:{
+                      text:parseCodeBlock((bot.bot.chatGptConfig.api_key ? `\n当前 openAi apiKey：\n\n`+"```\n"+`${bot.bot.chatGptConfig.api_key}`
+                        +"```"+`\n\n` : "\n>>> openAi apiKey 未设置！ <<<\n\n" )+ "修改设置,请直接回复:\n")
+                    },
+                    inlineButtons:[
+                      [
+                        {
+                          type:"command",
+                          text:"取消修改",
+                        }
+                      ]
+                    ],
+                    sendingState: undefined
+                  }
+
+                  onUpdate({
+                    '@type': "newMessage",
+                    chatId: localMessage.chatId,
+                    id:message.id,
+                    message,
+                    shouldForceReply:false
+                  });
+                  return;
+                case "initPrompt":
+                  localDb.botWaitReply['waitReply_'+localMessage.chatId] = {
+                    command:"initPrompt",
+                    payload:{
+                      messageId:msgId+1,
+                    }
+                  };
+                  message = {
+                    chatId: chat.id,
+                    date: Math.ceil(+(new Date())/1000),
+                    senderId:localMessage.chatId,
+                    id:msgId+1,
+                    isOutgoing:false,
+                    content:{
+                      text:parseCodeBlock((bot.bot.chatGptConfig.init_system_content ? `\n当前 初始化上下文 Prompt：\n\n`+"```\n"+`${bot.bot.chatGptConfig.init_system_content}`
+                        +"```"+`\n\n` : "\n>>> 初始化上下文 Prompt 未设置！ <<<\n\n" )+ "修改设置,请直接回复:\n")
+                    },
+                    sendingState: undefined,
+                    inlineButtons:[
+                      [
+                        {
+                          type:"command",
+                          text:"取消修改",
+                        }
+                      ]
+                    ]
+                  }
+
+                  onUpdate({
+                    '@type': "newMessage",
+                    chatId: localMessage.chatId,
+                    id:message.id,
+                    message,
+                    shouldForceReply:false
+                  });
+                  return;
+                case "aiModel":
+                  onUpdate({
+                    '@type': "newMessage",
+                    chatId: localMessage.chatId,
+                    id:msgId+1,
+                    message:{
+                      chatId: chat.id,
+                      date: Math.ceil(+(new Date())/1000),
+                      senderId:localMessage.chatId,
+                      id:msgId+1,
+                      inlineButtons:[
+                        [
+                          {
+                            type:"callback",
+                            data:"gpt-3.5-turbo",
+                            text:"✅ ChatGpt(gpt-3.5-turbo)",
+                          },
+                        ],
+                      ],
+                      isOutgoing:false,
+                      content:{
+                        text:{
+                          text:`当前模型:`
+                        }
+                      },
+                      sendingState: undefined
+                    },
+                    shouldForceReply:false
+                  });
+                  return;
+                case "enableAi":
+                  onUpdate({
+                    '@type': "newMessage",
+                    chatId: localMessage.chatId,
+                    id:msgId+1,
+                    message:{
+                      chatId: chat.id,
+                      date: Math.ceil(+(new Date())/1000),
+                      senderId:localMessage.chatId,
+                      id:msgId+1,
+                      inlineButtons:[
+                        [
+                          {
+                            type:"command",
+                            text:bot.bot.enableAi ? "关闭Ai" : "开启Ai",
+                          }
+                        ],
+                      ],
+                      isOutgoing:false,
+                      content:{
+                        text:{
+                          text:`Ai开关：`
+                        }
+                      },
+                      sendingState: undefined
+                    },
+                    shouldForceReply:false
+                  });
+                  return;
+              }
+            }
+
+            if(localDb.botWaitReply['waitReply_'+localMessage.chatId]){
+              switch (localDb.botWaitReply['waitReply_'+localMessage.chatId]!.command) {
+                case "apiKey_confirm":
+                  const {messageId,chatGptApiKey} = localDb.botWaitReply['waitReply_'+localMessage.chatId]?.payload!;
+                  onUpdate({
+                    '@type': "updateMessage",
+                    chatId: localMessage.chatId,
+                    id:messageId,
+                    message: {
+                      inlineButtons:undefined
+                    }
+                  });
+                  localDb.botWaitReply['waitReply_'+localMessage.chatId] = undefined
+                  let text;
+                  if(localMessage.content.text?.text === "✅ 确定"){
+                    onUpdate({
+                      '@type': "updateGlobalUpdate",
+                      data:{
+                        action:"updateBot",
+                        payload:{
+                          botInfo:bot.botInfo,
+                          bot:{
+                            ...bot.bot,
+                            chatGptConfig:{
+                              ...bot.bot.chatGptConfig,
+                              api_key:chatGptApiKey.trim()
+                            }
+                          }
+                        }
+                      }
+                    });
+                    text = "更改成功"
+                  }else{
+                    text = "放弃修改"
+                  }
+                  onUpdate({
+                    '@type': "newMessage",
+                    chatId: localMessage.chatId,
+                    id:msgId+1,
+                    message:{
+                      chatId: chat.id,
+                      date: Math.ceil(+(new Date())/1000),
+                      senderId:localMessage.chatId,
+                      id:msgId+1,
+                      isOutgoing:false,
+                      content:{
+                        text:{
+                          text
+                        }
+                      },
+                      sendingState: undefined
+                    },
+                    shouldForceReply:false
+                  });
+                  break;
+                case "apiKey":
+                  const chatGptApiKey1 = localMessage.content.text?.text;
+                  if(chatGptApiKey1 === "取消修改"){
+                    onUpdate({
+                      '@type': "updateMessage",
+                      chatId: localMessage.chatId,
+                      id:localDb.botWaitReply['waitReply_'+localMessage.chatId]!.payload!.messageId,
+                      message: {
+                        inlineButtons:undefined
+                      }
+                    });
+                    localDb.botWaitReply['waitReply_'+localMessage.chatId] = undefined
+                    return
+                  }
+
+                  localDb.botWaitReply['waitReply_'+localMessage.chatId] = {
+                    command:"apiKey_confirm",
+                    payload:{
+                      chatGptApiKey:chatGptApiKey1,
+                      messageId:msgId+1
+                    }
+                  };
+                  onUpdate({
+                    '@type': "newMessage",
+                    chatId: localMessage.chatId,
+                    id:msgId+1,
+                    message:{
+                      chatId: chat.id,
+                      date: Math.ceil(+(new Date())/1000),
+                      senderId:localMessage.chatId,
+                      id:msgId+1,
+                      inlineButtons:[
+                        [
+                          {
+                            type:"command",
+                            text:"✅ 确定",
+                          },
+                          {
+                            type:"command",
+                            text:"取消",
+                          }
+                        ]
+                      ],
+                      isOutgoing:false,
+                      content:{
+                        text:parseCodeBlock(`\n  确认将 apiKey 更改为:\n `+"```\n"+`${chatGptApiKey1}`+"```")
+                      },
+                      sendingState: undefined
+                    },
+                    shouldForceReply:false
+                  });
+                  break
+                case "initPrompt_confirm":
+                  const initPrompt_confirm_payload = localDb.botWaitReply['waitReply_'+localMessage.chatId]?.payload!;
+                  onUpdate({
+                    '@type': "updateMessage",
+                    chatId: localMessage.chatId,
+                    id:initPrompt_confirm_payload.messageId,
+                    message: {
+                      inlineButtons:undefined
+                    }
+                  });
+                  localDb.botWaitReply['waitReply_'+localMessage.chatId] = undefined
+                  let text1;
+                  if(localMessage.content.text?.text === "✅ 确定"){
+                    onUpdate({
+                      '@type': "updateGlobalUpdate",
+                      data:{
+                        action:"updateBot",
+                        payload:{
+                          botInfo:bot.botInfo,
+                          bot:{
+                            ...bot,
+                            chatGptConfig:{
+                              ...bot.bot.chatGptConfig,
+                              init_system_content:initPrompt_confirm_payload.prompt.trim()
+                            }
+                          }
+                        }
+                      }
+                    });
+                    text1 = "更改成功"
+                  }else{
+                    text1 = "放弃修改"
+                  }
+                  onUpdate({
+                    '@type': "newMessage",
+                    chatId: localMessage.chatId,
+                    id:msgId+1,
+                    message:{
+                      chatId: chat.id,
+                      date: Math.ceil(+(new Date())/1000),
+                      senderId:localMessage.chatId,
+                      id:msgId+1,
+                      isOutgoing:false,
+                      content:{
+                        text:{
+                          text:text1
+                        }
+                      },
+                      sendingState: undefined
+                    },
+                    shouldForceReply:false
+                  });
+                  break;
+                case "initPrompt":
+                  const prompt = localMessage.content.text?.text;
+                  if(prompt === "取消修改"){
+                    onUpdate({
+                      '@type': "updateMessage",
+                      chatId: localMessage.chatId,
+                      id:localDb.botWaitReply['waitReply_'+localMessage.chatId]!.payload!.messageId,
+                      message: {
+                        inlineButtons:undefined
+                      }
+                    });
+                    localDb.botWaitReply['waitReply_'+localMessage.chatId] = undefined
+                    return
+                  }
+                  localDb.botWaitReply['waitReply_'+localMessage.chatId] = {
+                    command:"initPrompt_confirm",
+                    payload:{
+                      prompt:prompt,
+                      messageId:msgId+1
+                    }
+                  };
+                  onUpdate({
+                    '@type': "newMessage",
+                    chatId: localMessage.chatId,
+                    id:msgId+1,
+                    message:{
+                      chatId: chat.id,
+                      date: Math.ceil(+(new Date())/1000),
+                      senderId:localMessage.chatId,
+                      id:msgId+1,
+                      inlineButtons:[
+                        [
+                          {
+                            type:"command",
+                            text:"✅ 确定",
+                          },
+                          {
+                            type:"command",
+                            text:"取消",
+                          }
+                        ]
+                      ],
+                      isOutgoing:false,
+                      content:{
+                        text:parseCodeBlock(`\n  确认将 初始化 上下文 Prompt 更改为:\n `+"```\n"+`${prompt}`+"```")
+                      },
+                      sendingState: undefined
+                    },
+                    shouldForceReply:false
+                  });
+                  break
+              }
+              return;
+            }
+          }
+          if(
+            localMessage.content.text?.text &&
+            ["取消","确定","关闭Ai","开启Ai","✅ 确定","取消修改"].includes(localMessage.content.text?.text)
+          ){
+            switch (localMessage.content.text?.text){
+              case "开启Ai":
+                onUpdate({
+                  '@type': "updateGlobalUpdate",
+                  data:{
+                    action:"updateBot",
+                    payload:{
+                      botInfo:bot.botInfo,
+                      bot:{
+                        ...bot.bot,
+                        enableAi:true
+                      }
+                    }
+                  }
+                });
+                onUpdate({
+                  '@type': "newMessage",
+                  chatId: localMessage.chatId,
+                  id:msgId+1,
+                  message:{
+                    chatId: chat.id,
+                    date: Math.ceil(+(new Date())/1000),
+                    senderId:localMessage.chatId,
+                    id:msgId+1,
+                    isOutgoing:false,
+                    content:{
+                      text:{
+                        text:"开启Ai成功"
+                      }
+                    },
+                    sendingState: undefined
+                  },
+                  shouldForceReply:false
+                });
+                break
+              case "关闭Ai":
+                onUpdate({
+                  '@type': "updateGlobalUpdate",
+                  data:{
+                    action:"updateBot",
+                    payload:{
+                      botInfo:bot.botInfo,
+                      bot:{
+                        ...bot.bot,
+                        enableAi:false
+                      }
+                    }
+                  }
+                });
+                onUpdate({
+                  '@type': "newMessage",
+                  chatId: localMessage.chatId,
+                  id:msgId+1,
+                  message:{
+                    chatId: chat.id,
+                    date: Math.ceil(+(new Date())/1000),
+                    senderId:localMessage.chatId,
+                    id:msgId+1,
+                    isOutgoing:false,
+                    content:{
+                      text:{
+                        text:"关闭Ai成功"
+                      }
+                    },
+                    sendingState: undefined
+                  },
+                  shouldForceReply:false
+                });
+                break
+            }
+            return
+          }
+          if(
+            localMessage.content.text?.text &&
+            !localMessage.content.text?.text.startsWith("/") &&
+            !["取消","确定","关闭Ai","开启Ai","✅ 确定","取消修改"].includes(localMessage.content.text?.text)
+          ){
+            if(bot.bot.enableAi && bot.bot.chatGptConfig){
+              if(!bot.bot.chatGptConfig.api_key){
+                if(DEBUG && process.env.OPENAI_APIKEY){
+                  console.log("DEBUG OPENAI_APIKEY")
+                }else{
+                  message = {
+                    chatId: chat.id,
+                    date: Math.ceil(+(new Date())/1000),
+                    senderId:localMessage.chatId,
+                    id:msgId+1,
+                    isOutgoing:false,
+                    content:{
+                      text:{
+                        text:"还没有配置 请点击 /apiKey 进行配置"
+                      }
+                    },
+                    sendingState: undefined
+                  }
+                  if(message.content && message.content.text && message.content.text.text){
+                    // @ts-ignore
+                    message.content.text!.entities = [
+                      ...message.content.text!.entities||[],
+                      ...parseEntities(message.content.text!.text!,commands)
+                    ]
+                  }
+                  onUpdate({
+                    '@type': "newMessage",
+                    chatId: localMessage.chatId,
+                    id:message.id,
+                    message,
+                    shouldForceReply:false
+                  });
+                  return
+                }
+
+              }
+
+              const userMessage: Message = {
+                role: "user",
+                content:localMessage.content.text?.text!,
+                date: new Date(localMessage.date * 1000).toLocaleString(),
+              };
+
+              const botMessage: Message = {
+                content: "",
+                role: "assistant",
+                date: new Date().toLocaleString(),
+                streaming: true,
+              };
+
+              const sendMessages:Message[] = [
+                {
+                  role: "system",
+                  content: bot.bot.chatGptConfig?.init_system_content || DEFAULT_PROMPT,
+                  date: "",
+                },
+                userMessage
+              ]
+
+              if(!localMessage.content.text?.text.startsWith("/")){
+                const apiKey = process.env.OPENAI_APIKEY!
+                let localId = msgId! + 1
+                message = {
+                  ...localMessage,
+                  senderId:localMessage.chatId,
+                  id:localId,
+                  isOutgoing:false,
+                  content:{
+                    text:{
+                      text:"..."
+                    }
+                  },
+                  sendingState: undefined,
+                }
+                onUpdate({
+                  '@type': "newMessage",
+                  chatId: localMessage.chatId,
+                  id:localId,
+                  message,
+                  shouldForceReply:false
+                });
+
+                onUpdate({
+                  '@type': "updateGlobalUpdate",
+                  data:{
+                    action:"setPauseSyncToRemote",
+                    payload:{
+                      pauseSyncToRemote:true
+                    }
+                  }
+                });
+                requestChatStream(sendMessages, {
+                  apiKey:bot.bot.chatGptConfig?.api_key!,
+                  onMessage(content, done) {
+                    // stream response
+                    let message;
+                    message = {
+                      ...localMessage,
+                      senderId:localMessage.chatId,
+                      id:localId,
+                      isOutgoing:false,
+                      content:{
+                        text:{
+                          ...parseCodeBlock(content)
+                        }
+                      },
+                      sendingState: undefined,
+                    }
+
+                    if(message.content && message.content.text && message.content.text.text){
+                      // @ts-ignore
+                      message.content.text!.entities = [
+                        ...message.content.text!.entities||[],
+                        ...parseEntities(message.content.text!.text!,commands)
+                      ]
+                    }
+                    onUpdate({
+                      '@type': "updateMessage",
+                      chatId: localMessage.chatId,
+                      id:localId,
+                      message,
+                      shouldForceReply:false
+                    });
+                    if (done) {
+                      onUpdate({
+                        '@type': "updateGlobalUpdate",
+                        data:{
+                          action:"setPauseSyncToRemote",
+                          payload:{
+                            pauseSyncToRemote:false
+                          }
+                        }
+                      });
+                      botMessage.streaming = false;
+                      botMessage.content = content;
+                      // ControllerPool.remove(sessionIndex, messageIndex);
+                    } else {
+                      botMessage.content = content;
+                    }
+                  },
+                  onError(error) {
+                    botMessage.content += "\n\n" + error.message;
+                    botMessage.streaming = false;
+                    // ControllerPool.remove(sessionIndex, messageIndex);
+                    onUpdate({
+                      '@type': 'updateMessage',
+                      chatId: chat.id,
+                      id:message.id,
+                      message: {
+                        ...message,
+                        content:{
+                          text:{
+                            text:error.message
+                          }
+                        }
+                      },
+                    });
+
+                    onUpdate({
+                      '@type': "updateGlobalUpdate",
+                      data:{
+                        action:"setPauseSyncToRemote",
+                        payload:{
+                          pauseSyncToRemote:false
+                        }
+                      }
+                    });
+                  },
+                  onController(controller) {
+                    // // collect controller for stop/retry
+                    // ControllerPool.addController(
+                    //   sessionIndex,
+                    //   messageIndex,
+                    //   controller,
+                    // );
+                  },
+                  filterBot: false,
+                  modelConfig: bot.bot.chatGptConfig?.config,
+                }).catch(console.error);
+
+              }
+            }
+
+          }
+
+        }
+      }else {
+        await Account.getCurrentAccount()?.sendPduWithCallback(new SendReq({
+          payload:JSON.stringify({
+            msg:localMessage
+          })
+        }).pack());
+      }
     } catch (error: any) {
       onUpdate({
         '@type': 'updateMessageSendFailed',
@@ -684,14 +1371,12 @@ export async function editMessage({
   //   ...(isScheduled && { scheduleDate: message.date }),
   //   ...(noWebPage && { noWebpage: noWebPage }),
   // }), true);
-  //todo
-  await Account.getCurrentAccount()!.sendPdu(new MsgUpdateReq({
-    msg_id:message.id,
-    chat_id:chat.id,
-    user_id:Account.getCurrentAccount()?.getUid()!,
-    text
-  }).pack(),0)
-
+  // await Account.getCurrentAccount()!.sendPdu(new MsgUpdateReq({
+  //   msg_id:message.id,
+  //   chat_id:chat.id,
+  //   user_id:Account.getCurrentAccount()?.getUid()!,
+  //   text
+  // }).pack(),0)
 }
 
 export async function rescheduleMessage({
@@ -812,12 +1497,12 @@ export async function deleteMessages({
 }) {
   const isChannel = getEntityTypeById(chat.id) === 'channel';
 
-  await Account.getCurrentAccount()?.sendPduWithCallback(new MsgDeleteReq({
-    msg_ids:messageIds,
-    chat_id:chat.id,
-    user_id:Account.getCurrentAccount()?.getUid()!,
-    revoke: shouldDeleteForAll
-  }).pack())
+  // await Account.getCurrentAccount()?.sendPduWithCallback(new MsgDeleteReq({
+  //   msg_ids:messageIds,
+  //   chat_id:chat.id,
+  //   user_id:Account.getCurrentAccount()?.getUid()!,
+  //   revoke: shouldDeleteForAll
+  // }).pack())
 
   // const result = await invokeRequest(
   //   isChannel
@@ -837,6 +1522,7 @@ export async function deleteMessages({
   onUpdate({
     '@type': 'deleteMessages',
     ids: messageIds,
+    ...{ chatId: chat.id },
     ...(isChannel && { chatId: chat.id }),
   });
 }

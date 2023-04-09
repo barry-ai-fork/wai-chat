@@ -1,3 +1,5 @@
+import {PasswordHelperType} from "../../../components/ui/PasswordModal";
+
 export function generateRandomString(length:number) {
   let result = '';
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -197,12 +199,13 @@ export const isEmailValid = (email:string)=>{
   return re.test(email);
 }
 
-export const getPasswordFromEvent = async (hint?:string,hideHitInput?:boolean)=>{
+export const getPasswordFromEvent = async (hint?:string,hideHitInput?:boolean,passwordHelper?:PasswordHelperType)=>{
   return new Promise<{password:string,hint?:string}>((resolve)=>{
     const event = new CustomEvent('password',{
       detail:{
         hint,
         hideHitInput,
+        passwordHelper,
         callback:({password,hint}:{password:string,hint?:string})=>{
           resolve({password,hint})
         }

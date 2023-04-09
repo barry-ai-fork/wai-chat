@@ -11,3 +11,4 @@ export * from './passcode';
 export * from './payments';
 export * from './statistics';
 export * from './translations';
+export * from './sync';

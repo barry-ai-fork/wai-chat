@@ -52,8 +52,8 @@ export function renderMessageSummary(
 ): TextPart[] {
   const { entities } = message.content.text || {};
 
-  const hasSpoilers = entities?.some((e) => e.type === ApiMessageEntityTypes.Spoiler);
-  const hasCustomEmoji = entities?.some((e) => e.type === ApiMessageEntityTypes.CustomEmoji);
+  const hasSpoilers = entities?.some && entities?.some((e) => e.type === ApiMessageEntityTypes.Spoiler);
+  const hasCustomEmoji = entities?.some && entities?.some((e) => e.type === ApiMessageEntityTypes.CustomEmoji);
   if (!hasSpoilers && !hasCustomEmoji) {
     const text = trimText(getMessageSummaryText(lang, message, noEmoji), truncateLength);
 

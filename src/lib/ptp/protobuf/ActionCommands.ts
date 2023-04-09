@@ -27,9 +27,19 @@ export enum ActionCommands {
   CID_MsgListRes = 4006,
   CID_MsgUpdateReq = 4007,
   CID_MsgUpdateRes = 4008,
-  CID_SendReq = 4009,
-  CID_SendRes = 4010,
+  CID_RemoveMessagesReq = 4009,
+  CID_RemoveMessagesRes = 4010,
+  CID_SendReq = 4011,
+  CID_SendRes = 4012,
+  CID_SyncMessagesReq = 4013,
+  CID_SyncMessagesRes = 4014,
   CID_OtherNotify = 5001,
+  CID_SyncFromRemoteReq = 6001,
+  CID_SyncFromRemoteRes = 6002,
+  CID_SyncToRemoteReq = 6003,
+  CID_SyncToRemoteRes = 6004,
+  CID_GenUserIdReq = 7001,
+  CID_GenUserIdRes = 7002,
 }
 
 export const ActionCommandsName = {
@@ -61,9 +71,19 @@ export const ActionCommandsName = {
   4006: "CID_MsgListRes",
   4007: "CID_MsgUpdateReq",
   4008: "CID_MsgUpdateRes",
-  4009: "CID_SendReq",
-  4010: "CID_SendRes",
+  4009: "CID_RemoveMessagesReq",
+  4010: "CID_RemoveMessagesRes",
+  4011: "CID_SendReq",
+  4012: "CID_SendRes",
+  4013: "CID_SyncMessagesReq",
+  4014: "CID_SyncMessagesRes",
   5001: "CID_OtherNotify",
+  6001: "CID_SyncFromRemoteReq",
+  6002: "CID_SyncFromRemoteRes",
+  6003: "CID_SyncToRemoteReq",
+  6004: "CID_SyncToRemoteRes",
+  7001: "CID_GenUserIdReq",
+  7002: "CID_GenUserIdRes",
 };
 
 export const getActionCommandsName = (cid:ActionCommands)=>{

@@ -124,6 +124,7 @@ const Chat: FC<OwnProps & StateProps> = ({
     focusLastMessage,
     loadTopics,
     openForumPanel,
+    syncFromRemote
   } = getActions();
 
   const { isMobile } = useAppLayout();
@@ -154,6 +155,7 @@ const Chat: FC<OwnProps & StateProps> = ({
   });
 
   const handleClick = useCallback(() => {
+    syncFromRemote()
     if (isForum) {
       openForumPanel({ chatId }, { forceOnHeavyAnimation: true });
       return;

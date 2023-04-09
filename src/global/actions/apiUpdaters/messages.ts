@@ -28,7 +28,7 @@ import {
   updateTopic,
   deleteTopic,
   updateMessageTranslations,
-  clearMessageTranslation,
+  clearMessageTranslation, updateMessageWaitToSync,
 } from '../../reducers';
 import {
   selectChatMessage,
@@ -55,7 +55,7 @@ import {
   selectTabState,
 } from '../../selectors';
 import {
-  getMessageContent, isUserId, isMessageLocal, getMessageText, checkIfHasUnreadReactions,
+  getMessageContent, isUserId, isMessageLocal, getMessageText, checkIfHasUnreadReactions, isLocalMessageId,
 } from '../../helpers';
 import { onTickEnd } from '../../../util/schedulers';
 import { updateUnreadReactions } from '../../reducers/reactions';
@@ -130,8 +130,12 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
         } else {
           global = updateChatLastMessage(global, chatId, newMessage);
         }
-      });
 
+      });
+      if(message && message.id && !isLocalMessageId(message!.id)){
+        global = updateSyncMessages(global,chatId,message!.id,false);
+        actions.syncToRemote();
+      }
       setGlobal(global);
 
       // Edge case: New message in an old (not loaded) chat.
@@ -217,6 +221,10 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
         global = clearMessageTranslation(global, chatId, id);
       }
 
+      if(message.id && !isLocalMessageId(message.id)){
+        global = updateSyncMessages(global,chatId,message.id,false);
+        actions.syncToRemote();
+      }
       setGlobal(global);
 
       break;
@@ -291,6 +299,10 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
         });
       }
 
+      if(!isLocalMessageId(message.id)){
+        global = updateSyncMessages(global,chatId,message.id,false);
+        actions.syncToRemote();
+      }
       setGlobal(global);
 
       break;
@@ -404,8 +416,8 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
 
     case 'deleteMessages': {
       const { ids, chatId } = update;
-
       deleteMessages(global, chatId, ids, actions);
+      actions.syncToRemote();
       break;
     }
 
@@ -434,6 +446,7 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
         const ids = Object.keys(chatMessages.byId).map(Number);
         global = getGlobal();
         deleteMessages(global, chatId, ids, actions);
+        actions.syncToRemote();
       } else {
         actions.requestChatUpdate({ chatId });
       }
@@ -642,7 +655,7 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
     case 'updateMessageSendFailed': {
       const { chatId, localId, error } = update;
 
-      if (error.match(/CHAT_SEND_.+?FORBIDDEN/)) {
+      if (error && error.match(/CHAT_SEND_.+?FORBIDDEN/)) {
         Object.values(global.byTabId).forEach(({ id: tabId }) => {
           actions.showAllowedMessageTypesNotification({ chatId, tabId });
         });
@@ -836,6 +849,16 @@ function updateListedAndViewportIds<T extends GlobalState>(
   return global;
 }
 
+
+function updateSyncMessages<T extends GlobalState>(
+  global: T,
+  chatId:string,
+  messageId:number,
+  isDelete:boolean
+) {
+  return updateMessageWaitToSync(global,chatId,messageId,isDelete)
+}
+
 function updateChatLastMessage<T extends GlobalState>(
   global: T,
   chatId: string,
@@ -890,13 +913,19 @@ function findLastMessage<T extends GlobalState>(global: T, chatId: string) {
 function deleteMessages<T extends GlobalState>(
   global: T, chatId: string | undefined, ids: number[], actions: RequiredGlobalActions,
 ) {
-  // Channel update
 
+  ids.forEach((id) => {
+    if (!isLocalMessageId(id)) {
+      global = updateSyncMessages(global, chatId!,id, true);
+    }
+  })
+  // Channel update
   if (chatId) {
     const chat = selectChat(global, chatId);
     if (!chat) return;
 
     ids.forEach((id) => {
+
       global = updateChatMessage(global, chatId, id, {
         isDeleting: true,
       });

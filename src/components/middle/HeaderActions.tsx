@@ -32,6 +32,7 @@ import { useHotkeys } from '../../hooks/useHotkeys';
 import Button from '../ui/Button';
 import HeaderMenuContainer from './HeaderMenuContainer.async';
 import Account from "../../worker/share/Account";
+import {UseLocalDb} from "../../worker/setting";
 
 interface OwnProps {
   chatId: string;
@@ -132,19 +133,24 @@ const HeaderActions: FC<OwnProps & StateProps> = ({
 
   const handleStartBot = useCallback(() => {
 
-    if(!Account.getCurrentAccount()?.getSession()){
-      getActions().updateGlobal({
-        authState:"authorizationStateWaitSignPassword"
-      })
-    }else{
-      if(Account.getCurrentAccount()?.getUid()){
-        sendBotCommand({ command: '/start' });
-      }else{
-        getActions().showNotification({
-          message:"正在登录请稍后再试"
+    if(UseLocalDb){
+      sendBotCommand({ command: '/start' });
+    }else {
+      if(!Account.getCurrentAccount()?.getSession()){
+        getActions().updateGlobal({
+          authState:"authorizationStateWaitSignPassword"
         })
+      }else{
+        if(Account.getCurrentAccount()?.getUid()){
+          sendBotCommand({ command: '/start' });
+        }else{
+          getActions().showNotification({
+            message:"正在登录请稍后再试"
+          })
+        }
       }
     }
+
   }, [sendBotCommand]);
 
   const handleRestartBot = useCallback(() => {

@@ -28,6 +28,7 @@ import SelectAvatar from '../../ui/SelectAvatar';
 import Avatar from '../../common/Avatar';
 
 import './Management.scss';
+import {UserIdFirstBot, UseLocalDb} from "../../../worker/setting";
 
 type OwnProps = {
   userId: string;
@@ -54,6 +55,7 @@ const ManageUser: FC<OwnProps & StateProps> = ({
   const {
     updateContact,
     deleteContact,
+    deleteHistory,
     closeManagement,
     uploadContactProfilePhoto,
   } = getActions();
@@ -130,7 +132,11 @@ const ManageUser: FC<OwnProps & StateProps> = ({
   }, [firstName, lastName, updateContact, userId, isNotificationsEnabled]);
 
   const handleDeleteContact = useCallback(() => {
-    deleteContact({ userId });
+    if(UseLocalDb){
+      deleteHistory({chatId:userId})
+    }else{
+      deleteContact({ userId });
+    }
     closeDeleteDialog();
     closeManagement();
   }, [closeDeleteDialog, closeManagement, deleteContact, userId]);
@@ -140,6 +146,11 @@ const ManageUser: FC<OwnProps & StateProps> = ({
   const isSuggestRef = useRef(false);
 
   const handleSuggestPhoto = useCallback(() => {
+    inputRef.current?.click();
+    isSuggestRef.current = true;
+  }, []);
+
+  const handleUploadPhoto = useCallback(() => {
     inputRef.current?.click();
     isSuggestRef.current = true;
   }, []);
@@ -164,7 +175,7 @@ const ManageUser: FC<OwnProps & StateProps> = ({
     return undefined;
   }
 
-  const canSetPersonalPhoto = !isUserBot(user) && user.id !== SERVICE_NOTIFICATIONS_USER_ID;
+  let canSetPersonalPhoto = !isUserBot(user) && user.id !== SERVICE_NOTIFICATIONS_USER_ID;
   const isLoading = progress === ManagementProgress.InProgress;
   const personalPhoto = user.fullInfo?.personalPhoto;
   const notPersonalPhoto = user.fullInfo?.profilePhoto || user.fullInfo?.fallbackPhoto;
@@ -192,17 +203,25 @@ const ManageUser: FC<OwnProps & StateProps> = ({
             onChange={handleLastNameChange}
             value={lastName}
           />
-          <div className="ListItem no-selection narrow">
-            <Checkbox
-              checked={isNotificationsEnabled}
-              label={lang('Notifications')}
-              subLabel={lang(isNotificationsEnabled
-                ? 'UserInfo.NotificationsEnabled'
-                : 'UserInfo.NotificationsDisabled')}
-              onChange={handleNotificationChange}
-            />
-          </div>
+          {/*<div className="ListItem no-selection narrow">*/}
+          {/*  <Checkbox*/}
+          {/*    checked={isNotificationsEnabled}*/}
+          {/*    label={lang('Notifications')}*/}
+          {/*    subLabel={lang(isNotificationsEnabled*/}
+          {/*      ? 'UserInfo.NotificationsEnabled'*/}
+          {/*      : 'UserInfo.NotificationsDisabled')}*/}
+          {/*    onChange={handleNotificationChange}*/}
+          {/*  />*/}
+          {/*</div>*/}
         </div>
+        {
+          UseLocalDb &&
+          <div className="section">
+            <ListItem icon="camera-add" ripple onClick={handleUploadPhoto}>
+              上传头像
+            </ListItem>
+          </div>
+        }
         {canSetPersonalPhoto && (
           <div className="section">
             <ListItem icon="camera-add" ripple onClick={handleSuggestPhoto}>
@@ -231,11 +250,14 @@ const ManageUser: FC<OwnProps & StateProps> = ({
             <p className="text-muted" dir="auto">{lang('UserInfo.CustomPhotoInfo', user.firstName)}</p>
           </div>
         )}
-        <div className="section">
-          <ListItem icon="delete" ripple destructive onClick={openDeleteDialog}>
-            {lang('DeleteContact')}
-          </ListItem>
-        </div>
+        {
+          ((UseLocalDb && UserIdFirstBot !== userId ) || !UseLocalDb) &&
+          <div className="section">
+            <ListItem icon="delete" ripple destructive onClick={openDeleteDialog}>
+              {lang(UseLocalDb ? "删除":'DeleteContact')}
+            </ListItem>
+          </div>
+        }
       </div>
       <FloatingActionButton
         isShown={isProfileFieldsTouched}
@@ -252,8 +274,8 @@ const ManageUser: FC<OwnProps & StateProps> = ({
       <ConfirmDialog
         isOpen={isDeleteDialogOpen}
         onClose={closeDeleteDialog}
-        text={lang('AreYouSureDeleteContact')}
-        confirmLabel={lang('DeleteContact')}
+        text={lang(UseLocalDb?"确定要删除么？":'AreYouSureDeleteContact')}
+        confirmLabel={lang(UseLocalDb ? '删除':'DeleteContact')}
         confirmHandler={handleDeleteContact}
         confirmIsDestructive
       />

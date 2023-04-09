@@ -1,16 +1,18 @@
 import type { ApiLimitType } from './global/types';
 
-export const BASE_API = process.env.BASE_API;
-export const WS_URL = process.env.WS_URL;
+export const CLOUD_MESSAGE_ENABLE = process.env.CLOUD_MESSAGE_ENABLE === "true";
+export const CLOUD_MESSAGE_API = process.env.CLOUD_MESSAGE_API;
+export const AI_PROXY_API = process.env.AI_PROXY_API;
+
+export const TEST_USERNAME = process.env.TEST_USERNAME;
+export const TEST_PWD = process.env.TEST_PWD;
+export const CLOUD_WS_URL = "";
 
 export const SESSION_TOKEN = 'user_token';
 
 export const APP_NAME = process.env.APP_NAME || 'WAI';
 export const APP_VERSION = process.env.APP_VERSION!;
 export const RELEASE_DATETIME = process.env.RELEASE_DATETIME;
-export const TEST_USERNAME = process.env.TEST_USERNAME;
-export const TEST_PWD = process.env.TEST_PWD;
-
 export const PRODUCTION_HOSTNAME = 'web.telegram.org';
 
 export const DEBUG = process.env.APP_ENV !== 'production';
@@ -38,7 +40,7 @@ export const PASSCODE_CACHE_NAME = 'tt-passcode';
 
 export const GLOBAL_STATE_CACHE_DISABLED = false;
 
-export const GLOBAL_STATE_CACHE_KEY = 'tt-global-state-v1.1.9';
+export const GLOBAL_STATE_CACHE_KEY = 'tt-global-state';
 
 export const GLOBAL_STATE_CACHE_USER_LIST_LIMIT = 500;
 export const GLOBAL_STATE_CACHE_CHAT_LIST_LIMIT = 200;
@@ -54,7 +56,7 @@ export const CUSTOM_EMOJI_PREVIEW_CACHE_DISABLED = false;
 export const CUSTOM_EMOJI_PREVIEW_CACHE_NAME = 'tt-custom-emoji-preview';
 export const MEDIA_CACHE_MAX_BYTES = 512 * 1024; // 512 KB
 export const CUSTOM_BG_CACHE_NAME = 'tt-custom-bg';
-export const LANG_CACHE_NAME = 'tt-lang-packs-v1';
+export const LANG_CACHE_NAME = 'tt-lang-packs';
 export const ASSET_CACHE_NAME = 'tt-assets';
 export const AUTODOWNLOAD_FILESIZE_MB_LIMITS = [1, 5, 10, 50, 100, 500];
 export const DATA_BROADCAST_CHANNEL_NAME = 'tt-global';

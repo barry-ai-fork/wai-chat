@@ -37,7 +37,6 @@ const useChatContextActions = ({
 
   const { isSelf } = user || {};
   const isServiceNotifications = user?.id === SERVICE_NOTIFICATIONS_USER_ID;
-  return null
   return useMemo(() => {
     if (!chat) {
       return undefined;
@@ -123,13 +122,13 @@ const useChatContextActions = ({
     return compact([
       actionOpenInNewTab,
       newTabActionSeparator,
-      actionAddToFolder,
-      actionMaskAsRead,
-      actionMarkAsUnread,
-      actionPin,
-      !isSelf && actionMute,
-      !isSelf && !isServiceNotifications && !isInFolder && actionArchive,
-      actionReport,
+      // actionAddToFolder,
+      // actionMaskAsRead,
+      // actionMarkAsUnread,
+      // actionPin,
+      // !isSelf && actionMute,
+      // !isSelf && !isServiceNotifications && !isInFolder && actionArchive,
+      // actionReport,
       actionDelete,
     ]) as MenuItemContextAction[];
   }, [

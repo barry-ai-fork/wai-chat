@@ -144,8 +144,8 @@ const LeftColumn: FC<StateProps> = ({
     }
 
     if (content === LeftColumnContent.NewChannelStep2) {
-      setContent_(LeftColumnContent.NewChannelStep1);
-      return;
+      // setContent_(LeftColumnContent.NewChannelStep1);
+      // return;
     }
 
     if (content === LeftColumnContent.NewGroupStep1) {

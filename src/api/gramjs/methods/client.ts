@@ -1,20 +1,25 @@
-import {Api as GramJs, connection,} from '../../../lib/gramjs';
+import {Api as GramJs, connection, TelegramClient,} from '../../../lib/gramjs';
 
 import {Logger as GramJsLogger} from '../../../lib/gramjs/extensions/index';
 import type {TwoFaParams} from '../../../lib/gramjs/client/2fa';
 
 import type {
+  AccountSession,
   ApiInitialArgs,
   ApiMediaFormat,
   ApiOnProgress,
   ApiSessionData,
-  ApiUpdateConnectionStateType,
-  ApiUpdateMsgClientStateType,
-  ApiUser,
   OnApiUpdate,
 } from '../../types';
 
-import {APP_VERSION, DEBUG, DEBUG_GRAMJS, UPLOAD_WORKERS,} from '../../../config';
+import {
+  APP_VERSION,
+  CLOUD_MESSAGE_API,
+  CLOUD_MESSAGE_ENABLE,
+  DEBUG,
+  DEBUG_GRAMJS,
+  UPLOAD_WORKERS,
+} from '../../../config';
 import {onCurrentUserUpdate,} from './auth';
 import {updater} from '../updater';
 import {setMessageBuilderCurrentUserId} from '../apiBuilders/messages';
@@ -23,16 +28,28 @@ import {buildApiUserFromFull} from '../apiBuilders/users';
 import localDb, {clearLocalDb} from '../localDb';
 import {buildApiPeerId} from '../apiBuilders/peers';
 import {addMessageToLocalDb, log} from '../helpers';
-import {MsgConnNotify, MsgConnNotifyAction} from "../../../lib/ptp/client/MsgClient";
-import MsgClient, {MsgClientState} from "../../../lib/ptp/client/MsgClient";
-import {Pdu} from "../../../lib/ptp/protobuf/BaseMsg";
+import MsgClient from "../../../lib/ptp/client/MsgClient";
+import {
+  Pdu,
+  popByteBuffer, readBytes, readInt16, readInt32,
+  toUint8Array,
+  wrapByteBuffer,
+  writeBytes,
+  writeInt16,
+  writeInt32
+} from "../../../lib/ptp/protobuf/BaseMsg";
 import Account, {ISession} from "../../../worker/share/Account";
 import LocalDatabase from "../../../worker/share/db/LocalDatabase";
-import {ActionCommands, getActionCommandsName} from "../../../lib/ptp/protobuf/ActionCommands";
-import {SendRes} from "../../../lib/ptp/protobuf/PTPMsg";
-import message from "../../../components/middle/message/Message";
-import {selectChat, selectUser} from "../../../global/selectors";
-import {addUsers, addUserStatuses, replaceChats, replaceUsers} from "../../../global/reducers";
+import {getActionCommandsName} from "../../../lib/ptp/protobuf/ActionCommands";
+import {CurrentUserInfo, UseLocalDb} from "../../../worker/setting";
+import {PbMsg, PbUser} from "../../../lib/ptp/protobuf/PTPCommon";
+import {
+  SyncFromRemoteReq,
+  SyncFromRemoteRes,
+  SyncToRemoteReq,
+  SyncToRemoteRes
+} from "../../../lib/ptp/protobuf/PTPSync";
+import {SyncFromRemoteReq_Type, SyncToRemoteReq_Type} from "../../../lib/ptp/protobuf/PTPSync/types";
 
 const DEFAULT_USER_AGENT = 'Unknown UserAgent';
 const DEFAULT_PLATFORM = 'Unknown platform';
@@ -41,107 +58,11 @@ const APP_CODE_NAME = 'Z';
 GramJsLogger.setLevel(DEBUG_GRAMJS ? 'debug' : 'warn');
 
 let onUpdate: OnApiUpdate;
-let client: MsgClient;
-let account: Account;
+let client: TelegramClient;
+export let account: Account;
 let isConnected = false;
 let currentUserId: string | undefined;
-
-const handleSendRes = async (pdu:Pdu)=> {
-  const {err, payload, action} = SendRes.parseMsg(pdu)
-  const payloadData = JSON.parse(payload)
-
-  if(DEBUG){
-    console.log("[handleSendRes]",getActionCommandsName(pdu.getCommandId()),action,payloadData)
-  }
-  switch (action) {
-    case "removeBot":
-      onUpdate({
-        '@type': 'updateGlobalUpdate',
-        data:{
-          action,
-          payload:{
-            chatId:payloadData.chatId
-          }
-        }
-      });
-      break
-    case "createBot":
-    case "loadChats":
-      onUpdate({
-        '@type': 'updateGlobalUpdate',
-        data:{
-          action,
-        }
-      });
-      break
-    case "clearHistory":
-      onUpdate({
-        '@type': 'updateGlobalUpdate',
-        data:{
-          action,
-          payload:{
-            chatId:payloadData.chatId
-          }
-        }
-      });
-      break
-    case "updateGlobal":
-      onUpdate({
-        '@type': 'updateGlobalUpdate',
-        data:{
-          chats:payloadData.chats,
-          users:payloadData.users
-        }
-      });
-      break
-    case "updateMessage":
-      onUpdate({
-        '@type': 'updateMessage',
-        chatId: String(payloadData.msg.chatId),
-        id: Number(payloadData.msg.id),
-        message: {
-          ...payloadData.msg
-        },
-      });
-      break
-    case "newMessage":
-      onUpdate({
-        '@type': 'newMessage',
-        id: Number(payloadData.msg.id),
-        chatId: String(payloadData.msg.chatId),
-        message: {
-          ...payloadData.msg
-        },
-      });
-      break
-    case "updateMessageSendSucceeded":
-      onUpdate({
-        '@type': 'updateMessageSendSucceeded',
-        localId: Number(payloadData.localMsgId),
-        chatId: String(payloadData.msg.chatId),
-        message: {
-          sendingState: undefined,
-          ...payloadData.msg
-        },
-      });
-      break
-    default:
-      //@ts-ignore
-      onUpdate({'@type': action, ...payloadData});
-      break
-  }
-}
-
-const handleRcvMsg = async (pdu:Pdu)=>{
-  const cmd = pdu.getCommandId();
-  switch (cmd) {
-    case ActionCommands.CID_SendRes:
-      await handleSendRes(pdu)
-      break
-    default:
-      break
-  }
-}
+export let accountSession : AccountSession
 
 export async function init(_onUpdate: OnApiUpdate, initialArgs: ApiInitialArgs) {
   if (DEBUG) {
@@ -161,95 +82,20 @@ export async function init(_onUpdate: OnApiUpdate, initialArgs: ApiInitialArgs) 
       useWSS: true,
     })
   }
-  const {accountId,session,entropy} = payload!;
-
-  client = new MsgClient(accountId);
+  const {accountId,session,currentAccountAddress,entropy} = payload!;
 
   const kv = new LocalDatabase();
   kv.init(localDb);
   Account.setKvStore(kv)
   account = Account.getInstance(accountId);
   Account.setCurrentAccount(account);
-  account.setMsgConn(client)
-  account.setSession(session)
   await account.setEntropy(entropy)
-
-  client.setMsgHandler(async (accountId:number,notifys:MsgConnNotify[])=>{
-    if(notifys && notifys.length > 0){
-      for (let i = 0; i < notifys.length; i++) {
-        const notify = notifys[i];
-        switch (notify.action){
-          case MsgConnNotifyAction.onConnectionStateChanged:
-            const {msgClientState} = notify.payload;
-            let connectionState:ApiUpdateConnectionStateType;
-            let msgClientState_: ApiUpdateMsgClientStateType
-            if(msgClientState === MsgClientState.connected || msgClientState === MsgClientState.waitingLogin || msgClientState === MsgClientState.logged){
-              connectionState = "connectionStateReady"
-              if(msgClientState === MsgClientState.logged){
-                msgClientState_ = "connectionStateLogged"
-                const account = Account.getInstance(accountId)
-                if(DEBUG){
-                  console.log("[connectionStateLogged]",account.getUid(),account.getUserInfo())
-                }
-                // @ts-ignore
-                const currentUser:ApiUser = account.getUserInfo()!;
-                onUpdate({
-                  '@type': 'updateCurrentUser',
-                  currentUser,
-                  accountId:accountId,
-                  sessionData:account.getSession()
-                });
-              }else if(msgClientState === MsgClientState.waitingLogin){
-                msgClientState_ = "connectionStateWaitingLogin"
-              }else{
-                msgClientState_ = "connectionStateConnected"
-              }
-            }else if(msgClientState === MsgClientState.connecting || msgClientState === MsgClientState.closed){
-              connectionState = "connectionStateConnecting"
-              msgClientState_ = "connectionStateConnecting"
-            }else{
-              connectionState = "connectionStateBroken";
-              msgClientState_ = "connectionStateBroken"
-            }
-
-            onUpdate({
-              '@type': 'updateMsgClientState',
-              msgClientState:msgClientState_,
-            });
-            onUpdate({
-              '@type': 'updateConnectionState',
-              connectionState,
-            });
-
-            break
-          case MsgConnNotifyAction.onData:
-            const payload = notify.payload;
-            handleRcvMsg(payload).catch(console.error)
-            break;
-        }
-      }
-    }
-  })
-
+  await setSession(payload!)
   try {
     if (DEBUG) {
       log('CONNECTING');
       // eslint-disable-next-line no-restricted-globals
       (self as any).invoke = invokeRequest;
-    }
-    try {
-      client.connect()
-      await client.waitForMsgServerState(MsgClientState.connected)
-    } catch (err: any) {
-      // eslint-disable-next-line no-console
-      console.error(err);
-      if (err.message !== 'Disconnect' && err.message !== 'Cannot send requests while disconnected') {
-        onUpdate({
-          '@type': 'updateConnectionState',
-          connectionState: 'connectionStateBroken',
-        });
-        return;
-      }
     }
 
     if (DEBUG) {
@@ -258,9 +104,29 @@ export async function init(_onUpdate: OnApiUpdate, initialArgs: ApiInitialArgs) 
       log('CONNECTED');
     }
 
-
     onUpdate({ '@type': 'updateApiReady' });
 
+    if(UseLocalDb){
+      if((CLOUD_MESSAGE_ENABLE && currentAccountAddress) || (!session)){
+        onUpdate({
+          '@type': 'updateAuthorizationState',
+          authorizationState: "authorizationStateReady",
+        });
+      }
+
+      // @ts-ignore
+      onUpdate({'@type': 'updateCurrentUser',currentUser: CurrentUserInfo});
+
+      onUpdate({
+        '@type': 'updateMsgClientState',
+        msgClientState:"connectionStateLogged",
+      });
+      onUpdate({
+        '@type': 'updateConnectionState',
+        connectionState:"connectionStateReady",
+      });
+
+    }
     // void fetchCurrentUser();
   } catch (err) {
     if (DEBUG) {
@@ -650,21 +516,176 @@ export async function repairFileReference({
     addMessageToLocalDb(message);
     return true;
   }
-
   return false;
 }
 
+export async function invokeSyncToRemoteReq(data:SyncToRemoteReq_Type){
+  if(data.users && data.users.length > 0){
+    for (let i = 0; i < data.users.length; i++) {
+      let {user,time} = data.users[i];
+      time = Math.ceil(time/1000)
+      let buf = Buffer.from(new PbUser(user).pack().getPbData())
+      const password = "WAI"+time.toString();
+      const cipher = await account.encryptData(buf,password)
+      const bb = popByteBuffer();
+      writeInt32(bb, cipher?.length + 4 + 4 + 4 + 2);
+      writeInt16(bb, 1);
+      writeInt32(bb, time);
+      writeInt32(bb, 0);
+      writeBytes(bb, cipher);
+      let buf1 = Buffer.from(toUint8Array(bb))
+      // console.log("plain",buf1.toString("hex"))
+      // console.log("cipher",cipher.toString("hex"))
+      // console.log("encode",buf1.toString("hex"))
+      data.users[i] = {
+        ...data.users[i],
+        time,
+        buf:buf1
+      }
+      data.users[i].user = undefined
+    }
+  }
+
+  if(data.messages && data.messages.length > 0){
+    for (let i = 0; i < data.messages.length; i++) {
+      let {message,time} = data.messages[i];
+
+      time = Math.ceil(time/1000)
+      let buf = Buffer.from(new PbMsg(message!).pack().getPbData())
+      const password = "WAI"+time.toString();
+      const cipher = await account.encryptData(buf,password)
+      const bb = popByteBuffer();
+      writeInt32(bb, cipher?.length + 4 + 4 + 4 + 2);
+      writeInt16(bb, 1);
+      writeInt32(bb, time);
+      writeInt32(bb, 0);
+      writeBytes(bb, cipher);
+      let buf1 = Buffer.from(toUint8Array(bb))
+
+      data.messages[i] = {
+        ...data.messages[i],
+        buf:buf1,
+      }
+      data.messages[i].message = undefined
+    }
+  }
+
+  if(DEBUG){
+    console.log("invokeSyncToRemoteReq",data)
+  }
+  const res = await sendWithCallback(Buffer.from(new SyncToRemoteReq(data).pack().getPbData()));
+  if(!res){
+    return
+  }
+  try {
+    return SyncToRemoteRes.parseMsg(new Pdu(res))
+  }catch (e){
+    console.error(e)
+    return
+  }
+}
+
+export async function invokeSyncFromRemote(data:SyncFromRemoteReq_Type){
+  if(accountSession.currentAccountAddress && accountSession.session){
+    const res = await sendWithCallback(Buffer.from(new SyncFromRemoteReq(data).pack().getPbData()))
+    if(!res){
+      return
+    }
+    const result = SyncFromRemoteRes.parseMsg(new Pdu(Buffer.from(res)))
+    console.log("[SyncFromRemoteRes]",result)
+    if(result.users && result.users.length > 0){
+      for (let i = 0; i < result.users.length; i++) {
+        let {buf} = result.users[i];
+        const bbDecode = wrapByteBuffer(Buffer.from(buf!))
+        const len = readInt32(bbDecode);
+        const encrypt = readInt16(bbDecode) === 1;
+        const time = readInt32(bbDecode);
+        const reverse = readInt32(bbDecode);
+        let buf2 = readBytes(bbDecode,len - 14);
+        const password = "WAI"+time.toString();
+        // console.log("encode",Buffer.from(buf!).toString("hex"))
+        // console.log("cipher",Buffer.from(buf2).toString("hex"))
+
+        buf = await account.decryptData(Buffer.from(buf2),password)
+        result.users[i] = {
+          ...result.users[i],
+          time,
+          user: PbUser.parseMsg(new Pdu(Buffer.from(buf)))
+        }
+        result.users[i].buf = undefined
+      }
+    }
+    if(result.messages && result.messages.length > 0){
+      for (let i = 0; i < result.messages.length; i++) {
+        let {buf,chatId} = result.messages[i];
+        const bbDecode = wrapByteBuffer(Buffer.from(buf!))
+        const len = readInt32(bbDecode);
+        const encrypt = readInt16(bbDecode) === 1;
+        const time = readInt32(bbDecode);
+        const reverse = readInt32(bbDecode);
+        let buf2 = readBytes(bbDecode,len - 14);
+        const password = "WAI"+time.toString();
+        // console.log("encode",Buffer.from(buf!).toString("hex"))
+        // console.log("cipher",Buffer.from(buf2).toString("hex"))
+
+        buf = await account.decryptData(Buffer.from(buf2),password)
+        result.messages[i] = {
+          ...result.messages[i],
+          chatId,
+          time,
+          message: PbMsg.parseMsg(new Pdu(Buffer.from(buf)))
+        }
+        result.messages[i].buf = undefined
+      }
+    }
+
+
+    return result
+  }else{
+    return
+  }
+}
 export async function sendWithCallback(buff:Uint8Array){
   const newPdu = new Pdu(buff)
-  newPdu.writeData(newPdu.body(),newPdu.getCommandId(),newPdu.getSeqNum(),newPdu.getReversed())
-  const res:Pdu = await Account.getCurrentAccount()?.sendPduWithCallback(newPdu)
-  if(!res){
-    return;
+
+  if(CLOUD_MESSAGE_ENABLE){
+    if(!accountSession.session){
+      return
+    }
+    if(!accountSession.currentAccountAddress){
+      return
+    }
+    if(DEBUG){
+      console.log("sendWithCallback",{accountSession,CLOUD_MESSAGE_ENABLE,cmd:getActionCommandsName(newPdu.getCommandId())})
+    }
+    const res = await fetch(`${CLOUD_MESSAGE_API}/proto`, {
+      method: "POST",
+      body: Buffer.from(newPdu.getPbData()),
+      headers:{
+        Authorization: `Bearer ${accountSession.session}`,
+      }
+    });
+    if(!res || res.status !== 200){
+      return;
+    }
+    const arrayBuffer = await res.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  }else {
+    const res:Pdu = await Account.getCurrentAccount()?.sendPduWithCallback(newPdu)
+    if(!res){
+      return;
+    }
+    return res.getPbData()
   }
-  return res.getPbData()
 }
 
 export async function msgClientLogin(payload:ISession){
   return  await client.login(payload);
 }
 
+export async function setSession(payload:AccountSession){
+  accountSession = {
+    ...accountSession,
+    ...payload
+  };
+}

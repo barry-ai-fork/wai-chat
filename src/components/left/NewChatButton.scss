@@ -33,13 +33,13 @@
   }
 
   > .Button {
-    .icon-new-chat-filled,
+    .icon-add,
     .icon-close {
       position: absolute;
     }
 
     &:not(.active) {
-      .icon-new-chat-filled {
+      .icon-add {
         animation: grow-icon 0.4s ease-out;
       }
 
@@ -53,7 +53,7 @@
         animation: grow-icon 0.4s ease-out;
       }
 
-      .icon-new-chat-filled {
+      .icon-add {
         animation: hide-icon 0.4s forwards ease-out;
       }
     }

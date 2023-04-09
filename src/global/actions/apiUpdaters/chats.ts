@@ -11,7 +11,7 @@ import {
   updateChatListIds,
   updateChatListType,
   replaceThreadParam,
-  leaveChat, updateTopic,
+  leaveChat, updateTopic, updateFolderWaitToSync,
 } from '../../reducers';
 import {
   selectChat,
@@ -24,6 +24,7 @@ import {
 import { updateUnreadReactions } from '../../reducers/reactions';
 import type { ActionReturnType } from '../../types';
 import {isLocalMessageId} from "../../helpers";
+import {updateLocalChatFolder} from "../api/chats";
 
 const TYPING_STATUS_CLEAR_DELAY = 6000; // 6 seconds
 
@@ -254,7 +255,6 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
     case 'updateChatFolder': {
       const { id, folder } = update;
       const { byId: chatFoldersById, orderedIds } = global.chatFolders;
-
       const newChatFoldersById = folder
         ? { ...chatFoldersById, [id]: folder }
         : pick(
@@ -266,19 +266,25 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
         ? orderedIds && orderedIds.includes(id) ? orderedIds : [...(orderedIds || []), id]
         : orderedIds ? orderedIds.filter((orderedId) => orderedId !== id) : undefined;
 
-      return {
-        ...global,
-        chatFolders: {
-          ...global.chatFolders,
-          byId: newChatFoldersById,
-          orderedIds: newOrderedIds,
-        },
-      };
+      updateLocalChatFolder({
+        folderIds:newOrderedIds || [],
+        chatFolders:Object.values(newChatFoldersById)
+      },global.currentAccountAddress);
+      global = getGlobal();
+      global = updateFolderWaitToSync(global,newOrderedIds,Object.values(newChatFoldersById))
+      return global;
     }
 
     case 'updateChatFoldersOrder': {
       const { orderedIds } = update;
 
+      global = updateFolderWaitToSync(global,orderedIds)
+
+      updateLocalChatFolder({
+        folderIds:orderedIds || [],
+        chatFolders:Object.values(global.chatFolders.byId)
+      },global.currentAccountAddress);
+      global = getGlobal();
       return {
         ...global,
         chatFolders: {

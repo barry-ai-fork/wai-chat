@@ -1,10 +1,11 @@
-import {DEBUG, WS_URL} from '../../../config';
+import {DEBUG, CLOUD_WS_URL} from '../../../config';
 import Account, {ISession} from "../../../worker/share/Account";
 import {Pdu} from "../protobuf/BaseMsg";
 import {ERR} from "../protobuf/PTPCommon/types";
 import {AuthLoginReq, AuthLoginRes, AuthStep1Req, AuthStep1Res, AuthStep2Req, AuthStep2Res} from "../protobuf/PTPAuth";
 import {randomize} from "worktop/utils";
 import {ActionCommands, getActionCommandsName} from "../protobuf/ActionCommands";
+import {UseLocalDb} from "../../../worker/setting";
 
 export enum MsgConnNotifyAction{
   onInitAccount,
@@ -98,7 +99,7 @@ export default class MsgClient {
         }
       }
       this.notifyState(MsgClientState.connecting);
-      this.client = new WebSocket(`${WS_URL}`);
+      this.client = new WebSocket(`${CLOUD_WS_URL}`);
       this.client.binaryType = 'arraybuffer';
       this.client.onopen = this.onConnected.bind(this);
       this.client.onmessage = this.onData.bind(this);
@@ -282,7 +283,7 @@ export default class MsgClient {
   }
 
   reconnect(autoConnect: boolean) {
-    if (autoConnect) {
+    if (autoConnect && !UseLocalDb) {
       setTimeout(() => {
         if (
           this.state === MsgClientState.closed ||
@@ -296,6 +297,7 @@ export default class MsgClient {
           } else {
             reconnect_cnt += 2;
           }
+          console.log(reconnect_cnt)
           this.connect();
         }
       }, 1000 * (reconnect_cnt + 1));

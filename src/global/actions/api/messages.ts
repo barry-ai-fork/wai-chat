@@ -3,7 +3,7 @@ import {addActionHandler, getGlobal, setGlobal} from '../../index';
 
 import type {ActionReturnType, ApiDraft, GlobalState, TabArgs,} from '../../types';
 import type {
-  ApiAttachment,
+  ApiAttachment, ApiBotInfo,
   ApiChat,
   ApiMessage,
   ApiMessageEntity,
@@ -33,7 +33,7 @@ import {areSortedArraysIntersecting, buildCollectionByKey, omit, split, unique,}
 import {
   addChatMessagesById,
   addChats,
-  addUsers,
+  addUsers, leaveChat,
   removeRequestedMessageTranslation,
   replaceScheduledMessages,
   replaceTabThreadParam,
@@ -101,12 +101,19 @@ import {blobToBuffer, fetchBlob} from "../../../util/files";
 import {popByteBuffer, toUint8Array, writeBytes, writeInt16} from "../../../lib/ptp/protobuf/BaseMsg";
 import {resizeImage} from "../../../util/imageResize";
 import {hashSha256} from "../../../worker/share/utils/helpers";
+import {deleteChat, getChatBot} from "./chats";
+import {UserIdFirstBot, UseLocalDb} from "../../../worker/setting";
+import {Api} from "../../../lib/gramjs";
+import {PbBot_Type, PbBotInfo_Type} from "../../../lib/ptp/protobuf/PTPCommon/types";
+import Password = Api.account.Password;
 
 const AUTOLOGIN_TOKEN_KEY = 'autologin_token';
 
 const uploadProgressCallbacks = new Map<number, ApiOnProgress>();
 
 const runDebouncedForMarkRead = debounce((cb) => cb(), 500, false);
+let _userMaxMsgId:number;
+
 
 addActionHandler('loadViewportMessages', (global, actions, payload): ActionReturnType => {
   const {
@@ -237,18 +244,18 @@ addActionHandler('sendMessage', async (global, actions, payload): ActionReturnTy
   payload = omit(payload, ['tabId']);
   const {currentUserId} = getGlobal();
 
-  if(currentUserId === chatId){
+  if(UserIdFirstBot === chatId){
     if(payload.attachments){
       const hasMessageEntitySpoiler = payload.attachments.find((a:ApiAttachment)=>a.shouldSendAsSpoiler);
       if(hasMessageEntitySpoiler){
-        const {password,hint} = await getPasswordFromEvent();
+        const {password,hint} = await getPasswordFromEvent(undefined,false,'messageEncryptPassword');
         if(password){
           let {attachments} = payload;
           for (let i = 0; i < attachments.length; i++) {
             const attachment = attachments[i];
             const {blobUrl,mimeType} = attachment;
             const buf = await blobToBuffer(await fetchBlob(blobUrl));
-            const cipher = await Account.getCurrentAccount()?.encryptByPubKey(buf, hashSha256(password))
+            const cipher = await Account.getCurrentAccount()?.encryptData(buf, password)
             const bb = popByteBuffer();
             const hintLen = (hint ? hint.length:0)
             const typeLen = mimeType.length;
@@ -287,13 +294,13 @@ addActionHandler('sendMessage', async (global, actions, payload): ActionReturnTy
       let {entities,text} = payload;
       const hasMessageEntitySpoiler = entities.find((entity:ApiMessageEntity)=>entity.type === "MessageEntitySpoiler");
       if(hasMessageEntitySpoiler){
-        const {password,hint} = await getPasswordFromEvent();
+        const {password,hint} = await getPasswordFromEvent(undefined,false,'messageEncryptPassword');
         if(password){
           for (let i = 0; i < entities.length; i++) {
             if(entities[i].type === "MessageEntitySpoiler"){
               const entity = payload.entities[i];
               const {offset,length} = entity;
-              const cipher = await Account.getCurrentAccount()?.encryptByPubKey(Buffer.from(text.substr(offset,length)), hashSha256(password))
+              const cipher = await Account.getCurrentAccount()?.encryptData(Buffer.from(text.substr(offset,length)), password)
               payload.text = replaceSubstring(payload.text,offset,length,"x".repeat(length));
               //@ts-ignore
               payload.entities[i] = {...entity,cipher:cipher.toString("hex"),hint}
@@ -595,14 +602,19 @@ addActionHandler('deleteHistory', async (global, actions, payload): Promise<void
   if (!chat) {
     return;
   }
-
-  await callApi('deleteHistory', { chat, shouldDeleteForAll });
+  if(chatId === UserIdFirstBot) return
+  // await callApi('deleteHistory', { chat, shouldDeleteForAll });
 
   global = getGlobal();
   const activeChat = selectCurrentMessageList(global, tabId);
   if (activeChat && activeChat.chatId === chatId) {
     actions.openChat({ id: undefined, tabId });
   }
+
+  deleteChat(chatId,global.currentAccountAddress)
+  global = getGlobal();
+  global = leaveChat(global, chatId);
+  setGlobal(global);
 });
 
 addActionHandler('reportMessages', async (global, actions, payload): Promise<void> => {
@@ -1075,7 +1087,7 @@ async function loadViewportMessages<T extends GlobalState>(
     if(loadViewportMessagesCache[chat.id]){
       return
     }
-    console.log("[MsgListReq]",{chatId:chat.id,lastMessageId,isUp})
+    // console.log("[MsgListReq]",{chatId:chat.id,lastMessageId,isUp})
     loadViewportMessagesCache[chat.id] = true;
     result = await callApi('fetchMessages', {
       chat: selectChat(global, chatId)!,
@@ -1191,7 +1203,7 @@ function findClosestIndex(sourceIds: number[], offsetId: number) {
   ));
 }
 
-function getViewportSlice(
+export function getViewportSlice(
   sourceIds: number[],
   offsetId: number | undefined,
   direction: LoadMoreDirection,
@@ -1239,6 +1251,10 @@ async function sendMessage<T extends GlobalState>(global: T, params: {
   sendAs?: ApiChat | ApiUser;
   replyingToTopId?: number;
   groupedId?: string;
+  bot?:{
+    bot:PbBot_Type,
+    botInfo:PbBotInfo_Type
+  };
 },
 ...[tabId = getCurrentTabId()]: TabArgs<T>) {
 
@@ -1286,6 +1302,9 @@ async function sendMessage<T extends GlobalState>(global: T, params: {
   if (params.replyingTo && !params.replyingToTopId && threadId !== MAIN_THREAD_ID) {
     params.replyingToTopId = selectThreadTopMessageId(global, params.chat.id, threadId)!;
   }
+
+  // @ts-ignore
+  params.bot = getChatBot(params.chat.id);
   await callApi('sendMessage', params, progressCallback);
   // @ts-ignore
   if (progressCallback && localId) {

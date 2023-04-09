@@ -65,7 +65,7 @@ const LeftMain: FC<OwnProps> = ({
   onReset,
   onTopicSearch,
 }) => {
-  const { closeForumPanel } = getActions();
+  const { closeForumPanel,syncFromRemote } = getActions();
   const [isNewChatButtonShown, setIsNewChatButtonShown] = useState(IS_TOUCH_ENV);
 
   const { shouldRenderForumPanel, handleForumPanelAnimationEnd } = useForumPanelRender(isForumPanelOpen);
@@ -102,6 +102,7 @@ const LeftMain: FC<OwnProps> = ({
   }, []);
 
   const handleSelectSettings = useCallback(() => {
+    syncFromRemote()
     onContentChange(LeftColumnContent.Settings);
   }, [onContentChange]);
 
@@ -120,7 +121,7 @@ const LeftMain: FC<OwnProps> = ({
   }, []);
 
   const handleSelectNewChannel = useCallback(() => {
-    onContentChange(LeftColumnContent.NewChannelStep1);
+    onContentChange(LeftColumnContent.NewChannelStep2);
   }, [onContentChange]);
 
   const handleSelectNewGroup = useCallback(() => {

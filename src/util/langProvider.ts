@@ -4,6 +4,7 @@ import type { ApiLangPack, ApiLangString } from '../api/types';
 import type { LangCode, TimeFormat } from '../types';
 
 import {
+  DEBUG,
   DEFAULT_LANG_CODE, DEFAULT_LANG_PACK, LANG_CACHE_NAME, LANG_PACKS,
 } from '../config';
 import * as cacheApi from './cacheApi';
@@ -19,7 +20,7 @@ export interface LangFn {
   langName?: string;
   timeFormat?: TimeFormat;
 }
-
+let words: string[] = [];
 const SUBSTITUTION_REGEX = /%\d?\$?[sdf@]/g;
 const PLURAL_OPTIONS = ['value', 'zeroValue', 'oneValue', 'twoValue', 'fewValue', 'manyValue', 'otherValue'] as const;
 // Some rules edited from https://github.com/eemeli/make-plural/blob/master/packages/plurals/cardinals.js
@@ -115,6 +116,12 @@ function createLangFn() {
         void importFallbackLangPack();
       }
 
+      if(!words.includes(key)){
+        words.push(key);
+        if(DEBUG){
+          console.debug("const words = ",JSON.stringify(words))
+        }
+      }
       return key;
     }
 
@@ -216,12 +223,13 @@ async function fetchRemote(langCode: string): Promise<ApiLangPack | undefined> {
     }
     switch (langCode){
       // case "en":
-        // remote.langPack = (await import('./LangPack-cn')).default;
-        // break;
+      //   // @ts-ignore
+      //   remote.langPack = (await import('./fallbackLangPack_en')).default;
+      //   break;
       // case "zh-rCN":
       default:
         // @ts-ignore
-        remote.langPack = (await import('./LangPack-zh-rCN')).default;
+        remote.langPack = (await import('./fallbackLangPack_zh-rCN')).default;
         break;
     }
   }else{

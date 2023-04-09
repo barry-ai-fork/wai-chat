@@ -42,11 +42,23 @@ export interface MsgUpdateReq_Type {
 export interface MsgUpdateRes_Type {
   err: PTPCommon.ERR;
 }
+export interface RemoveMessagesReq_Type {
+  messageIds?: number[];
+}
+export interface RemoveMessagesRes_Type {
+  err: PTPCommon.ERR;
+}
 export interface SendReq_Type {
   payload: string;
 }
 export interface SendRes_Type {
   action: string;
   payload: string;
+  err: PTPCommon.ERR;
+}
+export interface SyncMessagesReq_Type {
+  messages?: PTPCommon.PbMsg_Type[];
+}
+export interface SyncMessagesRes_Type {
   err: PTPCommon.ERR;
 }

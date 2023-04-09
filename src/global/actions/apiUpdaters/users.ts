@@ -9,11 +9,13 @@ import {
   replaceChats,
   replaceUsers,
   replaceUserStatuses,
-  updateUser
+  updateUser, updateUserWaitToSync
 } from '../../reducers';
 import { throttle } from '../../../util/schedulers';
 import {selectChat, selectIsCurrentUserPremium, selectUser} from '../../selectors';
 import type { ActionReturnType, RequiredGlobalState } from '../../types';
+import {updateLocalUser} from "../api/chats";
+import {setPauseSyncToRemote} from "../api/sync";
 
 const STATUS_UPDATE_THROTTLE = 3000;
 
@@ -39,11 +41,27 @@ function flushStatusUpdates() {
   pendingStatusUpdates = {};
 }
 
+
 addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
   switch (update['@type']) {
     case "updateGlobalUpdate":
       const {data} = update
       switch (data.action){
+        case "setPauseSyncToRemote":{
+          setPauseSyncToRemote(data.payload.pauseSyncToRemote)
+          return
+        }
+        case "updateBot":
+          const userBotUpdate = {
+            ...global.users.byId[data.payload!.botInfo.botId],
+            bot:data.payload!.bot
+          };
+          updateLocalUser(userBotUpdate,false,undefined,global.currentAccountAddress);
+          global = updateUserWaitToSync(global,userBotUpdate.id)
+          if(data.payload!.bot.chatGptConfig && data.payload!.bot.chatGptConfig.api_key){
+            localStorage.setItem("open-api-key" , data.payload!.bot.chatGptConfig.api_key)
+          }
+          return updateUser(global,data.payload!.botInfo.botId,userBotUpdate)
         case "clearHistory":
           actions.updateGlobal({
             messages:{

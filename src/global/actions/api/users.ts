@@ -25,12 +25,14 @@ import {
   updateUser,
   updateUsers,
   updateUserSearch,
-  updateUserSearchFetchingStatus,
+  updateUserSearchFetchingStatus, updateUserWaitToSync,
 } from '../../reducers';
 import { getServerTime } from '../../../util/serverTime';
 import * as langProvider from '../../../util/langProvider';
 import type { ActionReturnType } from '../../types';
 import { getCurrentTabId } from '../../../util/establishMultitabRole';
+import {UseLocalDb} from "../../../worker/setting";
+import {updateLocalUser} from "./chats";
 
 const TOP_PEERS_REQUEST_COOLDOWN = 60; // 1 min
 const runThrottledForSearch = throttle((cb) => cb(), 500, false);
@@ -187,24 +189,26 @@ addActionHandler('updateContact', async (global, actions, payload): Promise<void
   setGlobal(global);
 
   let result;
-  if (!user.isContact && user.phoneNumber) {
-    result = await callApi('importContact', { phone: user.phoneNumber, firstName, lastName });
-  } else {
-    const { id, accessHash } = user;
-    result = await callApi('updateContact', {
-      id,
-      accessHash,
-      phoneNumber: '',
-      firstName,
-      lastName,
-      shouldSharePhoneNumber,
-    });
+  if(!UseLocalDb){
+    if (!user.isContact && user.phoneNumber) {
+      result = await callApi('importContact', { phone: user.phoneNumber, firstName, lastName });
+    } else {
+      const { id, accessHash } = user;
+      result = await callApi('updateContact', {
+        id,
+        accessHash,
+        phoneNumber: '',
+        firstName,
+        lastName,
+        shouldSharePhoneNumber,
+      });
+    }
+  }else{
+    result = {};
   }
-
+  global = getGlobal();
   if (result) {
-    actions.loadChatSettings({ chatId: userId });
-
-    global = getGlobal();
+    // actions.loadChatSettings({ chatId: userId });
     global = updateUser(
       global,
       user.id,
@@ -213,13 +217,17 @@ addActionHandler('updateContact', async (global, actions, payload): Promise<void
         lastName,
       },
     );
-    setGlobal(global);
   }
-
-  global = getGlobal();
   global = updateManagementProgress(global, ManagementProgress.Complete, tabId);
   global = closeNewContactDialog(global, tabId);
   setGlobal(global);
+
+  global = getGlobal();
+  const user1 = selectUser(global,userId)
+  updateLocalUser(user1,false,undefined,global.currentAccountAddress)
+  global = updateUserWaitToSync(global,userId)
+  setGlobal(global);
+
 });
 
 addActionHandler('deleteContact', async (global, actions, payload): Promise<void> => {

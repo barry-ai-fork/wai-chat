@@ -28,7 +28,7 @@ import {extractCurrentThemeParams} from '../../../util/themeStyle';
 import PopupManager from '../../../util/PopupManager';
 import {updateTabState} from '../../reducers/tabs';
 import {getCurrentTabId} from '../../../util/establishMultitabRole';
-import MsgClient,{MsgClientState} from "../../../lib/ptp/client/MsgClient";
+import {getChatBot} from "./chats";
 
 const GAMEE_URL = 'https://prizes.gamee.com/';
 const TOP_PEERS_REQUEST_COOLDOWN = 60; // 1 min
@@ -933,12 +933,14 @@ async function sendBotCommand(
   chat: ApiChat, threadId = MAIN_THREAD_ID, command: string, replyingTo?: number, sendAs?: ApiChat | ApiUser,
 ) {
 
+  const bot = getChatBot(chat.id);
   await callApi('sendMessage', {
     chat,
     replyingToTopId: threadId,
     text: command,
     replyingTo,
     sendAs,
+    bot
   });
 }
 

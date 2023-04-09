@@ -1,5 +1,5 @@
 {
-  "name": "telegram-t",
+  "name": "wai",
   "version": "1.60.0",
   "description": "",
   "main": "index.js",
@@ -28,7 +28,7 @@
     "statoscope:validate-diff": "statoscope validate --input input.json --reference reference.json",
     "postinstall": "(cd dev/eslint-multitab && npm i)",
     "clean:prod": "rm -rf  dist/statoscope-report.html dist/build-stats.json public/build-stats.json public/statoscope-report.html dist/img-apple-64 dist/img-apple-160",
-    "dev:pages-api": "wrangler pages dev public"
+    "dev:pages-api": "wrangler pages dev public --port=1237"
   },
   "engines": {
     "node": "^18",
@@ -54,17 +54,18 @@
     "@babel/preset-env": "^7.20.2",
     "@babel/preset-react": "^7.18.6",
     "@babel/preset-typescript": "^7.18.6",
+    "@cloudflare/workers-types": "^3.0.0",
     "@faker-js/faker": "^7.6.0",
     "@glen/jest-raw-loader": "^2.0.0",
-    "@testing-library/jest-dom": "^5.16.5",
-    "@types/jest": "^29.2.3",
     "@playwright/test": "^1.28.1",
     "@statoscope/cli": "^5.24.0",
     "@statoscope/webpack-plugin": "^5.20.1",
+    "@testing-library/jest-dom": "^5.16.5",
     "@types/bn.js": "^5.1.1",
     "@types/croppie": "^2.6.1",
     "@types/elliptic": "^6.4.14",
     "@types/hast": "^2.3.4",
+    "@types/jest": "^29.2.3",
     "@types/pouchdb": "^6.4.0",
     "@types/react": "^18.0.25",
     "@types/react-dom": "^18.0.9",
@@ -127,9 +128,11 @@
     "webpack": "^5.75.0",
     "webpack-dev-server": "^4.11.1",
     "whatwg-fetch": "^3.6.2",
-    "@cloudflare/workers-types": "^3.0.0"
+    "array.prototype.at": "^1.1.1",
+    "worktop": "0.8.0-next.14"
   },
   "dependencies": {
+    "eventsource-parser": "^0.1.0",
     "@aws-sdk/client-sns": "^3.245.0",
     "@cryptography/aes": "^0.1.1",
     "@nuintun/qrcode": "^3.3.1",
@@ -147,6 +150,7 @@
     "idb-keyval": "^6.2.0",
     "jsonwebtoken": "^9.0.0",
     "lowlight": "^2.8.0",
+    "openai": "^3.2.1",
     "opus-recorder": "github:Ajaxy/opus-recorder",
     "os-browserify": "^0.3.0",
     "pako": "^2.1.0",

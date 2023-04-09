@@ -76,7 +76,7 @@ let localMessageCounter = LOCAL_MESSAGE_MIN_ID;
 // It also allows to avoid collisions when sending messages from multiple tabs due to timestamp-based whole part.
 // To support up to 1M local messages, the whole part must be below 8.5B (https://stackoverflow.com/a/57225494/903919).
 // The overflow will happen when `datePart` is >3.59B which will be in June 2034.
-function getNextLocalMessageId() {
+export function getNextLocalMessageId() {
   const datePart = Math.round((Date.now() - TIMESTAMP_BASE) / TIMESTAMP_PRECISION);
   return LOCAL_MESSAGE_MIN_ID + datePart + (++localMessageCounter / LOCAL_MESSAGES_LIMIT);
 }

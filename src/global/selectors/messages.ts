@@ -1,6 +1,4 @@
-import type {
-  GlobalState, MessageListType, TabArgs, Thread, TabThread, ChatTranslatedMessages,
-} from '../types';
+import type {ChatTranslatedMessages, GlobalState, MessageListType, TabArgs, TabThread, Thread,} from '../types';
 import type {
   ApiChat,
   ApiMessage,
@@ -9,18 +7,14 @@ import type {
   ApiStickerSetInfo,
   ApiUser,
 } from '../../api/types';
-import { ApiMessageEntityTypes, MAIN_THREAD_ID } from '../../api/types';
+import {ApiMessageEntityTypes, MAIN_THREAD_ID} from '../../api/types';
 
+import {GENERAL_TOPIC_ID, LOCAL_MESSAGE_MIN_ID, REPLIES_USER_ID, SERVICE_NOTIFICATIONS_USER_ID,} from '../../config';
+import {selectChat, selectChatBot, selectIsChatWithSelf,} from './chats';
+import {selectIsCurrentUserPremium, selectIsUserOrChatContact, selectUser, selectUserStatus,} from './users';
 import {
-  GENERAL_TOPIC_ID, LOCAL_MESSAGE_MIN_ID, REPLIES_USER_ID, SERVICE_NOTIFICATIONS_USER_ID,
-} from '../../config';
-import {
-  selectChat, selectChatBot, selectIsChatWithSelf,
-} from './chats';
-import {
-  selectIsCurrentUserPremium, selectIsUserOrChatContact, selectUser, selectUserStatus,
-} from './users';
-import {
+  canSendReaction,
+  getAllowedAttachmentOptions,
   getCanPostInChat,
   getHasAdminRight,
   getMessageAudio,
@@ -39,19 +33,19 @@ import {
   isChatSuperGroup,
   isCommonBoxChat,
   isForwardedMessage,
+  isLocalMessageId,
   isMessageLocal,
   isOwnMessage,
   isServiceNotificationMessage,
   isUserId,
   isUserRightBanned,
-  canSendReaction, getAllowedAttachmentOptions,
 } from '../helpers';
-import { findLast } from '../../util/iteratees';
-import { selectIsStickerFavorite } from './symbols';
-import { getServerTime } from '../../util/serverTime';
-import { MEMO_EMPTY_ARRAY } from '../../util/memo';
-import { selectTabState } from './tabs';
-import { getCurrentTabId } from '../../util/establishMultitabRole';
+import {findLast} from '../../util/iteratees';
+import {selectIsStickerFavorite} from './symbols';
+import {getServerTime} from '../../util/serverTime';
+import {MEMO_EMPTY_ARRAY} from '../../util/memo';
+import {selectTabState} from './tabs';
+import {getCurrentTabId} from '../../util/establishMultitabRole';
 
 const MESSAGE_EDIT_ALLOWED_TIME = 172800; // 48 hours
 
@@ -1337,4 +1331,22 @@ export function selectForwardsCanBeSentToChat<T extends GlobalState>(
       || (isGif && !canSendGifs)
       || (isPlainText && !canSendPlainText);
   });
+}
+
+
+export function selectLastMessageId<T extends GlobalState>(
+  global: T, chatId: string, threadId = MAIN_THREAD_ID,
+  ...[tabId = getCurrentTabId()]: TabArgs<T>
+): number | undefined {
+  const chat = selectChat(global, chatId);
+  if (!chat) {
+    return undefined;
+  }
+
+  const chatMessages = selectChatMessages(global, chatId);
+  const viewportIds = selectViewportIds(global, chatId, threadId, tabId);
+  if (!chatMessages || !viewportIds) {
+    return undefined;
+  }
+  return findLast(viewportIds, (id) => !isLocalMessageId(id))
 }

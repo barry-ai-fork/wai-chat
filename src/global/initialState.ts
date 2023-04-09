@@ -10,6 +10,9 @@ import {
 import { IS_IOS, IS_MAC_OS } from '../util/environment';
 
 export const INITIAL_GLOBAL_STATE: GlobalState = {
+  session:"",
+  waitToSync:{},
+  currentAccountAddress:"",
   attachMenu: { bots: {} },
   blurredTabTokens: [],
   passcode: {},
@@ -213,7 +216,7 @@ export const INITIAL_TAB_STATE: TabState = {
   stickerSearch: {},
 
   messageLists: [],
-  activeChatFolder: 0,
+  activeChatFolder: window.sessionStorage.getItem("activeChatFolder") ? parseInt(window.sessionStorage.getItem("activeChatFolder")!) :  0,
   tabThreads: {},
 
   inlineBots: {

@@ -192,7 +192,7 @@ function getErrorHeader(error: ApiError) {
   }
 
   if (!error.hasErrorKey) {
-    return 'Telegram';
+    return 'Wai';
   }
 
   return 'Something went wrong';
