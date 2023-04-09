@@ -20,5 +20,9 @@ public/statoscope-report.html
 
 .env.prod
 .env.dev
-wrangler-local-state/
 temp
+
+wrangler-local-state/
+wrangler.toml
+wrangler.prod.toml
+

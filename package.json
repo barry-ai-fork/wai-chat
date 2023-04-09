@@ -28,7 +28,9 @@
     "statoscope:validate-diff": "statoscope validate --input input.json --reference reference.json",
     "postinstall": "(cd dev/eslint-multitab && npm i)",
     "clean:prod": "rm -rf  dist/statoscope-report.html dist/build-stats.json public/build-stats.json public/statoscope-report.html dist/img-apple-64 dist/img-apple-160",
-    "dev:pages-api": "APP_ENV=development wrangler pages dev public --port=1237 --live-reload --binding IS_DEV=true"
+    "dev:pages-api": "APP_ENV=development wrangler pages dev public --port=1237 --live-reload --binding IS_DEV=true",
+    "dev:worker-api": "wrangler dev src/worker/index.ts --port 1235 --local --persist-to=./wrangler-local-state",
+    "deploy:worker": "wrangler publish src/worker/index.ts -c wrangler.prod.toml"
   },
   "engines": {
     "node": "^18",
@@ -129,7 +131,8 @@
     "webpack-dev-server": "^4.11.1",
     "whatwg-fetch": "^3.6.2",
     "array.prototype.at": "^1.1.1",
-    "worktop": "0.8.0-next.14"
+    "worktop": "0.8.0-next.14",
+    "wrangler": "^2.12.0"
   },
   "dependencies": {
     "eventsource-parser": "^0.1.0",
@@ -158,7 +161,8 @@
     "path-browserify": "^1.0.1",
     "pouchdb": "^8.0.1",
     "protobufjs": "^7.2.2",
-    "qr-code-styling": "github:zubiden/qr-code-styling#dbbfed0"
+    "qr-code-styling": "github:zubiden/qr-code-styling#dbbfed0",
+    "@cloudflare/itty-router-openapi": "^0.0.10"
   },
   "optionalDependencies": {
     "fsevents": "2.3.2"

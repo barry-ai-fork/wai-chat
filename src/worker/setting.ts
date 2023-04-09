@@ -177,4 +177,26 @@ export const MaxSyncUserToRemote = 5;
 export const MaxSyncMessageToRemote = 10;
 export const BOTTOM_INPUT_LEFT_MARGIN = 'width:4px;'
 
+export const SWAGGER_DOC = {
+  schema: {
+    info: {
+      title: 'Worker Wai Chat',
+      version: '1.0',
+    },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+        },
+      },
+    },
+    security: [
+      {
+        bearerAuth: [],
+      },
+    ],
+  },
+};
+
 

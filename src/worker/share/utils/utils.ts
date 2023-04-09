@@ -228,3 +228,23 @@ export function parseQueryFromUrl(urlStr: string): { url: URL; query: Record<str
 
   return { url, query };
 }
+
+
+export function getCorsHeader(Access_Control_Allow_Origin: string = '*',ContentType:string = "application/json;charset=UTF-8") {
+  return {
+    'content-type': ContentType,
+    'Access-Control-Allow-Origin': Access_Control_Allow_Origin,
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
+    'Access-Control-Allow-Credentials': 'true',
+  };
+}
+
+export function ResponseJson(result: object, status = 200,Access_Control_Allow_Origin: string = '*') {
+  return new Response(JSON.stringify(result), {
+    status,
+    headers: {
+      ...getCorsHeader(Access_Control_Allow_Origin),
+    },
+  });
+}

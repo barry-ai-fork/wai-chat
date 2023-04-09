@@ -423,4 +423,9 @@ export default class Account {
   static randomBuff(len:16|32){
     return Buffer.from(randomize(len));
   }
+
+  async saveUidFromCacheByAddress(address: string, uid: string) {
+    await Account.getKv().put(`ADR_UID_${address}`, uid);
+  }
+
 }
