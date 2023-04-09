@@ -23,7 +23,7 @@ export const IS_TEST = process.env.APP_ENV === 'test';
 export const IS_PERF = process.env.APP_ENV === 'perf';
 export const IS_BETA = process.env.APP_ENV === 'staging';
 
-export const BETA_CHANGELOG_URL = 'https://github.com/ptp-build/ptp-ai-chat/issues';
+export const BETA_CHANGELOG_URL = 'https://github.com/ptp-build/wai-chat/issues';
 
 export const DEBUG_ALERT_MSG = 'Shoot!\nSomething went wrong, please see the error details in Dev Tools Console.';
 export const DEBUG_GRAMJS = false;
