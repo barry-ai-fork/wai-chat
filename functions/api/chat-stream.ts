@@ -1,4 +1,4 @@
-import {createParser} from "eventsource-parser";
+import {createParser} from "./eventsource-parser/src";
 import {requestOpenai} from "./common";
 
 async function createStream(req: Request) {
