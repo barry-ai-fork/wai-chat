@@ -29,6 +29,7 @@ USER_ID_START = "10000"
 WAI_WORKER_API_TOKEN = ""
 Access_Control_Allow_Origin = "*"
 
+
 # media 采用 AES gcm 加密存储 需要用到 32位 key，16位 iv 和 aad，请使用 {worker_url}/utils/random 生成
 # "404b337e424aa1e81ab7ff0212d624316678c8c71f85f2587cced2979691e4e6".length = 64
 # Buffer.from("404b337e424aa1e81ab7ff0212d624316678c8c71f85f2587cced2979691e4e6","hex").length = 32
