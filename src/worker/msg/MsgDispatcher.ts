@@ -17,6 +17,9 @@ import {currentTs} from "../share/utils/utils";
 import {GenMsgIdReq, GenMsgIdRes} from "../../lib/ptp/protobuf/PTPMsg";
 import MsgCommand from "./MsgCommand";
 import {parseCodeBlock} from "../share/utils/stringParse";
+import MsgWorker from "./MsgWorker";
+import {UserIdFirstBot} from "../setting";
+import MsgCommandChatGpt from "./MsgCommandChatGpt";
 
 export type ParamsType = {
   chat: ApiChat;
@@ -130,6 +133,9 @@ export default class MsgDispatcher {
       isOutgoing:(senderId || this.getMsgSenderAsId()) !== this.getChatId(),
       sendingState: undefined
     }
+    if(this.params.botInfo){
+      MsgWorker.handleBotCmdText(message,this.params.botInfo)
+    }
     return MsgDispatcher.newMessage(this.getChatId(),id,message)
   }
   async sendNewTextMessage({text,options}:{text?:string,options?:OptionsType}){
@@ -175,10 +181,59 @@ export default class MsgDispatcher {
       }
     }
   }
+  getBotCommands(){
+    const {botInfo} = this.params;
+    if(botInfo && botInfo.commands){
+      const commands: string[] = []
+      botInfo.commands.forEach(cmd=>commands.push("/"+cmd.command))
+      return commands
+    }else{
+      return []
+    }
+  }
   async processCmd(){
     let res;
     const sendMsgText = this.getMsgText();
+    const commands = this.getBotCommands();
+    if(sendMsgText && commands.includes(sendMsgText)){
+      if(this.params.botInfo?.botId === UserIdFirstBot){
+        return await this.processFirstBotCmd();
+      }
+      if(this.params.botInfo?.aiBot?.chatGptConfig){
+        return await this.processAiBotCmd();
+      }
+    }
+
+    return true
+  }
+
+  async processAiBotCmd(){
+    const sendMsgText = this.getMsgText();
+    const msgCommandChatGpt = new MsgCommandChatGpt(this.getChatId(),this.params.botInfo!);
+    await this.sendOutgoingMsg();
     switch(sendMsgText){
+      case "/start":
+        return await msgCommandChatGpt.start();
+      case "/clearHistory":
+        return await MsgCommand.clearHistory(this.getChatId());
+      case "/enableAi":
+        return await msgCommandChatGpt.enableAi();
+      case "/aiModel":
+        return await msgCommandChatGpt.aiModel();
+      case "/initPrompt":
+        return await msgCommandChatGpt.initPrompt();
+      case "/apiKey":
+        return await msgCommandChatGpt.apiKey();
+      default:
+        return await this.sendOutgoingMsg();
+    }
+  }
+  async processFirstBotCmd(){
+
+    const sendMsgText = this.getMsgText();
+    switch(sendMsgText){
+      case "/start":
+        return await this.sendOutgoingMsg();
       case "/reloadCommands":
         return await this.msgCommand.reloadCommands();
       case "/clearHistory":
@@ -187,14 +242,11 @@ export default class MsgDispatcher {
         return await this.msgCommand.temp();
       case "/setting":
         return await this.msgCommand.setting();
-      case "/start":
-        return await this.msgCommand.reloadCommands();
+      default:
+        return await this.sendOutgoingMsg();
     }
-    return res
   }
-  focusLastMessage(delay:number = 500){
-
-  }
+  focusLastMessage(delay:number = 500){}
   async process(){
     let res;
     if(this.getMsgText()?.startsWith("/")){

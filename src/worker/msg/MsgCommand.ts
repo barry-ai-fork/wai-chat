@@ -18,6 +18,7 @@ import {getPasswordFromEvent} from "../share/utils/password";
 import {hashSha256} from "../share/utils/helpers";
 import MsgCommandSetting from "./MsgCommandSetting";
 import {ControllerPool} from "../../lib/ptp/functions/requests";
+import MsgCommandChatGpt from "./MsgCommandChatGpt";
 
 export default class MsgCommand {
   private msgDispatcher: MsgDispatcher;
@@ -216,13 +217,11 @@ export default class MsgCommand {
   }
   static async answerCallbackButton(global:GlobalState,chatId:string,messageId:number,data:string){
     await MsgCommandSetting.answerCallbackButton(global,chatId,messageId,data)
+    await MsgCommandChatGpt.answerCallbackButton(global,chatId,messageId,data)
     if(data.startsWith("requestChatStream/stop/")){
       const [chatId,messageId] = data.replace("requestChatStream/stop/","").split("/").map(Number)
       ControllerPool.stop(chatId,messageId);
     }
-  }
-  static async onUploadFolder(){
-
   }
   async temp(){
     await this.msgDispatcher.sendOutgoingMsg();

@@ -3,7 +3,8 @@ import {addActionHandler, getGlobal, setGlobal} from '../../index';
 
 import type {ActionReturnType, ApiDraft, GlobalState, TabArgs,} from '../../types';
 import type {
-  ApiAttachment, ApiBotInfo,
+  ApiAttachment,
+  ApiBotInfo,
   ApiChat,
   ApiMessage,
   ApiMessageEntity,
@@ -53,8 +54,7 @@ import {
   updateTopic,
 } from '../../reducers';
 import {
-  selectBot,
-  selectChat, selectChatBot,
+  selectChat,
   selectChatMessage,
   selectChatMessages,
   selectCurrentChat,
@@ -101,13 +101,9 @@ import {replaceSubstring} from "../../../worker/share/utils/utils";
 import {blobToBuffer, fetchBlob} from "../../../util/files";
 import {popByteBuffer, toUint8Array, writeBytes, writeInt16} from "../../../lib/ptp/protobuf/BaseMsg";
 import {resizeImage} from "../../../util/imageResize";
-import {getChatBot} from "./chats";
 import {UserIdFirstBot} from "../../../worker/setting";
-import {Api} from "../../../lib/gramjs";
-import {PbBot_Type, PbBotInfo_Type} from "../../../lib/ptp/protobuf/PTPCommon/types";
 import MsgDispatcher from "../../../worker/msg/MsgDispatcher";
-import { getPasswordFromEvent } from '../../../worker/share/utils/password';
-import chat from "../../../components/left/main/Chat";
+import {getPasswordFromEvent} from '../../../worker/share/utils/password';
 
 const AUTOLOGIN_TOKEN_KEY = 'autologin_token';
 

@@ -304,7 +304,6 @@ export default class MsgWorker {
   }
   async processBotMsg(){
     const {botInfo,msgSend} =this;
-    return await new MsgChatGptWorker(this.msgSend,botInfo).process()
     if(
       msgSend.content.text && msgSend.content.text.text &&
       botInfo?.aiBot && botInfo?.aiBot.enableAi && botInfo?.aiBot.chatGptConfig

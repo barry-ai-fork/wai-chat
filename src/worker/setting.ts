@@ -17,6 +17,11 @@ export const ChatModelConfig:PbChatGptConfig_Type = {
 export const DEFAULT_AI_CONFIG_COMMANDS = [
   {
     "botId": UserIdFirstBot,
+    "command": "start",
+    "description": "开始对话"
+  },
+  {
+    "botId": UserIdFirstBot,
     "command": "aiModel",
     "description": "设置AI模型"
   },
@@ -34,6 +39,11 @@ export const DEFAULT_AI_CONFIG_COMMANDS = [
     "botId": UserIdFirstBot,
     "command": "enableAi",
     "description": "开启或者关闭AI"
+  },
+  {
+    "botId": UserIdFirstBot,
+    "command": "clearHistory",
+    "description": "清除历史记录"
   },
 ]
 export const DEFAULT_BOT_COMMANDS = [

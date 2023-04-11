@@ -7,6 +7,7 @@ import {MAIN_THREAD_ID} from '../../../api/types';
 import type {InlineBotSettings} from '../../../types';
 import {callApi} from '../../../api/gramjs';
 import {
+  selectBot,
   selectChat,
   selectChatBot,
   selectChatMessage,
@@ -28,7 +29,6 @@ import {extractCurrentThemeParams} from '../../../util/themeStyle';
 import PopupManager from '../../../util/PopupManager';
 import {updateTabState} from '../../reducers/tabs';
 import {getCurrentTabId} from '../../../util/establishMultitabRole';
-import {getChatBot} from "./chats";
 import MsgDispatcher from "../../../worker/msg/MsgDispatcher";
 import {openSystemFilesDialog} from "../../../util/systemFilesDialog";
 import {SUPPORTED_IMAGE_CONTENT_TYPES} from "../../../config";
@@ -950,19 +950,19 @@ async function searchInlineBot<T extends GlobalState>(global: T, {
 async function sendBotCommand(
   chat: ApiChat, threadId = MAIN_THREAD_ID, command: string, replyingTo?: number, sendAs?: ApiChat | ApiUser,
 ) {
-
-  const bot = getChatBot(chat.id);
+  const global = getGlobal();
+  const user = selectUser(global,chat.id)
   const params = {
     chat,
     replyingToTopId: threadId,
     text: command,
     replyingTo,
     sendAs,
-    bot
+    botInfo:user?.fullInfo?.botInfo
   }
   const res = await new MsgDispatcher(getGlobal(),params).process()
   if(!res){
-    // await callApi('sendMessage', params);
+    await callApi('sendMessage', params);
   }
 }
 

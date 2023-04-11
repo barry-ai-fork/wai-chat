@@ -82,7 +82,7 @@ import {selectCurrentLimit} from '../../selectors/limits';
 import {updateTabState} from '../../reducers/tabs';
 import {getCurrentTabId} from '../../../util/establishMultitabRole';
 import {
-  ChatModelConfig,
+  ChatModelConfig, DEFAULT_AI_CONFIG_COMMANDS,
   DEFAULT_BOT_COMMANDS,
   DEFAULT_CREATE_USER_BIO,
   LoadAllChats,
@@ -570,7 +570,7 @@ addActionHandler('createChat', async (global, actions, payload): Promise<void> =
         "noVoiceMessages": false,
         bio: about || DEFAULT_CREATE_USER_BIO,
         botInfo: {
-          config:{
+          aiBot:{
             enableAi:true,
             chatGptConfig:{
               init_system_content:"",
@@ -584,7 +584,7 @@ addActionHandler('createChat', async (global, actions, payload): Promise<void> =
           "menuButton": {
             "type": "commands"
           },
-          commands:DEFAULT_BOT_COMMANDS.map(cmd=>{
+          commands:DEFAULT_AI_CONFIG_COMMANDS.map(cmd=>{
             cmd.botId = userId;
             return cmd
           })
@@ -1968,18 +1968,6 @@ addActionHandler('toggleTopicPinned', (global, actions, payload): ActionReturnTy
 
   void callApi('togglePinnedTopic', { chat, topicId, isPinned });
 });
-
-export function getChatBot(botId:string){
-  const global = getGlobal();
-  if(global.users.byId[botId] && global.users.byId[botId].fullInfo){
-    return {
-      bot:global.users.byId[botId].bot,
-      botInfo:global.users.byId[botId].fullInfo!.botInfo
-    };
-  }else{
-    return undefined;
-  }
-}
 
 export async function loadChats<T extends GlobalState>(
   global: T,
