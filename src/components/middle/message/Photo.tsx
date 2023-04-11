@@ -34,7 +34,7 @@ import useAppLayout from '../../../hooks/useAppLayout';
 
 import ProgressSpinner from '../../ui/ProgressSpinner';
 import MediaSpoiler from '../../common/MediaSpoiler';
-import {getPasswordFromEvent} from "../../../worker/share/utils/utils";
+import {getPasswordFromEvent} from "../../../worker/share/utils/password";
 import {blobToBuffer, blobToDataUri, fetchBlob} from "../../../util/files";
 import {
   readBytes,

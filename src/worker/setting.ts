@@ -1,9 +1,7 @@
 import {PbChatGptConfig_Type} from "../lib/ptp/protobuf/PTPCommon/types";
 
-export const UseLocalDb = true;
-
 export const UserIdFirstBot = "1000";
-export const NameFirstBot = "First Bot";
+export const NameFirstBot = "小W";
 export const DEFAULT_CREATE_USER_BIO = '我是一个AI机器人'
 export const DEFAULT_PROMPT = '你现在是一个优秀的前端开发工程师，请用中文回答我的问题。'
 export const BOT_FOLDER_TITLE = '机器人'
@@ -16,13 +14,7 @@ export const ChatModelConfig:PbChatGptConfig_Type = {
   max_tokens: 2000,
   presence_penalty: 0,
 }
-
-export const DEFAULT_BOT_COMMANDS = [
-  {
-    "botId": UserIdFirstBot,
-    "command": "start",
-    "description": "开始对话"
-  },
+export const DEFAULT_AI_CONFIG_COMMANDS = [
   {
     "botId": UserIdFirstBot,
     "command": "aiModel",
@@ -42,6 +34,33 @@ export const DEFAULT_BOT_COMMANDS = [
     "botId": UserIdFirstBot,
     "command": "enableAi",
     "description": "开启或者关闭AI"
+  },
+]
+export const DEFAULT_BOT_COMMANDS = [
+  {
+    "botId": UserIdFirstBot,
+    "command": "start",
+    "description": "开始对话"
+  },
+  {
+    "botId": UserIdFirstBot,
+    "command": "reloadCommands",
+    "description": "重载命令"
+  },
+  {
+    "botId": UserIdFirstBot,
+    "command": "setting",
+    "description": "设置"
+  },
+  {
+    "botId": UserIdFirstBot,
+    "command": "clearHistory",
+    "description": "清除历史记录"
+  },
+  {
+    "botId": UserIdFirstBot,
+    "command": "temp",
+    "description": "Temp"
   },
 ]
 
@@ -167,7 +186,6 @@ export let LoadAllChats = {
 }
 export const TEXT_AI_THINKING = "..."
 export const BYPASS_API = [
-  "setSession","invokeSyncToRemoteReq","invokeSyncFromRemote",
   "editChatFolder","sortChatFolders","deleteChatFolder",
   "requestWebView","uploadContactProfilePhoto",
   "sendMessage","editMessage","deleteMessages","downloadMedia","destroy","fetchMessages","answerCallbackButton",

@@ -1,20 +1,15 @@
-import React, {
-  memo, useCallback, useEffect, useRef,
-} from '../../../lib/teact/teact';
-
-import type { FC } from '../../../lib/teact/teact';
+import type {FC} from '../../../lib/teact/teact';
+import React, {memo, useCallback, useEffect, useRef,} from '../../../lib/teact/teact';
 import {ApiMessageEntity, ApiMessageEntityTypes} from '../../../api/types';
 
-import { createClassNameBuilder } from '../../../util/buildClassName';
+import {createClassNameBuilder} from '../../../util/buildClassName';
 import useFlag from '../../../hooks/useFlag';
 
 import './Spoiler.scss';
-import {getPasswordFromEvent} from "../../../worker/share/utils/utils";
+import {getPasswordFromEvent} from "../../../worker/share/utils/password";
 import Account from "../../../worker/share/Account";
 import useLang from "../../../hooks/useLang";
-import {hashSha256} from "../../../worker/share/utils/helpers";
 import {getActions} from "../../../global";
-import {UseLocalDb} from "../../../worker/setting";
 
 type OwnProps = {
   children?: React.ReactNode;
@@ -92,10 +87,8 @@ const Spoiler: FC<OwnProps> = ({
 
     setTimeout(() => {
       actionsByMessageId.get(messageId!)?.forEach((actions) => actions.conceal());
-      if(UseLocalDb){
-        contentRef.current!.innerText = tempText;
-        tempText = ""
-      }
+      contentRef.current!.innerText = tempText;
+      tempText = ""
       conceal();
     }, timeoutMs);
   }, [conceal, messageId]);

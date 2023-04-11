@@ -341,19 +341,7 @@ const MiddleColumn: FC<OwnProps & StateProps> = ({
   }, [joinChannel, chatId, renderingShouldSendJoinRequest, showNotification, isChannel, lang]);
 
   const handleStartBot = useCallback(() => {
-    if(!Account.getCurrentAccount()?.getSession()){
-      getActions().updateGlobal({
-        authState:"authorizationStateWaitSignPassword"
-      })
-    }else{
-      if(getGlobal().msgClientState !== "connectionStateLogged"){
-        sendBotCommand({ command: '/start' });
-      }else{
-        getActions().showNotification({
-          message:"正在登录请稍后再试"
-        })
-      }
-    }
+    sendBotCommand({ command: '/start' });
   }, [sendBotCommand]);
 
   const handleRestartBot = useCallback(() => {

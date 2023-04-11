@@ -33,11 +33,9 @@ export interface FileInfo_Type {
 
 export interface MessageStoreRow_Type {
   message?: PbMsg_Type;
-  chatId: string;
   messageId: number;
   time?: number;
   buf?: Buffer;
-  encrypt?: boolean;
 }
 
 export interface PbAction_Type {
@@ -45,7 +43,7 @@ export interface PbAction_Type {
   type: string;
 }
 
-export interface PbBot_Type {
+export interface PbAiBot_Type {
   chatGptConfig?: PbChatGpBotConfig_Type;
   enableAi?: boolean;
 }
@@ -56,6 +54,7 @@ export interface PbBotInfo_Type {
   menuButton?: PbMenuButton_Type;
   commands?: PbCommands_Type[];
   photo?: PbPhoto_Type;
+  aiBot?: PbAiBot_Type;
 }
 
 export interface PbChat_Type {
@@ -204,7 +203,6 @@ export interface PbUser_Type {
   isSelf?: boolean;
   avatarHash?: string;
   photos?: PbPhoto_Type[];
-  bot?: PbBot_Type;
 }
 
 export interface PbUsernames_Type {
@@ -227,18 +225,17 @@ export interface PbVoice_Type {
 }
 
 export interface UserMessageStoreData_Type {
+  chatId: string;
   messageIds?: number[];
+  messageIdsDeleted?: number[];
   time: number;
-  authUserId: number;
 }
 
 export interface UserStoreData_Type {
-  chatsDeleted?: number[];
-  chats?: number[];
-  chatFolders?: PbChatFolder_Type[];
-  folderIds?: number[];
+  chatIds?: string[];
+  chatIdsDeleted?: string[];
+  chatFolders: string;
   time: number;
-  authUserId: number;
 }
 
 export interface UserStoreRow_Type {
@@ -246,6 +243,5 @@ export interface UserStoreRow_Type {
   userId: string;
   time?: number;
   user?: PbUser_Type;
-  encrypt?: boolean;
 }
 

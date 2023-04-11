@@ -1,5 +1,5 @@
 import type {FC} from '../../../lib/teact/teact';
-import React, {memo, useCallback, useEffect, useState} from '../../../lib/teact/teact';
+import React, {memo, useCallback, useEffect} from '../../../lib/teact/teact';
 import {getActions, withGlobal} from '../../../global';
 
 import type {ApiPrivacySettings} from '../../../types';
@@ -9,17 +9,6 @@ import {selectIsCurrentUserPremium} from '../../../global/selectors';
 
 import useLang from '../../../hooks/useLang';
 import useHistoryBack from '../../../hooks/useHistoryBack';
-
-import ListItem from '../../ui/ListItem';
-import Modal from "../../ui/Modal";
-import Account from "../../../worker/share/Account";
-import Mnemonic from "../../../lib/ptp/wallet/Mnemonic";
-import QrCode from "../../common/QrCode";
-import {getPasswordFromEvent} from "../../../worker/share/utils/utils";
-import {hashSha256} from "../../../worker/share/utils/helpers";
-import {aesEncrypt} from "../../../util/passcode";
-import {PbQrCode} from "../../../lib/ptp/protobuf/PTPCommon";
-import {QrCodeType} from "../../../lib/ptp/protobuf/PTPCommon/types";
 
 
 type OwnProps = {
@@ -131,36 +120,6 @@ const SettingsPrivacy: FC<OwnProps & StateProps> = ({
     });
     updatePageTitle();
   }, []);
-  const [showModal,setShowModal] = useState(false);
-  const [mnemonic,setMnemonic] = useState("");
-  const [mnemonicEncrypt,setMnemonicEncrypt] = useState("");
-  const onShowMnemonic = useCallback(async ()=>{
-    const {password} = await getPasswordFromEvent(undefined,true,'showMnemonic')
-    if(!password){
-      return
-    }
-    const account = Account.getCurrentAccount();
-    const res = await account?.verifySession(session,password);
-    if(!res){
-      return showNotification({message:"密码不正确"})
-    }
-    setShowModal(true);
-    const entropy = await Account.getCurrentAccount()!.getEntropy();
-    const m = Mnemonic.fromEntropy(entropy);
-    const words = m.getWords();
-    const e = await aesEncrypt(words,Buffer.from(hashSha256(password),'hex'))
-    setMnemonicEncrypt(Buffer.from(new PbQrCode({
-      type:QrCodeType.QrCodeType_MNEMONIC,
-      data:Buffer.from(e)
-    }).pack().getPbData()).toString("hex"))
-    setMnemonic(words);
-  },[setShowModal])
-
-  const onCloseMoal = useCallback(async ()=>{
-    setShowModal(false);
-    setMnemonic("");
-  },[setShowModal])
-
   const handleUpdateContentSettings = useCallback((isChecked: boolean) => {
     updateContentSettings(isChecked);
   }, [updateContentSettings]);
@@ -191,17 +150,9 @@ const SettingsPrivacy: FC<OwnProps & StateProps> = ({
 
   return (
     <div className="settings-content custom-scroll">
-      <Modal title={"助记词"} isOpen={showModal} hasCloseButton={true} onClose={()=>setShowModal(false)}>
-        <QrCode content={mnemonicEncrypt} tips={mnemonic} />
-      </Modal>
       <div className="settings-item pt-3">
-        <ListItem
-          icon="key"
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onShowMnemonic()}
-        >
-          助记词
-        </ListItem>
+
+        {/*</ListItem>*/}
           {/*<ListItem*/}
           {/*  icon="key"*/}
           {/*  narrow*/}

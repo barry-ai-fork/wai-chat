@@ -24,6 +24,7 @@ import DotAnimation from './DotAnimation';
 import FullNameTitle from './FullNameTitle';
 
 type OwnProps = {
+  hideName?:boolean;
   userId: string;
   typingStatus?: ApiTypingStatus;
   avatarSize?: 'tiny' | 'small' | 'medium' | 'large' | 'jumbo';
@@ -52,6 +53,7 @@ type StateProps =
   & Pick<GlobalState, 'lastSyncTime'>;
 
 const PrivateChatInfo: FC<OwnProps & StateProps> = ({
+  hideName,
   typingStatus,
   avatarSize = 'medium',
   status,
@@ -176,10 +178,13 @@ const PrivateChatInfo: FC<OwnProps & StateProps> = ({
         withVideo={withVideoAvatar}
         animationLevel={animationLevel}
       />
-      <div className="info">
-        {renderNameTitle()}
-        {(status || (!isSavedMessages && !noStatusOrTyping)) && renderStatusOrTyping()}
-      </div>
+      {
+        !hideName &&
+        <div className="info">
+          { renderNameTitle()}
+          {(status || (!isSavedMessages && !noStatusOrTyping)) && renderStatusOrTyping()}
+        </div>
+      }
     </div>
   );
 };

@@ -10,16 +10,15 @@ import LocalStorage from "./db/LocalStorage";
 import CloudFlareKv from "./db/CloudFlareKv";
 import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
 import {AuthLoginReq_Type} from "../../lib/ptp/protobuf/PTPAuth/types";
-import {getActionCommandsName} from "../../lib/ptp/protobuf/ActionCommands";
 import {decrypt, encrypt} from "ethereum-cryptography/aes";
 import {hashSha256} from "./utils/helpers";
 import LocalDatabase from "./db/LocalDatabase";
-import {UseLocalDb} from "../setting";
 import {randomize} from "worktop/utils";
 import {EncryptType} from "../../lib/ptp/protobuf/PTPCommon/types";
 
 const KEY_PREFIX = "a-k-";
 const KEYS_PREFIX = "a-ks";
+const SESSIONS_PREFIX = "a-ss";
 const SESSION_PREFIX = "a-si-";
 
 export type IMsgConn = {
@@ -37,7 +36,8 @@ export type ISession = {
 let currentAccountId: number;
 let accountIds: number[] = [];
 let accounts: Record<number, Account> = {};
-let kvStore:LocalStorage | CloudFlareKv | LocalDatabase | undefined = undefined
+let serverKvStore: CloudFlareKv  | undefined = undefined
+let clientKvStore:LocalStorage | LocalDatabase | undefined = undefined
 
 export default class Account {
   private accountId: number;
@@ -47,66 +47,107 @@ export default class Account {
   private iv?: Buffer;
   private aad?: Buffer;
   private entropy?:string;
-  private address: string | undefined;
-  private session: ISession | undefined;
   private msgConn?: WebSocket | IMsgConn;
+  private session?: string;
   constructor(accountId: number) {
     this.accountId = accountId;
-    this.address = undefined;
     this.uid = "";
-    this.session = undefined;
   }
-  static getKv(){
-    return kvStore!;
+  static getServerKv(){
+    return serverKvStore!;
   }
-  static setKvStore(kv:LocalStorage | CloudFlareKv | LocalDatabase){
-    kvStore = kv;
+  static getClientKv(){
+    return clientKvStore!;
   }
-
-  setSession(session?:ISession){
-    this.session = session
+  static setServerKv(kv:CloudFlareKv){
+    serverKvStore = kv;
   }
 
-  getSession(){
-    return this.session
+  static setClientKv(kv:LocalStorage | LocalDatabase){
+    clientKvStore = kv;
   }
 
-  async saveSession(){
-    await Account.getKv().put(`${SESSION_PREFIX}${this.accountId}`,JSON.stringify({
-      ...this.session,
-      sign:Buffer.from(this.session!.sign).toString('hex')
-    }))
+  static formatSession({sign,ts,address}:{sign:Buffer,ts:number,address:string}){
+    return `${sign.toString("hex")}_${ts}_${address}`
   }
 
-  async delSession(){
-    this.setSession(undefined);
-    // await Account.getKv().delete(`${SESSION_PREFIX}${this.accountId}`)
-  }
-
-  async loadSession(){
-    const res = await Account.getKv().get(`${SESSION_PREFIX}${this.accountId}`);
-    if(res){
-      const data = JSON.parse(res);
-      this.setSession({
-        ...data,
-        sign:Buffer.from(data.sign,"hex")
-      })
-      return this.getSession();
-    } else {
-      return null;
+  static parseSession(session:string){
+    if(session){
+      const [sign,time,address] = session.split("_")
+      return {sign,time,address};
+    }else{
+      return undefined
     }
   }
 
+  saveSession(session:string){
+    const res = Account.parseSession(session)
+    if(res){
+      Account.getClientKv().put(`adr`,res.address)
+      Account.saveSessionByAddr(res.address,session)
+    }
+  }
+
+  getSession(){
+    if(this.session){
+      return this.session;
+    }else{
+      const adr = Account.getClientKv().get(`adr`);
+      if(adr){
+        this.session = Account.getSessionByAddr(adr);
+        return this.session
+      }else{
+        return undefined
+      }
+    }
+  }
+
+  delSession(){
+    this.session = undefined
+    Account.getClientKv().delete(`adr`);
+  }
+
+  static saveSessionByAddr(addr:string,session:string){
+    const sessions = Account.getSessions()
+    sessions[addr] = session;
+    Account.getClientKv().put(
+      `${SESSIONS_PREFIX}`,
+      JSON.stringify(sessions)
+    );
+  }
+
+  static getSessionByAddr(addr:string){
+    const sessions = Account.getSessions()
+    if(sessions[addr]){
+      return sessions[addr]
+    }else{
+      return undefined
+    }
+  }
+  static getSessions(){
+    const data = Account.getClientKv().get(
+      `${SESSIONS_PREFIX}`,
+    );
+    if(data){
+      return JSON.parse(data)
+    }else{
+      return {}
+    }
+  }
+
+  async saveUidFromCacheByAddress(address: string, uid: string) {
+    await Account.getServerKv().put(`ADR_UID_${address}`, uid);
+  }
+
   async getUidFromCacheByAddress(address:string){
-    const uid_cache = await Account.getKv().get(`ADR_UID_${address}`)
+    const uid_cache = await Account.getServerKv().get(`ADR_UID_${address}`)
     return uid_cache || undefined;
   }
-  async afterServerLoginOk({uid,sign,ts,address}:AuthLoginReq_Type){
+  async afterServerLoginOk({uid,address}:AuthLoginReq_Type){
     this.setUid(uid);
-    this.setSession({uid,sign,ts,address});
-    const uid_cache = await Account.getKv().get(`ADR_UID_${address}`)
+    const uid_cache = await Account.getServerKv().get(`ADR_UID_${address}`)
     if(!uid_cache){
-      await Account.getKv().put(`ADR_UID_${address}`,uid)
+      await Account.getServerKv().put(`ADR_UID_${address}`,uid)
     }
   }
 
@@ -123,12 +164,7 @@ export default class Account {
   getAccountId() {
     return this.accountId;
   }
-  getAddress() {
-    return this.address;
-  }
-  setAddress(address: string) {
-    this.address = address;
-  }
+
   setUid(uid: string) {
     this.uid = uid;
   }
@@ -157,16 +193,7 @@ export default class Account {
     const ethWallet = wallet.getPTPWallet(0);
     return ethWallet.address;
   }
-  async getAccountAddress() {
-    const address = this.getAddress();
-    if (!address) {
-      const entropy = await this.getEntropy();
-      this.address = Account.getAddressFromEntropy(entropy);
-      return this.address!;
-    } else {
-      return address;
-    }
-  }
+
   genEntropy(){
     let mnemonic = new Mnemonic();
     this.entropy = mnemonic.toEntropy();
@@ -218,20 +245,49 @@ export default class Account {
     return EthEcies.decrypt(prvKey, cipher)
   }
 
-  async saveKey(key:string,value:string){
-    const keys = await this.getKeys()
+  static getAccountIdByEntropy(entropy:string){
+    const keys = Account.getKeys()
+    for (let i = 0; i < Object.keys(keys).length; i++) {
+      const key = Object.keys(keys)[i]
+      const value = keys[key]
+      if(0 === value.indexOf(hashSha256(entropy))){
+        const accountIdsStr =  Account.getClientKv().get("a-as");
+        if(accountIdsStr){
+          const accountIds = JSON.parse(accountIdsStr);
+          for (let j = 0; j < accountIds.length; j++) {
+            const key1 = sha256(
+              Buffer.from(`${KEY_PREFIX}${accountIds[j]}`)
+            ).toString('hex');
+            const key2 = `${KEY_PREFIX}${key1}`
+            if(key2 === key){
+              return accountIds[j]
+            }
+          }
+        }
+        break
+      }
+    }
+    return null
+  }
+  static saveKey(key:string,value:string){
+    const keys = Account.getKeys()
     keys[key] = value;
-    await Account.getKv().put(
+    Account.getClientKv().put(
       `${KEYS_PREFIX}`,
       JSON.stringify(keys)
     );
   }
-  async getKey(key:string){
-    const keys = await this.getKeys()
-    return keys[key] ? keys[key] : undefined
+
+  static getKey(key:string){
+    const keys = Account.getKeys()
+    if(keys[key]){
+      return keys[key].substring(64)
+    }else{
+      return undefined
+    }
   }
-  async getKeys(){
-    const data = await Account.getKv().get(
+  static getKeys(){
+    const data = Account.getClientKv().get(
       `${KEYS_PREFIX}`,
     );
     if(data){
@@ -240,20 +296,28 @@ export default class Account {
       return {}
     }
   }
-  async setEntropy(entropy:string) {
+  async setEntropy(entropy:string,skipSave?:boolean) {
     this.entropy = entropy;
-    const key = sha256(
-      Buffer.from(`${KEY_PREFIX}${this.getAccountId()}`)
-    ).toString('hex');
-    let cipher = encrypt(
-      Buffer.from(entropy, 'hex'),
-      Buffer.from(key.substring(0, 16)),
-      Buffer.from(key.substring(16, 32))
-    );
-    await this.saveKey(`${KEY_PREFIX}${key}`,cipher.toString('hex'))
+    if(!skipSave){
+      const key = sha256(
+        Buffer.from(`${KEY_PREFIX}${this.getAccountId()}`)
+      ).toString('hex');
+      let cipher = encrypt(
+        Buffer.from(entropy, 'hex'),
+        Buffer.from(key.substring(0, 16)),
+        Buffer.from(key.substring(16, 32))
+      );
+
+      await Account.saveKey(
+        `${KEY_PREFIX}${key}`,
+        Buffer.concat([
+          Buffer.from(hashSha256(entropy),"hex"),
+          cipher
+        ]).toString('hex'))
+    }
   }
 
-  async getEntropy() {
+  async getEntropy() :Promise<string>{
     if(this.entropy){
       return this.entropy
     }
@@ -261,7 +325,7 @@ export default class Account {
       Buffer.from(`${KEY_PREFIX}${this.getAccountId()}`)
     ).toString('hex');
 
-    let entropy = await this.getKey(`${KEY_PREFIX}${key}`);
+    let entropy = await Account.getKey(`${KEY_PREFIX}${key}`);
     if (!entropy) {
       let mnemonic = new Mnemonic();
       entropy = mnemonic.toEntropy();
@@ -270,7 +334,13 @@ export default class Account {
         Buffer.from(key.substring(0, 16)),
         Buffer.from(key.substring(16, 32))
       );
-      await this.saveKey(`${KEY_PREFIX}${key}`,cipher.toString('hex'))
+      console.log("====>>",Buffer.from(hashSha256(entropy),'hex').length)
+      await Account.saveKey(
+        `${KEY_PREFIX}${key}`,
+        Buffer.concat([
+          Buffer.from(hashSha256(entropy),'hex'),
+          cipher
+        ]).toString('hex'))
     } else {
       const plain = decrypt(
         Buffer.from(entropy, 'hex'),
@@ -338,38 +408,22 @@ export default class Account {
     return EcdsaHelper.recoverAddressAndPubKey({ message, sig });
   }
 
-  async addEntropy(entropy: string) {
-    const key = sha256(
-      Buffer.from(`${KEY_PREFIX}${this.getAccountId()}`)
-    ).toString('hex');
-    let cipher = encrypt(
-      Buffer.from(entropy, 'hex'),
-      Buffer.from(key.substring(0, 16)),
-      Buffer.from(key.substring(16, 32))
-    );
-    await this.saveKey(`${KEY_PREFIX}${key}`,cipher.toString('hex'))
-  }
-
   setMsgConn(msgConn:WebSocket | IMsgConn){
     this.msgConn = msgConn
   }
 
   sendPdu(pdu: Pdu,seq_num:number = 0){
-    if(UseLocalDb){
-      return undefined
-    }
-    if(seq_num > 0){
-      pdu.updateSeqNo(seq_num)
-    }
-    console.log("[SEND]","seq_num",pdu.getSeqNum(),"cid:",getActionCommandsName(pdu.getCommandId()))
-    this.msgConn?.send!(pdu.getPbData());
+    // return undefined
+    // if(seq_num > 0){
+    //   pdu.updateSeqNo(seq_num)
+    // }
+    // console.log("[SEND]","seq_num",pdu.getSeqNum(),"cid:",getActionCommandsName(pdu.getCommandId()))
+    // this.msgConn?.send!(pdu.getPbData());
   }
   async sendPduWithCallback(pdu: Pdu){
-    if(UseLocalDb){
-      return undefined
-    }
+    return undefined
     // @ts-ignore
-    return this.msgConn?.sendPduWithCallback(pdu);
+    // return this.msgConn?.sendPduWithCallback(pdu);
   }
 
   static setCurrentAccount(account:Account) {
@@ -390,12 +444,14 @@ export default class Account {
     if(currentAccountId){
       return currentAccountId;
     }else{
-      let accountId:number | string | null = localStorage.getItem("a-c-id");
+      let accountId:number | string | null = Account.getClientKv().get("a-c-id");
       if(!accountId){
         accountId = Account.genAccountId();
       }else{
-        accountId = parseInt(accountId)
-        Account.getKv().put("a-c-id",String(accountId));
+        if (typeof accountId === "string") {
+          accountId = parseInt(accountId)
+        }
+        Account.getClientKv().put("a-c-id",String(accountId));
       }
       Account.setCurrentAccountId(accountId);
       return accountId;
@@ -403,14 +459,14 @@ export default class Account {
   }
 
   static setCurrentAccountId(accountId: number) {
-    const accountIdsStr =  localStorage.getItem("a-as");
+    currentAccountId = accountId;
+    const accountIdsStr =  Account.getClientKv().get("a-as");
     accountIds = accountIdsStr ? JSON.parse(accountIdsStr) : []
     if(!accountIds.includes(accountId)){
       accountIds.push(accountId);
-      Account.getKv().put("a-as",JSON.stringify(accountIds));
+      Account.getClientKv().put("a-as",JSON.stringify(accountIds));
     }
-    Account.getKv().put("a-c-id",String(accountId));
-    currentAccountId = accountId;
+    Account.getClientKv().put("a-c-id",String(accountId));
   }
 
   static getInstance(accountId: number) {
@@ -422,10 +478,6 @@ export default class Account {
 
   static randomBuff(len:16|32){
     return Buffer.from(randomize(len));
-  }
-
-  async saveUidFromCacheByAddress(address: string, uid: string) {
-    await Account.getKv().put(`ADR_UID_${address}`, uid);
   }
 
 }

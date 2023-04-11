@@ -1,19 +1,13 @@
-import {
-  addActionHandler,
-  getGlobal,
-  setGlobal,
-} from '../../index';
+import {addActionHandler, getGlobal, setGlobal,} from '../../index';
 
-import type { ApiUser } from '../../../api/types';
-import { ManagementProgress } from '../../../types';
+import type {ApiUser} from '../../../api/types';
+import {ManagementProgress} from '../../../types';
 
-import { throttle } from '../../../util/schedulers';
-import { buildCollectionByKey, unique } from '../../../util/iteratees';
-import { isUserBot, isUserId } from '../../helpers';
-import { callApi } from '../../../api/gramjs';
-import {
-  selectChat, selectCurrentMessageList, selectTabState, selectUser,
-} from '../../selectors';
+import {throttle} from '../../../util/schedulers';
+import {buildCollectionByKey, unique} from '../../../util/iteratees';
+import {isUserBot, isUserId} from '../../helpers';
+import {callApi} from '../../../api/gramjs';
+import {selectChat, selectCurrentMessageList, selectTabState, selectUser,} from '../../selectors';
 import {
   addChats,
   addUsers,
@@ -25,14 +19,12 @@ import {
   updateUser,
   updateUsers,
   updateUserSearch,
-  updateUserSearchFetchingStatus, updateUserWaitToSync,
+  updateUserSearchFetchingStatus,
 } from '../../reducers';
-import { getServerTime } from '../../../util/serverTime';
+import {getServerTime} from '../../../util/serverTime';
 import * as langProvider from '../../../util/langProvider';
-import type { ActionReturnType } from '../../types';
-import { getCurrentTabId } from '../../../util/establishMultitabRole';
-import {UseLocalDb} from "../../../worker/setting";
-import {updateLocalUser} from "./chats";
+import type {ActionReturnType} from '../../types';
+import {getCurrentTabId} from '../../../util/establishMultitabRole';
 
 const TOP_PEERS_REQUEST_COOLDOWN = 60; // 1 min
 const runThrottledForSearch = throttle((cb) => cb(), 500, false);
@@ -189,23 +181,20 @@ addActionHandler('updateContact', async (global, actions, payload): Promise<void
   setGlobal(global);
 
   let result;
-  if(!UseLocalDb){
-    if (!user.isContact && user.phoneNumber) {
-      result = await callApi('importContact', { phone: user.phoneNumber, firstName, lastName });
-    } else {
-      const { id, accessHash } = user;
-      result = await callApi('updateContact', {
-        id,
-        accessHash,
-        phoneNumber: '',
-        firstName,
-        lastName,
-        shouldSharePhoneNumber,
-      });
-    }
-  }else{
-    result = {};
-  }
+  // if (!user.isContact && user.phoneNumber) {
+  //   result = await callApi('importContact', { phone: user.phoneNumber, firstName, lastName });
+  // } else {
+  //   const { id, accessHash } = user;
+  //   result = await callApi('updateContact', {
+  //     id,
+  //     accessHash,
+  //     phoneNumber: '',
+  //     firstName,
+  //     lastName,
+  //     shouldSharePhoneNumber,
+  //   });
+  // }
+  result = {};
   global = getGlobal();
   if (result) {
     // actions.loadChatSettings({ chatId: userId });
@@ -221,13 +210,6 @@ addActionHandler('updateContact', async (global, actions, payload): Promise<void
   global = updateManagementProgress(global, ManagementProgress.Complete, tabId);
   global = closeNewContactDialog(global, tabId);
   setGlobal(global);
-
-  global = getGlobal();
-  const user1 = selectUser(global,userId)
-  updateLocalUser(user1,false,undefined,global.currentAccountAddress)
-  global = updateUserWaitToSync(global,userId)
-  setGlobal(global);
-
 });
 
 addActionHandler('deleteContact', async (global, actions, payload): Promise<void> => {

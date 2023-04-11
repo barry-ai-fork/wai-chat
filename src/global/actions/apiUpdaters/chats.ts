@@ -11,7 +11,7 @@ import {
   updateChatListIds,
   updateChatListType,
   replaceThreadParam,
-  leaveChat, updateTopic, updateFolderWaitToSync,
+  leaveChat, updateTopic,
 } from '../../reducers';
 import {
   selectChat,
@@ -24,7 +24,6 @@ import {
 import { updateUnreadReactions } from '../../reducers/reactions';
 import type { ActionReturnType } from '../../types';
 import {isLocalMessageId} from "../../helpers";
-import {updateLocalChatFolder} from "../api/chats";
 
 const TYPING_STATUS_CLEAR_DELAY = 6000; // 6 seconds
 
@@ -117,6 +116,7 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
 
     case 'newMessage': {
       const { message } = update;
+
       if (message.senderId === global.currentUserId && !message.isFromScheduled) {
         return undefined;
       }
@@ -128,9 +128,13 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
 
       const hasMention = Boolean(update.message.id && update.message.hasUnreadMention);
       if(!isLocalMessageId(message.id!)){
+        // global = updateChat(global, update.chatId, {
+        //   unreadCount: chat.unreadCount ? chat.unreadCount + 1 : 1,
+        //   ...(hasMention && { unreadMentionsCount: (chat.unreadMentionsCount || 0) + 1 }),
+        // });
         global = updateChat(global, update.chatId, {
-          unreadCount: chat.unreadCount ? chat.unreadCount + 1 : 1,
-          ...(hasMention && { unreadMentionsCount: (chat.unreadMentionsCount || 0) + 1 }),
+          unreadCount:0,
+          unreadMentionsCount:0,
         });
       }
       if (hasMention) {
@@ -266,25 +270,19 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
         ? orderedIds && orderedIds.includes(id) ? orderedIds : [...(orderedIds || []), id]
         : orderedIds ? orderedIds.filter((orderedId) => orderedId !== id) : undefined;
 
-      updateLocalChatFolder({
-        folderIds:newOrderedIds || [],
-        chatFolders:Object.values(newChatFoldersById)
-      },global.currentAccountAddress);
-      global = getGlobal();
-      global = updateFolderWaitToSync(global,newOrderedIds,Object.values(newChatFoldersById))
-      return global;
+      return {
+        ...global,
+        chatFolders: {
+          ...global.chatFolders,
+          byId: newChatFoldersById,
+          orderedIds: newOrderedIds,
+        },
+      };
     }
 
     case 'updateChatFoldersOrder': {
       const { orderedIds } = update;
 
-      global = updateFolderWaitToSync(global,orderedIds)
-
-      updateLocalChatFolder({
-        folderIds:orderedIds || [],
-        chatFolders:Object.values(global.chatFolders.byId)
-      },global.currentAccountAddress);
-      global = getGlobal();
       return {
         ...global,
         chatFolders: {

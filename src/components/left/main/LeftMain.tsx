@@ -1,13 +1,10 @@
-import type { FC } from '../../../lib/teact/teact';
-import React, {
-  memo, useCallback, useEffect, useRef, useState,
-} from '../../../lib/teact/teact';
+import type {FC} from '../../../lib/teact/teact';
+import React, {memo, useCallback, useEffect, useRef, useState,} from '../../../lib/teact/teact';
 
-import type { SettingsScreens } from '../../../types';
-import { LeftColumnContent } from '../../../types';
-import type { FolderEditDispatch } from '../../../hooks/reducers/useFoldersReducer';
+import {LeftColumnContent, SettingsScreens} from '../../../types';
+import type {FolderEditDispatch} from '../../../hooks/reducers/useFoldersReducer';
 
-import { IS_TOUCH_ENV } from '../../../util/environment';
+import {IS_TOUCH_ENV} from '../../../util/environment';
 import buildClassName from '../../../util/buildClassName';
 import useShowTransition from '../../../hooks/useShowTransition';
 import useLang from '../../../hooks/useLang';
@@ -24,7 +21,7 @@ import ForumPanel from './ForumPanel';
 import * as cacheApi from '../../../util/cacheApi';
 
 import './LeftMain.scss';
-import { getActions } from '../../../global';
+import {getActions} from '../../../global';
 import {LANG_CACHE_NAME} from "../../../config";
 
 type OwnProps = {
@@ -65,7 +62,7 @@ const LeftMain: FC<OwnProps> = ({
   onReset,
   onTopicSearch,
 }) => {
-  const { closeForumPanel,syncFromRemote } = getActions();
+  const { closeForumPanel } = getActions();
   const [isNewChatButtonShown, setIsNewChatButtonShown] = useState(IS_TOUCH_ENV);
 
   const { shouldRenderForumPanel, handleForumPanelAnimationEnd } = useForumPanelRender(isForumPanelOpen);
@@ -101,8 +98,13 @@ const LeftMain: FC<OwnProps> = ({
     }, BUTTON_CLOSE_DELAY_MS);
   }, []);
 
+  const handleSelectFolder = useCallback(() => {
+    onSettingsScreenSelect(SettingsScreens.Folders);
+    onContentChange(LeftColumnContent.Settings);
+  }, [onContentChange]);
+
   const handleSelectSettings = useCallback(() => {
-    syncFromRemote()
+    onSettingsScreenSelect(SettingsScreens.Main);
     onContentChange(LeftColumnContent.Settings);
   }, [onContentChange]);
 
@@ -159,6 +161,7 @@ const LeftMain: FC<OwnProps> = ({
         content={content}
         contactsFilter={contactsFilter}
         onSearchQuery={onSearchQuery}
+        onSelectFolder={handleSelectFolder}
         onSelectSettings={handleSelectSettings}
         onSelectContacts={handleSelectContacts}
         onSelectArchived={handleSelectArchived}

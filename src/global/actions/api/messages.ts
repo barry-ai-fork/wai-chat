@@ -33,7 +33,8 @@ import {areSortedArraysIntersecting, buildCollectionByKey, omit, split, unique,}
 import {
   addChatMessagesById,
   addChats,
-  addUsers, leaveChat,
+  addUsers,
+  leaveChat,
   removeRequestedMessageTranslation,
   replaceScheduledMessages,
   replaceTabThreadParam,
@@ -52,7 +53,8 @@ import {
   updateTopic,
 } from '../../reducers';
 import {
-  selectChat,
+  selectBot,
+  selectChat, selectChatBot,
   selectChatMessage,
   selectChatMessages,
   selectCurrentChat,
@@ -94,18 +96,18 @@ import {translate} from '../../../util/langProvider';
 import {ensureProtocol} from '../../../util/ensureProtocol';
 import {updateTabState} from '../../reducers/tabs';
 import {getCurrentTabId} from '../../../util/establishMultitabRole';
-import {SendReq} from "../../../lib/ptp/protobuf/PTPMsg";
 import Account from "../../../worker/share/Account";
-import {getPasswordFromEvent, replaceSubstring} from "../../../worker/share/utils/utils";
+import {replaceSubstring} from "../../../worker/share/utils/utils";
 import {blobToBuffer, fetchBlob} from "../../../util/files";
 import {popByteBuffer, toUint8Array, writeBytes, writeInt16} from "../../../lib/ptp/protobuf/BaseMsg";
 import {resizeImage} from "../../../util/imageResize";
-import {hashSha256} from "../../../worker/share/utils/helpers";
-import {deleteChat, getChatBot} from "./chats";
-import {UserIdFirstBot, UseLocalDb} from "../../../worker/setting";
+import {getChatBot} from "./chats";
+import {UserIdFirstBot} from "../../../worker/setting";
 import {Api} from "../../../lib/gramjs";
 import {PbBot_Type, PbBotInfo_Type} from "../../../lib/ptp/protobuf/PTPCommon/types";
-import Password = Api.account.Password;
+import MsgDispatcher from "../../../worker/msg/MsgDispatcher";
+import { getPasswordFromEvent } from '../../../worker/share/utils/password';
+import chat from "../../../components/left/main/Chat";
 
 const AUTOLOGIN_TOKEN_KEY = 'autologin_token';
 
@@ -244,74 +246,74 @@ addActionHandler('sendMessage', async (global, actions, payload): ActionReturnTy
   payload = omit(payload, ['tabId']);
   const {currentUserId} = getGlobal();
 
-  if(UserIdFirstBot === chatId){
-    if(payload.attachments){
-      const hasMessageEntitySpoiler = payload.attachments.find((a:ApiAttachment)=>a.shouldSendAsSpoiler);
-      if(hasMessageEntitySpoiler){
-        const {password,hint} = await getPasswordFromEvent(undefined,false,'messageEncryptPassword');
-        if(password){
-          let {attachments} = payload;
-          for (let i = 0; i < attachments.length; i++) {
-            const attachment = attachments[i];
-            const {blobUrl,mimeType} = attachment;
-            const buf = await blobToBuffer(await fetchBlob(blobUrl));
-            const cipher = await Account.getCurrentAccount()?.encryptData(buf, password)
-            const bb = popByteBuffer();
-            const hintLen = (hint ? hint.length:0)
-            const typeLen = mimeType.length;
-            writeInt16(bb, 2);
-            writeBytes(bb,Buffer.from("EN"));
-            writeInt16(bb, typeLen);
-            writeBytes(bb,Buffer.from(mimeType));
-            writeInt16(bb, hintLen);
-            if(hintLen){
-              writeBytes(bb,Buffer.from(hint||""));
-            }
-            const res = toUint8Array(bb);
-            const blob = new Blob([Buffer.from(res),Buffer.from(cipher!)], { type: attachment.mimeType });
-            payload.attachments[i].encryptUrl = URL.createObjectURL(blob)
+
+  if(payload.attachments){
+    const hasMessageEntitySpoiler = payload.attachments.find((a:ApiAttachment)=>a.shouldSendAsSpoiler);
+    if(hasMessageEntitySpoiler){
+      const {password,hint} = await getPasswordFromEvent(undefined,false,'messageEncryptPassword');
+      if(password){
+        let {attachments} = payload;
+        for (let i = 0; i < attachments.length; i++) {
+          const attachment = attachments[i];
+          const {blobUrl,mimeType} = attachment;
+          const buf = await blobToBuffer(await fetchBlob(blobUrl));
+          const cipher = await Account.getCurrentAccount()?.encryptData(buf, password)
+          const bb = popByteBuffer();
+          const hintLen = (hint ? hint.length:0)
+          const typeLen = mimeType.length;
+          writeInt16(bb, 2);
+          writeBytes(bb,Buffer.from("EN"));
+          writeInt16(bb, typeLen);
+          writeBytes(bb,Buffer.from(mimeType));
+          writeInt16(bb, hintLen);
+          if(hintLen){
+            writeBytes(bb,Buffer.from(hint||""));
           }
-        }else{
-          return undefined
+          const res = toUint8Array(bb);
+          const blob = new Blob([Buffer.from(res),Buffer.from(cipher!)], { type: attachment.mimeType });
+          payload.attachments[i].encryptUrl = URL.createObjectURL(blob)
         }
-      }
-    }
-    let {attachments} = payload;
-    if(attachments){
-      for (let i = 0; i < attachments.length; i++) {
-        const attachment = attachments[i];
-        const {mimeType,encryptUrl,blobUrl} = attachment;
-        if(mimeType.indexOf("image/") === 0){
-          const size = encryptUrl ? 10 : 40;
-          const quality = 0.1;
-          attachment.thumbBlobUrl = await resizeImage(
-            blobUrl, size,size, 'image/jpeg',quality
-          );
-        }
-      }
-    }
-    if(payload.text && payload.entities && payload.entities!.length > 0){
-      let {entities,text} = payload;
-      const hasMessageEntitySpoiler = entities.find((entity:ApiMessageEntity)=>entity.type === "MessageEntitySpoiler");
-      if(hasMessageEntitySpoiler){
-        const {password,hint} = await getPasswordFromEvent(undefined,false,'messageEncryptPassword');
-        if(password){
-          for (let i = 0; i < entities.length; i++) {
-            if(entities[i].type === "MessageEntitySpoiler"){
-              const entity = payload.entities[i];
-              const {offset,length} = entity;
-              const cipher = await Account.getCurrentAccount()?.encryptData(Buffer.from(text.substr(offset,length)), password)
-              payload.text = replaceSubstring(payload.text,offset,length,"x".repeat(length));
-              //@ts-ignore
-              payload.entities[i] = {...entity,cipher:cipher.toString("hex"),hint}
-            }
-          }
-        }else{
-          return undefined
-        }
+      }else{
+        return undefined
       }
     }
   }
+  let {attachments} = payload;
+  if(attachments){
+    for (let i = 0; i < attachments.length; i++) {
+      const attachment = attachments[i];
+      const {mimeType,encryptUrl,blobUrl} = attachment;
+      if(mimeType.indexOf("image/") === 0){
+        const size = encryptUrl ? 10 : 40;
+        const quality = 0.1;
+        attachment.thumbBlobUrl = await resizeImage(
+          blobUrl, size,size, 'image/jpeg',quality
+        );
+      }
+    }
+  }
+  if(payload.text && payload.entities && payload.entities!.length > 0){
+    let {entities,text} = payload;
+    const hasMessageEntitySpoiler = entities.find((entity:ApiMessageEntity)=>entity.type === "MessageEntitySpoiler");
+    if(hasMessageEntitySpoiler){
+      const {password,hint} = await getPasswordFromEvent(undefined,false,'messageEncryptPassword');
+      if(password){
+        for (let i = 0; i < entities.length; i++) {
+          if(entities[i].type === "MessageEntitySpoiler"){
+            const entity = payload.entities[i];
+            const {offset,length} = entity;
+            const cipher = await Account.getCurrentAccount()?.encryptData(Buffer.from(text.substr(offset,length)), password)
+            payload.text = replaceSubstring(payload.text,offset,length,"x".repeat(length));
+            //@ts-ignore
+            payload.entities[i] = {...entity,cipher:cipher.toString("hex"),hint}
+          }
+        }
+      }else{
+        return undefined
+      }
+    }
+  }
+
   global = getGlobal();
   if (type === 'scheduled' && !payload.scheduledAt) {
     return updateTabState(global, {
@@ -611,8 +613,18 @@ addActionHandler('deleteHistory', async (global, actions, payload): Promise<void
     actions.openChat({ id: undefined, tabId });
   }
 
-  deleteChat(chatId,global.currentAccountAddress)
   global = getGlobal();
+  const {chatIdsDeleted} = global;
+  if(!chatIdsDeleted.includes(chatId)){
+    chatIdsDeleted.push(chatId)
+  }
+  global = {
+    ...global,
+    messagesDeleted:{
+      ...global.messagesDeleted,
+      [chatId]:[]
+    }
+  }
   global = leaveChat(global, chatId);
   setGlobal(global);
 });
@@ -1251,10 +1263,7 @@ async function sendMessage<T extends GlobalState>(global: T, params: {
   sendAs?: ApiChat | ApiUser;
   replyingToTopId?: number;
   groupedId?: string;
-  bot?:{
-    bot:PbBot_Type,
-    botInfo:PbBotInfo_Type
-  };
+  botInfo?:ApiBotInfo;
 },
 ...[tabId = getCurrentTabId()]: TabArgs<T>) {
 
@@ -1303,12 +1312,15 @@ async function sendMessage<T extends GlobalState>(global: T, params: {
     params.replyingToTopId = selectThreadTopMessageId(global, params.chat.id, threadId)!;
   }
 
-  // @ts-ignore
-  params.bot = getChatBot(params.chat.id);
-  await callApi('sendMessage', params, progressCallback);
-  // @ts-ignore
-  if (progressCallback && localId) {
-    uploadProgressCallbacks.delete(localId);
+  const user = selectUser(global,params.chat.id);
+  params.botInfo = user?.fullInfo?.botInfo ? user?.fullInfo?.botInfo:undefined
+  const res = await new MsgDispatcher(global,params).process()
+  if(!res){
+    await callApi('sendMessage', params, progressCallback);
+    // @ts-ignore
+    if (progressCallback && localId) {
+      uploadProgressCallbacks.delete(localId);
+    }
   }
 }
 

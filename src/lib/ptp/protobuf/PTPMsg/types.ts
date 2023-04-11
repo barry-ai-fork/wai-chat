@@ -14,6 +14,20 @@ export interface AnswerCallbackButtonRes_Type {
   alert?: string;
   err: PTPCommon.ERR;
 }
+export interface DownloadMsgReq_Type {
+  chatId: string;
+}
+export interface DownloadMsgRes_Type {
+  messages?: PTPCommon.MessageStoreRow_Type[];
+  err?: PTPCommon.ERR;
+}
+export interface GenMsgIdReq_Type {
+  isLocal: boolean;
+}
+export interface GenMsgIdRes_Type {
+  messageId: number;
+  err?: PTPCommon.ERR;
+}
 export interface MsgDeleteReq_Type {
   user_id: string;
   chat_id: string;
@@ -56,9 +70,11 @@ export interface SendRes_Type {
   payload: string;
   err: PTPCommon.ERR;
 }
-export interface SyncMessagesReq_Type {
-  messages?: PTPCommon.PbMsg_Type[];
+export interface UploadMsgReq_Type {
+  messages?: PTPCommon.MessageStoreRow_Type[];
+  chatId: string;
+  time: number;
 }
-export interface SyncMessagesRes_Type {
-  err: PTPCommon.ERR;
+export interface UploadMsgRes_Type {
+  err?: PTPCommon.ERR;
 }

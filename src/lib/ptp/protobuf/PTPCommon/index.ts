@@ -1,7 +1,7 @@
 export { default as FileInfo } from './FileInfo';
 export { default as MessageStoreRow } from './MessageStoreRow';
 export { default as PbAction } from './PbAction';
-export { default as PbBot } from './PbBot';
+export { default as PbAiBot } from './PbAiBot';
 export { default as PbBotInfo } from './PbBotInfo';
 export { default as PbChat } from './PbChat';
 export { default as PbChatFolder } from './PbChatFolder';

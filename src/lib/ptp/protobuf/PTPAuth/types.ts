@@ -11,6 +11,12 @@ export interface AuthLoginRes_Type {
   payload?: string;
   err: PTPCommon.ERR;
 }
+export interface AuthNativeReq_Type {
+  accountId: number;
+  entropy: string;
+  session?: string;
+}
+export interface AuthNativeRes_Type {}
 export interface AuthPreLoginReq_Type {
   sign1: Buffer;
   address1: string;

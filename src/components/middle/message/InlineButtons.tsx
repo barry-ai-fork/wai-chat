@@ -33,6 +33,8 @@ const InlineButtons: FC<OwnProps> = ({ message, onClick }) => {
       case 'buy':
       case 'receipt':
         return <i className="icon-cart" />;
+      case 'requestUploadImage':
+        return <i className="icon-photo" />;
       case 'switchBotInline':
         return <i className="icon-share-filled" />;
       case 'webView':

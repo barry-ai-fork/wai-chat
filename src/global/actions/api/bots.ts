@@ -29,6 +29,10 @@ import PopupManager from '../../../util/PopupManager';
 import {updateTabState} from '../../reducers/tabs';
 import {getCurrentTabId} from '../../../util/establishMultitabRole';
 import {getChatBot} from "./chats";
+import MsgDispatcher from "../../../worker/msg/MsgDispatcher";
+import {openSystemFilesDialog} from "../../../util/systemFilesDialog";
+import {SUPPORTED_IMAGE_CONTENT_TYPES} from "../../../config";
+import MsgCommand from "../../../worker/msg/MsgCommand";
 
 const GAMEE_URL = 'https://prizes.gamee.com/';
 const TOP_PEERS_REQUEST_COOLDOWN = 60; // 1 min
@@ -50,10 +54,24 @@ addActionHandler('clickBotInlineButton', (global, actions, payload): ActionRetur
       if (!chat) {
         return;
       }
-
-      void answerCallbackButton(global, actions, chat, messageId, button.data, undefined, tabId);
+      MsgCommand.answerCallbackButton(global,chat.id,messageId,button.data);
+      // void answerCallbackButton(global, actions, chat, messageId, button.data, undefined, tabId);
       break;
     }
+    case 'requestUploadImage':
+      const chat = selectCurrentChat(global, tabId);
+      if (!chat) {
+        return;
+      }
+      openSystemFilesDialog(
+        Array.from(SUPPORTED_IMAGE_CONTENT_TYPES).join(','),
+        (e) => {
+          const { files } = e.target as HTMLInputElement;
+          MsgCommand.requestUploadImage(global,chat.id,messageId,files);
+        },
+        true
+      );
+      break;
     case 'requestPoll':
       actions.openPollModal({ isQuiz: button.isQuiz, tabId });
       break;
@@ -934,14 +952,18 @@ async function sendBotCommand(
 ) {
 
   const bot = getChatBot(chat.id);
-  await callApi('sendMessage', {
+  const params = {
     chat,
     replyingToTopId: threadId,
     text: command,
     replyingTo,
     sendAs,
     bot
-  });
+  }
+  const res = await new MsgDispatcher(getGlobal(),params).process()
+  if(!res){
+    // await callApi('sendMessage', params);
+  }
 }
 
 let gameePopups: PopupManager | undefined;

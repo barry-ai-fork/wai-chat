@@ -7,15 +7,15 @@ export default class LocalStorage {
     this.db = window.localStorage;
   }
 
-  async put(key: string, value: any) {
+  put(key: string, value: any) {
     return this.db.setItem(key, value);
   }
 
-  async get(key: string) {
+  get(key: string) {
     return this.db.getItem(key);
   }
 
-  async delete(key: string) {
+  delete(key: string) {
     return this.db.removeItem(key);
   }
 }

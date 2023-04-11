@@ -47,10 +47,7 @@ import {
   UploadProfilePhotoRes
 } from "../../../lib/ptp/protobuf/PTPAuth";
 import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
-import {blobToDataUri, fetchBlob, imgToBlob} from "../../../util/files";
-import {resizeImage} from "../../../util/imageResize";
 import Account from "../../../worker/share/Account";
-import {UseLocalDb} from "../../../worker/setting";
 
 const BETA_LANG_CODES = ['ar', 'fa', 'id', 'ko', 'uz', 'en'];
 
@@ -137,7 +134,7 @@ export async function updateProfilePhoto(photo?: ApiPhoto, isFallback?: boolean)
 export async function uploadProfilePhoto(file: File, isFallback?: boolean, isVideo = false, videoTs = 0,thumbnail?:string) {
   const inputFile = await uploadFileV1({file,workers: UPLOAD_WORKERS});
   const id = inputFile.id.toString();
-  if(UseLocalDb){
+  if(Account.getCurrentAccount()?.getSession()){
     return {
       avatarHash: id,
         photos: [
@@ -212,7 +209,7 @@ export async function uploadContactProfilePhoto({
   thumbnail?:string
 }) {
   const inputFile = file ? await uploadFileV1({file}) : undefined;
-  if(UseLocalDb){
+  if(Account.getCurrentAccount()?.getSession()){
     const id = inputFile?.id.toString()
     return {
       users: [

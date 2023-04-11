@@ -1,26 +1,22 @@
-import { addActionHandler, getGlobal, setGlobal } from '../../index';
+import {addActionHandler, getGlobal, setGlobal} from '../../index';
 
-import { ManagementProgress } from '../../../types';
-import type { ActionReturnType } from '../../types';
+import {ManagementProgress} from '../../../types';
+import type {ActionReturnType} from '../../types';
 
-import { callApi } from '../../../api/gramjs';
+import {callApi} from '../../../api/gramjs';
 import {
   addUsers,
   updateChat,
   updateManagement,
   updateManagementProgress,
   updateUsers,
-  updateUserWaitToSync,
 } from '../../reducers';
-import {
-  selectChat, selectCurrentMessageList, selectTabState, selectUser,
-} from '../../selectors';
-import {ensureIsSuperGroup, updateLocalUser} from './chats';
-import { getUserFirstOrLastName } from '../../helpers';
-import { buildCollectionByKey } from '../../../util/iteratees';
-import { getCurrentTabId } from '../../../util/establishMultitabRole';
+import {selectChat, selectCurrentMessageList, selectTabState, selectUser,} from '../../selectors';
+import {ensureIsSuperGroup} from './chats';
+import {getUserFirstOrLastName} from '../../helpers';
+import {buildCollectionByKey} from '../../../util/iteratees';
+import {getCurrentTabId} from '../../../util/establishMultitabRole';
 import * as langProvider from '../../../util/langProvider';
-import {UseLocalDb} from "../../../worker/setting";
 import {blobToDataUri, fetchBlob, imgToBlob} from "../../../util/files";
 import {resizeImage} from "../../../util/imageResize";
 
@@ -448,7 +444,6 @@ addActionHandler('uploadContactProfilePhoto', async (global, actions, payload): 
     thumbnail,
   });
 
-
   if (!result) {
     global = getGlobal();
     global = updateManagementProgress(global, ManagementProgress.Error, tabId);
@@ -463,22 +458,17 @@ addActionHandler('uploadContactProfilePhoto', async (global, actions, payload): 
   setGlobal(global);
 
   const { id, accessHash } = user;
-  if(!UseLocalDb){
-    const newUser = await callApi('fetchFullUser', { id, accessHash });
-    if (!newUser) {
-      global = getGlobal();
-      global = updateManagementProgress(global, ManagementProgress.Error, tabId);
-      setGlobal(global);
-      return;
-    }
-    actions.loadProfilePhotos({ profileId: userId });
-  }else{
-    global = getGlobal();
-    updateLocalUser(result.users[0],false,undefined,global.currentAccountAddress)
-  }
+  // const newUser = await callApi('fetchFullUser', { id, accessHash });
+  // if (!newUser) {
+  //   global = getGlobal();
+  //   global = updateManagementProgress(global, ManagementProgress.Error, tabId);
+  //   setGlobal(global);
+  //   return;
+  // }
+  // actions.loadProfilePhotos({ profileId: userId });
+  global = getGlobal();
 
   global = getGlobal();
-  global = updateUserWaitToSync(global,userId)
   global = updateManagementProgress(global, ManagementProgress.Complete, tabId);
   setGlobal(global);
 

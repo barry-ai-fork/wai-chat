@@ -17,7 +17,6 @@ import {getEntityTypeById} from '../gramjsBuilders';
 import {DownloadReq, DownloadRes} from "../../../lib/ptp/protobuf/PTPFile";
 import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
 import {Pdu} from "../../../lib/ptp/protobuf/BaseMsg";
-import {UseLocalDb} from "../../../worker/setting";
 
 const MEDIA_ENTITY_TYPES = new Set([
   'msg', 'sticker', 'gif', 'wallpaper', 'photo', 'webDocument', 'document', 'videoAvatar',

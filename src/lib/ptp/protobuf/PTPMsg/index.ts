@@ -1,5 +1,9 @@
 export { default as AnswerCallbackButtonReq } from './AnswerCallbackButtonReq';
 export { default as AnswerCallbackButtonRes } from './AnswerCallbackButtonRes';
+export { default as DownloadMsgReq } from './DownloadMsgReq';
+export { default as DownloadMsgRes } from './DownloadMsgRes';
+export { default as GenMsgIdReq } from './GenMsgIdReq';
+export { default as GenMsgIdRes } from './GenMsgIdRes';
 export { default as MsgDeleteReq } from './MsgDeleteReq';
 export { default as MsgDeleteRes } from './MsgDeleteRes';
 export { default as MsgListReq } from './MsgListReq';
@@ -10,5 +14,5 @@ export { default as RemoveMessagesReq } from './RemoveMessagesReq';
 export { default as RemoveMessagesRes } from './RemoveMessagesRes';
 export { default as SendReq } from './SendReq';
 export { default as SendRes } from './SendRes';
-export { default as SyncMessagesReq } from './SyncMessagesReq';
-export { default as SyncMessagesRes } from './SyncMessagesRes';
+export { default as UploadMsgReq } from './UploadMsgReq';
+export { default as UploadMsgRes } from './UploadMsgRes';

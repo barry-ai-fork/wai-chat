@@ -1,11 +1,10 @@
-import {DEBUG, CLOUD_WS_URL} from '../../../config';
+import {CLOUD_WS_URL, DEBUG} from '../../../config';
 import Account, {ISession} from "../../../worker/share/Account";
 import {Pdu} from "../protobuf/BaseMsg";
 import {ERR} from "../protobuf/PTPCommon/types";
-import {AuthLoginReq, AuthLoginRes, AuthStep1Req, AuthStep1Res, AuthStep2Req, AuthStep2Res} from "../protobuf/PTPAuth";
+import {AuthLoginReq, AuthLoginRes, AuthStep1Req, AuthStep1Res, AuthStep2Req} from "../protobuf/PTPAuth";
 import {randomize} from "worktop/utils";
 import {ActionCommands, getActionCommandsName} from "../protobuf/ActionCommands";
-import {UseLocalDb} from "../../../worker/setting";
 
 export enum MsgConnNotifyAction{
   onInitAccount,
@@ -156,75 +155,75 @@ export default class MsgClient {
     this.authStep1().catch(console.error)
   }
   async login(sessionData?:ISession){
-    const account = Account.getInstance(this.accountId)
-    let pdu:Pdu | undefined = undefined;
-    let session:ISession|undefined
-    if(sessionData){
-      session = sessionData;
-      pdu = await account.sendPduWithCallback(new AuthLoginReq({
-        ...session
-      }).pack());
-
-    }else{
-      session = account.getSession()
-      if(session){
-        pdu = await account.sendPduWithCallback(new AuthLoginReq({
-          ...session
-        }).pack());
-      }
-    }
-    if(pdu != undefined){
-      const {err,payload} = AuthLoginRes.parseMsg(pdu);
-      if(err === ERR.NO_ERROR){
-        // @ts-ignore
-        const {currentUser,address} = JSON.parse(payload)
-        account.setUid(session!.uid);
-        account.setAddress(address);
-        account.setUserInfo(currentUser);
-        account.setSession(session)
-        await account.saveSession()
-        console.log("[login ok account]",this.getAccountId())
-        console.log("[user]",currentUser.id,address)
-        this.notifyState(MsgClientState.logged);
-        return account.getUid()
-      }else{
-        console.log("[login error account]",this.getAccountId())
-        return false;
-      }
-    }
+    // const account = Account.getInstance(this.accountId)
+    // let pdu:Pdu | undefined = undefined;
+    // let session:ISession|undefined
+    // if(sessionData){
+    //   session = sessionData;
+    //   pdu = await account.sendPduWithCallback(new AuthLoginReq({
+    //     ...session
+    //   }).pack());
+    //
+    // }else{
+    //   session = account.getSession()
+    //   if(session){
+    //     pdu = await account.sendPduWithCallback(new AuthLoginReq({
+    //       ...session
+    //     }).pack());
+    //   }
+    // }
+    // if(pdu != undefined){
+    //   const {err,payload} = AuthLoginRes.parseMsg(pdu);
+    //   if(err === ERR.NO_ERROR){
+    //     // @ts-ignore
+    //     const {currentUser,address} = JSON.parse(payload)
+    //     account.setUid(session!.uid);
+    //     account.setAddress(address);
+    //     account.setUserInfo(currentUser);
+    //     account.setSession(session)
+    //     await account.saveSession()
+    //     console.log("[login ok account]",this.getAccountId())
+    //     console.log("[user]",currentUser.id,address)
+    //     this.notifyState(MsgClientState.logged);
+    //     return account.getUid()
+    //   }else{
+    //     console.log("[login error account]",this.getAccountId())
+    //     return false;
+    //   }
+    // }
   }
   async authStep2(){
-    const accountClient = Account.getInstance(this.accountId);
-    const ts = +(new Date())
-    const { sign }= await accountClient.signMessage(ts + Buffer.concat([accountClient.getIv(),accountClient.getAad()]).toString("hex"));
-    const pdu = await accountClient.sendPduWithCallback(new AuthStep2Req({
-      sign,
-      ts,
-      address:await accountClient.getAccountAddress()
-    }).pack());
-    this.notifyState(MsgClientState.waitingLogin);
-    await this.login();
+    // const accountClient = Account.getInstance(this.accountId);
+    // const ts = +(new Date())
+    // const { sign }= await accountClient.signMessage(ts + Buffer.concat([accountClient.getIv(),accountClient.getAad()]).toString("hex"));
+    // const pdu = await accountClient.sendPduWithCallback(new AuthStep2Req({
+    //   sign,
+    //   ts,
+    //   address:await accountClient.getAccountAddress()
+    // }).pack());
+    // this.notifyState(MsgClientState.waitingLogin);
+    // await this.login();
   }
   async authStep1(){
-    const accountClient = Account.getInstance(this.accountId);
-    accountClient.setMsgConn(this)
-    const p = Buffer.from(randomize(16));
-    const req = new AuthStep1Req({
-      p
-    }).pack();
-    const pdu = await accountClient.sendPduWithCallback(req);
-    const {err,address,q,sign,ts} = AuthStep1Res.parseMsg(pdu)
-    if(err == ERR.NO_ERROR){
-      const res = accountClient.recoverAddressAndPubKey(sign,ts+Buffer.concat([p,q]).toString("hex"))
-      if(res.address != address){
-        console.error("invalid server address")
-      }else{
-        await accountClient.initEcdh(res.pubKey,p,q)
-        await this.authStep2()
-      }
-    }else{
-      console.error(err)
-    }
+    // const accountClient = Account.getInstance(this.accountId);
+    // accountClient.setMsgConn(this)
+    // const p = Buffer.from(randomize(16));
+    // const req = new AuthStep1Req({
+    //   p
+    // }).pack();
+    // const pdu = await accountClient.sendPduWithCallback(req);
+    // const {err,address,q,sign,ts} = AuthStep1Res.parseMsg(pdu)
+    // if(err == ERR.NO_ERROR){
+    //   const res = accountClient.recoverAddressAndPubKey(sign,ts+Buffer.concat([p,q]).toString("hex"))
+    //   if(res.address != address){
+    //     console.error("invalid server address")
+    //   }else{
+    //     await accountClient.initEcdh(res.pubKey,p,q)
+    //     await this.authStep2()
+    //   }
+    // }else{
+    //   console.error(err)
+    // }
   }
   notify(notifyList:MsgConnNotify[]) {
     if (this.__msgHandler) {
@@ -283,7 +282,7 @@ export default class MsgClient {
   }
 
   reconnect(autoConnect: boolean) {
-    if (autoConnect && !UseLocalDb) {
+    if (autoConnect) {
       setTimeout(() => {
         if (
           this.state === MsgClientState.closed ||

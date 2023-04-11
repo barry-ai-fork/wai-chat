@@ -1,7 +1,7 @@
 import type {RequiredGlobalActions} from '../../index';
 import {addActionHandler, getGlobal, setGlobal,} from '../../index';
 
-import type {ApiChat, ApiChatFolder, ApiChatMember, ApiError, ApiUser,} from '../../../api/types';
+import type {ApiChat, ApiChatFolder, ApiChatMember, ApiError, ApiUser, ApiUserStatus,} from '../../../api/types';
 import {MAIN_THREAD_ID} from '../../../api/types';
 import {ChatCreationProgress, ManagementProgress, NewChatMembersProgress} from '../../../types';
 import type {ActionReturnType, GlobalState, TabArgs,} from '../../types';
@@ -9,8 +9,6 @@ import type {ActionReturnType, GlobalState, TabArgs,} from '../../types';
 import {
   ALL_FOLDER_ID,
   ARCHIVED_FOLDER_ID,
-  CHAT_LIST_LOAD_SLICE,
-  CLOUD_MESSAGE_ENABLE,
   DEBUG,
   RE_TG_LINK,
   SERVICE_NOTIFICATIONS_USER_ID,
@@ -38,14 +36,12 @@ import {
   updateChatListIds,
   updateChatListSecondaryInfo,
   updateChats,
-  updateFolderWaitToSync,
   updateListedTopicIds,
   updateManagementProgress,
   updateThreadInfo,
   updateTopic,
   updateTopics,
   updateUser,
-  updateUserWaitToSync,
 } from '../../reducers';
 import {
   selectChat,
@@ -80,7 +76,7 @@ import {
 import {formatShareText, parseChooseParameter, processDeepLink} from '../../../util/deeplink';
 import {updateGroupCall} from '../../reducers/calls';
 import {selectGroupCall} from '../../selectors/calls';
-import {getOrderedIds, init as initFolderManager} from '../../../util/folderManager';
+import {getOrderedIds} from '../../../util/folderManager';
 import * as langProvider from '../../../util/langProvider';
 import {selectCurrentLimit} from '../../selectors/limits';
 import {updateTabState} from '../../reducers/tabs';
@@ -90,12 +86,10 @@ import {
   DEFAULT_BOT_COMMANDS,
   DEFAULT_CREATE_USER_BIO,
   LoadAllChats,
-  UseLocalDb,
   UserIdFirstBot
 } from "../../../worker/setting";
-import {GenUserIdReq, GenUserIdRes} from "../../../lib/ptp/protobuf/PTPUser";
-import {Pdu} from "../../../lib/ptp/protobuf/BaseMsg";
-import {setIsWaitToRemote} from "./sync";
+import {Api} from "../../../lib/gramjs";
+import MsgCommandSetting from "../../../worker/msg/MsgCommandSetting";
 
 const TOP_CHAT_MESSAGES_PRELOAD_INTERVAL = 100;
 const INFINITE_LOOP_MARKER = 100;
@@ -258,7 +252,7 @@ addActionHandler('loadAllChats', async (global, actions, payload): Promise<void>
     return;
   }
   const { onReplace } = payload;
-  let { shouldReplace,addChat } = payload;
+  let { shouldReplace } = payload;
   let i = 0;
 
   const getOrderDate = (chat: ApiChat) => {
@@ -303,7 +297,6 @@ addActionHandler('loadAllChats', async (global, actions, payload): Promise<void>
       oldestChat ? getOrderDate(oldestChat) : undefined,
       shouldReplace,
       true,
-      addChat
     );
 
     if (shouldReplace) {
@@ -545,16 +538,11 @@ addActionHandler('createChat', async (global, actions, payload): Promise<void> =
   }, tabId);
   setGlobal(global);
   try{
-    let userId;
-    if(CLOUD_MESSAGE_ENABLE){
-      const genUserIdResBuf = await callApi("sendWithCallback",Buffer.from(new GenUserIdReq().pack().getPbData()))
-      if(!genUserIdResBuf){
-        return
-      }
-      const genUserIdRes = GenUserIdRes.parseMsg(new Pdu(Buffer.from(genUserIdResBuf)))
-      userId = genUserIdRes.userId.toString()
-    }else {
-      userId = genUserId()
+    const userIds = Object.keys(global.users.byId)
+    let userId = UserIdFirstBot + 1
+    if(userIds.length > 0){
+      userIds.sort((a,b)=>parseInt(b) - parseInt(a))
+      userId = userIds[0] + 1
     }
     const user = {
       "canBeInvitedToGroup": false,
@@ -570,15 +558,6 @@ addActionHandler('createChat', async (global, actions, payload): Promise<void> =
       isPremium: false,
       firstName: title,
       photos:[],
-      bot:{
-        enableAi:true,
-        chatGptConfig:{
-          init_system_content:"",
-          api_key:"",
-          max_history_length:10,
-          config:ChatModelConfig
-        }
-      },
       usernames: [
         {
           "username": "Bot_"+userId,
@@ -591,6 +570,15 @@ addActionHandler('createChat', async (global, actions, payload): Promise<void> =
         "noVoiceMessages": false,
         bio: about || DEFAULT_CREATE_USER_BIO,
         botInfo: {
+          config:{
+            enableAi:true,
+            chatGptConfig:{
+              init_system_content:"",
+              api_key:"",
+              max_history_length:10,
+              config:ChatModelConfig
+            }
+          },
           botId: userId,
           "description": about || DEFAULT_CREATE_USER_BIO,
           "menuButton": {
@@ -603,34 +591,41 @@ addActionHandler('createChat', async (global, actions, payload): Promise<void> =
         }
       }
     }
-    let result = fetchLocalAllChats(global.currentAccountAddress);
+    global = getGlobal()
+    const {chatFolders} = global;
+    // @ts-ignore
+    const users:ApiUser[] = [user]
+// @ts-ignore
+    const chats:ApiChat[] = [MsgCommandSetting.buildDefaultChat(user)]
+
     let activeChatFolder = window.sessionStorage.getItem("activeChatFolder")
     let activeChatFolderRow;
+    const chatFolderById:Record<string, ApiChatFolder> = {};
     if(activeChatFolder){
-      result.chatFolders?.forEach((row,i)=>{
+      // @ts-ignore
+      Object.values(chatFolders.byId).forEach((row:ApiChatFolder)=>{
         if(row.id === parseInt(activeChatFolder!)){
           activeChatFolderRow = row;
           if(!row.includedChatIds){
             row.includedChatIds = []
           }
           row.includedChatIds.push(userId)
+          chatFolderById[row.id] = row;
         }
       })
     }
-    result = updateLocalUser(user,true,result,global.currentAccountAddress);
 
-    setLocalAllChats(result,global.currentAccountAddress)
 
-    const userStatusesById = {};
-    userStatusesById[user.id] = {
-      "type": "userStatusEmpty"
+    const userStatusesById:Record<string,ApiUserStatus> = {
+      [user.id] : {
+        "type": "userStatusEmpty"
+      }
     }
 
     global = getGlobal();
-    global = updateUserWaitToSync(global,userId)
-    global = addUsers(global, buildCollectionByKey(result.users, 'id'));
-    global = addChats(global, buildCollectionByKey(result.chats, 'id'));
-    global = updateChatListIds(global, "active", result.chats.map(chat=>chat.id));
+    global = addUsers(global, buildCollectionByKey(users, 'id'));
+    global = addChats(global, buildCollectionByKey(chats, 'id'));
+    global = updateChatListIds(global, "active", chats.map(chat=>chat.id));
     global = addUserStatuses(global, userStatusesById);
     global = updateTabState(global, {
       chatCreation: {
@@ -641,15 +636,21 @@ addActionHandler('createChat', async (global, actions, payload): Promise<void> =
 
     setGlobal({
       ...global,
+      chatFolders:{
+        ...global.chatFolders,
+        byId:{
+          ...global.chatFolders.byId,
+          ...chatFolderById
+        }
+
+      }
     })
 
     if(activeChatFolderRow){
       actions.editChatFolder({ id: activeChatFolderRow.id, folderUpdate: activeChatFolderRow });
     }
-    actions.openChat({
-      id: userId,
-      shouldReplaceHistory: true,
-    });
+    // @ts-ignore
+    actions.openChat({id: userId,shouldReplaceHistory: true,});
 
   }catch (e){
     // debugger
@@ -1980,158 +1981,6 @@ export function getChatBot(botId:string){
   }
 }
 
-export function updateLocalChatFolder({chatFolders,folderIds}:{chatFolders:ApiChatFolder[],folderIds:number[]},address:string){
-  setIsWaitToRemote(true);
-  let result = fetchLocalAllChats(address)
-
-  result.chatFolders = chatFolders.filter((f)=>{
-    if(f.id === ALL_FOLDER_ID){
-      return true;
-    }else{
-      return folderIds.includes(f.id)
-    }
-  })
-  result.folderIds = folderIds
-  setLocalAllChats(result,address)
-}
-
-export function updateLocalUser(user:any,skipSaveDb?:boolean,result?:any,address?:string,skipIsWaitToRemote?:boolean){
-  if(!skipIsWaitToRemote){
-    setIsWaitToRemote(true);
-  }
-
-  if(!result){
-    result = fetchLocalAllChats(address)
-  }
-  let hasUser = false;
-  result.users = result.users.map((row:any)=>{
-    if(row.id === user.id){
-      hasUser = true;
-      return user;
-    }else{
-      return row
-    }
-  })
-
-  if(!hasUser){
-    result.users.push(user)
-  }
-  let hasChat = false;
-
-  result.chats = result.chats.map((row:any)=>{
-    if(row.id === user.id && user.firstName){
-      hasChat = true;
-      return {
-        ...row,
-        title:user.firstName
-      };
-    }else{
-      return row
-    }
-  })
-  if(!hasChat){
-    result.chats.push({
-      "id": user.id,
-      "title":  user.firstName,
-      "type": "chatTypePrivate",
-      "isMuted": false,
-      "isMin": false,
-      "hasPrivateLink": false,
-      "isSignaturesShown": false,
-      "isVerified": true,
-      "isJoinToSend": true,
-      "isJoinRequest": true,
-      lastMessage:{
-        id:0,
-        chatId:user.id,
-        isOutgoing:false,
-        date:Math.ceil(+(new Date)/1000),
-        content:{
-          action:{
-            type:"chatCreate",
-            text:"",
-          }
-        }
-      },
-      "isForum": false,
-      "isListed": true,
-      "settings": {
-        "isAutoArchived": false,
-        "canReportSpam": false,
-        "canAddContact": false,
-        "canBlockContact": false
-      },
-      "accessHash": ""
-    })
-  }
-
-  if(!skipSaveDb){
-    setLocalAllChats(result,address)
-  }
-
-  return result;
-}
-
-export function deleteChat(chatId:string,address?:string){
-  if(chatId === UserIdFirstBot) return
-  setIsWaitToRemote(true);
-  let result = fetchLocalAllChats(address);
-
-  result.chats = result.chats.filter((chat)=>chat.id !== chatId)
-  result.users = result.users.filter((user)=>user.id !== chatId)
-  result.chatFolders?.forEach((row:any)=>{
-    if(row.includedChatIds && row.includedChatIds.includes(chatId)){
-      row.includedChatIds = row.includedChatIds.filter((id: string)=>id !== chatId)
-    }
-    if(row.pinnedChatIds && row.pinnedChatIds.includes(chatId)){
-      row.pinnedChatIds = row.pinnedChatIds.filter((id: string)=>id !== chatId)
-    }
-    if(row.excludedChatIds && row.excludedChatIds.includes(chatId)){
-      row.excludedChatIds = row.excludedChatIds.filter((id: string)=>id !== chatId)
-    }
-  })
-  let global = getGlobal()
-  global = updateUserWaitToSync(global,chatId,true)
-  setGlobal({
-    ...global,
-  })
-  setLocalAllChats(result,address)
-}
-
-export function genUserId(){
-  let userIdStr = localStorage.getItem("user-id-max")
-  if(!userIdStr){
-    userIdStr = UserIdFirstBot;
-  }
-  let userId = parseInt(userIdStr);
-  userId = userId + 1;
-  localStorage.setItem("user-id-max",userId.toString())
-  return userId.toString()
-}
-
-let GlobalLocalData:Record<string, any> = {}
-
-export function fetchLocalAllChats(accountAddress?:string) {
-  let result;
-  if(!GlobalLocalData[accountAddress|| "default"]){
-    const str = localStorage.getItem("local-db"+ accountAddress)
-    if(str){
-      result = JSON.parse(str)
-    }else{
-      result = LoadAllChats;
-    }
-    GlobalLocalData[accountAddress|| "default"] = result
-  }else{
-    result = GlobalLocalData[accountAddress|| "default"]
-  }
-  return result
-}
-
-export function setLocalAllChats(result:any,accountAddress?:string) {
-  GlobalLocalData[accountAddress|| "default"] = result;
-  localStorage.setItem("local-db"+accountAddress,JSON.stringify(result))
-}
-
 export async function loadChats<T extends GlobalState>(
   global: T,
   listType: 'active' | 'archived',
@@ -2143,30 +1992,44 @@ export async function loadChats<T extends GlobalState>(
   global = getGlobal();
   let lastLocalServiceMessage = selectLastServiceNotification(global)?.message;
   try {
+
     let result: { folderIds?: number[],chatFolders?: any[]; users?: any; userStatusesById?: any; chats?: any; chatIds?: any; draftsById?: any; replyingToById?: any; orderedPinnedIds?: string[] | never[] | undefined; totalChatCount?: number; };
-    if(UseLocalDb){
-      result = fetchLocalAllChats(global.currentAccountAddress);
+    if(!global.users.byId[UserIdFirstBot]) {
+      result = LoadAllChats;
       for (let i = 0; i < result.chats.length; i++) {
         const chat = result.chats[i];
-        if(global.messages.byChatId[chat.id]){
-          const {threadsById,byId} = global.messages.byChatId[chat.id]
-          if(threadsById[-1] && threadsById[-1].lastViewportIds && threadsById[-1].lastViewportIds!.length > 0){
+        if (global.messages.byChatId[chat.id]) {
+          const {threadsById, byId} = global.messages.byChatId[chat.id]
+          if (threadsById[-1] && threadsById[-1].lastViewportIds && threadsById[-1].lastViewportIds!.length > 0) {
             // @ts-ignore
-            result.chats[i].lastMessage = byId[threadsById[-1].lastViewportIds[threadsById[-1].lastViewportIds.length -1]]
+            result.chats[i].lastMessage = byId[threadsById[-1].lastViewportIds[threadsById[-1].lastViewportIds.length - 1]]
           }
         }
       }
-    }else{
-      result = await callApi('fetchChats', {
-        limit: CHAT_LIST_LOAD_SLICE,
-        offsetDate,
-        archived: listType === 'archived',
-        withPinned: shouldReplace,
-        lastLocalServiceMessage,
-      });
+    }else {
+      global = {
+        ...global,
+        chats: {
+          ...global.chats,
+          isFullyLoaded: {
+            ...global.chats.isFullyLoaded,
+            [listType]: true,
+          },
+        },
+      };
+      setGlobal(global);
+      return
     }
+    // result = await callApi('fetchChats', {
+    //   limit: CHAT_LIST_LOAD_SLICE,
+    //   offsetDate,
+    //   archived: listType === 'archived',
+    //   withPinned: shouldReplace,
+    //   lastLocalServiceMessage,
+    // });
     const userStatusesById = {};
-    result.users.forEach((user: { id: string | number; })=>{
+    result.users.forEach((user: ApiUser)=>{
+
       // @ts-ignore
       userStatusesById[user.id] = {
         "type": "userStatusEmpty"

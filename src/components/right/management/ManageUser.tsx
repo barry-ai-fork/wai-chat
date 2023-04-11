@@ -28,7 +28,7 @@ import SelectAvatar from '../../ui/SelectAvatar';
 import Avatar from '../../common/Avatar';
 
 import './Management.scss';
-import {UserIdFirstBot, UseLocalDb} from "../../../worker/setting";
+import {UserIdFirstBot} from "../../../worker/setting";
 
 type OwnProps = {
   userId: string;
@@ -132,11 +132,8 @@ const ManageUser: FC<OwnProps & StateProps> = ({
   }, [firstName, lastName, updateContact, userId, isNotificationsEnabled]);
 
   const handleDeleteContact = useCallback(() => {
-    if(UseLocalDb){
-      deleteHistory({chatId:userId})
-    }else{
-      deleteContact({ userId });
-    }
+    deleteHistory({chatId:userId})
+    // deleteContact({ userId });
     closeDeleteDialog();
     closeManagement();
   }, [closeDeleteDialog, closeManagement, deleteContact, userId]);
@@ -185,6 +182,7 @@ const ManageUser: FC<OwnProps & StateProps> = ({
       <div className="custom-scroll">
         <div className="section">
           <PrivateChatInfo
+            hideName={true}
             userId={user.id}
             avatarSize="jumbo"
             status="original name"
@@ -192,17 +190,18 @@ const ManageUser: FC<OwnProps & StateProps> = ({
           />
           <InputText
             id="user-first-name"
-            label={lang('UserInfo.FirstNamePlaceholder')}
+            // label={lang('UserInfo.FirstNamePlaceholder')}
+            label={"名称"}
             onChange={handleFirstNameChange}
             value={firstName}
             error={error === ERROR_FIRST_NAME_MISSING ? error : undefined}
           />
-          <InputText
-            id="user-last-name"
-            label={lang('UserInfo.LastNamePlaceholder')}
-            onChange={handleLastNameChange}
-            value={lastName}
-          />
+          {/*<InputText*/}
+          {/*  id="user-last-name"*/}
+          {/*  label={lang('UserInfo.LastNamePlaceholder')}*/}
+          {/*  onChange={handleLastNameChange}*/}
+          {/*  value={lastName}*/}
+          {/*/>*/}
           {/*<div className="ListItem no-selection narrow">*/}
           {/*  <Checkbox*/}
           {/*    checked={isNotificationsEnabled}*/}
@@ -214,14 +213,11 @@ const ManageUser: FC<OwnProps & StateProps> = ({
           {/*  />*/}
           {/*</div>*/}
         </div>
-        {
-          UseLocalDb &&
-          <div className="section">
-            <ListItem icon="camera-add" ripple onClick={handleUploadPhoto}>
-              上传头像
-            </ListItem>
-          </div>
-        }
+        <div className="section">
+          <ListItem icon="camera-add" ripple onClick={handleUploadPhoto}>
+            上传头像
+          </ListItem>
+        </div>
         {canSetPersonalPhoto && (
           <div className="section">
             <ListItem icon="camera-add" ripple onClick={handleSuggestPhoto}>
@@ -251,10 +247,10 @@ const ManageUser: FC<OwnProps & StateProps> = ({
           </div>
         )}
         {
-          ((UseLocalDb && UserIdFirstBot !== userId ) || !UseLocalDb) &&
+          ((UserIdFirstBot !== userId )) &&
           <div className="section">
             <ListItem icon="delete" ripple destructive onClick={openDeleteDialog}>
-              {lang(UseLocalDb ? "删除":'DeleteContact')}
+              {lang("删除")}
             </ListItem>
           </div>
         }
@@ -274,8 +270,8 @@ const ManageUser: FC<OwnProps & StateProps> = ({
       <ConfirmDialog
         isOpen={isDeleteDialogOpen}
         onClose={closeDeleteDialog}
-        text={lang(UseLocalDb?"确定要删除么？":'AreYouSureDeleteContact')}
-        confirmLabel={lang(UseLocalDb ? '删除':'DeleteContact')}
+        text={lang("确定要删除么？")}
+        confirmLabel={lang("删除")}
         confirmHandler={handleDeleteContact}
         confirmIsDestructive
       />

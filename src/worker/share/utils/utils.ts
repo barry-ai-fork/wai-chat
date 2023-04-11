@@ -1,4 +1,3 @@
-import {PasswordHelperType} from "../../../components/ui/PasswordModal";
 
 export function generateRandomString(length:number) {
   let result = '';
@@ -199,22 +198,6 @@ export const isEmailValid = (email:string)=>{
   return re.test(email);
 }
 
-export const getPasswordFromEvent = async (hint?:string,hideHitInput?:boolean,passwordHelper?:PasswordHelperType)=>{
-  return new Promise<{password:string,hint?:string}>((resolve)=>{
-    const event = new CustomEvent('password',{
-      detail:{
-        hint,
-        hideHitInput,
-        passwordHelper,
-        callback:({password,hint}:{password:string,hint?:string})=>{
-          resolve({password,hint})
-        }
-      }
-    });
-    document.dispatchEvent(event);
-  })
-}
-
 export function parseQueryFromUrl(urlStr: string): { url: URL; query: Record<string, string> } {
   const replacedUrl = urlStr.replace(/#/g, '?');
   const url = new URL(replacedUrl);
@@ -247,4 +230,12 @@ export function ResponseJson(result: object, status = 200,Access_Control_Allow_O
       ...getCorsHeader(Access_Control_Allow_Origin),
     },
   });
+}
+
+export function currentTs(){
+  return Math.ceil(+(new Date)/1000)
+}
+
+export function currentTs1000(){
+  return Math.ceil(+(new Date))
 }

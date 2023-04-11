@@ -1,14 +1,12 @@
-import type { FC } from '../../lib/teact/teact';
-import React, {
-  memo, useCallback, useEffect, useState,
-} from '../../lib/teact/teact';
-import { getActions, withGlobal } from '../../global';
+import type {FC} from '../../lib/teact/teact';
+import React, {memo, useCallback, useEffect, useState,} from '../../lib/teact/teact';
+import {getActions, withGlobal} from '../../global';
 
-import type { GlobalState } from '../../global/types';
+import type {GlobalState} from '../../global/types';
 
-import { LOCAL_TGS_URLS } from '../common/helpers/animatedAssets';
+import {LOCAL_TGS_URLS} from '../common/helpers/animatedAssets';
 import useLang from '../../hooks/useLang';
-import { decryptSession } from '../../util/passcode';
+import {decryptSession} from '../../util/passcode';
 import useShowTransition from '../../hooks/useShowTransition';
 import useTimeout from '../../hooks/useTimeout';
 import useFlag from '../../hooks/useFlag';
@@ -21,7 +19,6 @@ import Link from '../ui/Link';
 
 import styles from './LockScreen.module.scss';
 import lockPreviewUrl from '../../assets/lock.png';
-import {UseLocalDb} from "../../worker/setting";
 
 export type OwnProps = {
   isLocked?: boolean;
@@ -99,9 +96,7 @@ const LockScreen: FC<OwnProps & StateProps> = ({
   }
 
   function renderLogoutPrompt() {
-    if(UseLocalDb){
-      return <div className={styles.help}></div>
-    }
+    return <div className={styles.help}></div>
     return (
       <div className={styles.help}>
         <p>

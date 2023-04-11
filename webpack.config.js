@@ -174,6 +174,7 @@ module.exports = (_env, { mode = 'production' }) => {
         RELEASE_DATETIME: Date.now(),
         AI_PROXY_API: undefined,
         OPENAI_APIKEY:undefined,
+        CLOUD_MESSAGE_API:undefined,
         CLOUD_WS_URL: "",
         NODE_DEBUG:false,
         TEST_USERNAME:APP_ENV === 'production'? "" : "tom",

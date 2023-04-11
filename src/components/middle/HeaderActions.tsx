@@ -1,38 +1,29 @@
-import type { FC } from '../../lib/teact/teact';
-import React, {
-  memo,
-  useRef,
-  useCallback,
-  useState,
-} from '../../lib/teact/teact';
-import { getActions, withGlobal } from '../../global';
+import type {FC} from '../../lib/teact/teact';
+import React, {memo, useCallback, useRef, useState,} from '../../lib/teact/teact';
+import {getActions, withGlobal} from '../../global';
 
-import type { MessageListType } from '../../global/types';
-import { MAIN_THREAD_ID } from '../../api/types';
-import type { IAnchorPosition } from '../../types';
-import { ManagementScreens } from '../../types';
+import type {MessageListType} from '../../global/types';
+import {MAIN_THREAD_ID} from '../../api/types';
+import type {IAnchorPosition} from '../../types';
+import {ManagementScreens} from '../../types';
 
-import { ANIMATION_LEVEL_MIN } from '../../config';
-import { ARE_CALLS_SUPPORTED, IS_PWA } from '../../util/environment';
-import {
-  isChatBasicGroup, isChatChannel, isChatSuperGroup, isUserId,
-} from '../../global/helpers';
+import {ANIMATION_LEVEL_MIN} from '../../config';
+import {ARE_CALLS_SUPPORTED, IS_PWA} from '../../util/environment';
+import {isChatBasicGroup, isChatChannel, isChatSuperGroup, isUserId,} from '../../global/helpers';
 import {
   selectChat,
   selectChatBot,
-  selectIsUserBlocked,
   selectIsChatBotNotStarted,
   selectIsChatWithSelf,
   selectIsInSelectMode,
   selectIsRightColumnShown,
+  selectIsUserBlocked,
 } from '../../global/selectors';
 import useLang from '../../hooks/useLang';
-import { useHotkeys } from '../../hooks/useHotkeys';
+import {useHotkeys} from '../../hooks/useHotkeys';
 
 import Button from '../ui/Button';
 import HeaderMenuContainer from './HeaderMenuContainer.async';
-import Account from "../../worker/share/Account";
-import {UseLocalDb} from "../../worker/setting";
 
 interface OwnProps {
   chatId: string;
@@ -132,25 +123,7 @@ const HeaderActions: FC<OwnProps & StateProps> = ({
   }, [joinChannel, chatId, shouldSendJoinRequest, showNotification, isChannel, lang]);
 
   const handleStartBot = useCallback(() => {
-
-    if(UseLocalDb){
-      sendBotCommand({ command: '/start' });
-    }else {
-      if(!Account.getCurrentAccount()?.getSession()){
-        getActions().updateGlobal({
-          authState:"authorizationStateWaitSignPassword"
-        })
-      }else{
-        if(Account.getCurrentAccount()?.getUid()){
-          sendBotCommand({ command: '/start' });
-        }else{
-          getActions().showNotification({
-            message:"正在登录请稍后再试"
-          })
-        }
-      }
-    }
-
+    sendBotCommand({ command: '/start' });
   }, [sendBotCommand]);
 
   const handleRestartBot = useCallback(() => {

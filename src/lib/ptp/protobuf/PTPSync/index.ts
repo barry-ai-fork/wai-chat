@@ -1,4 +1,2 @@
-export { default as SyncFromRemoteReq } from './SyncFromRemoteReq';
-export { default as SyncFromRemoteRes } from './SyncFromRemoteRes';
-export { default as SyncToRemoteReq } from './SyncToRemoteReq';
-export { default as SyncToRemoteRes } from './SyncToRemoteRes';
+export { default as SyncReq } from './SyncReq';
+export { default as SyncRes } from './SyncRes';

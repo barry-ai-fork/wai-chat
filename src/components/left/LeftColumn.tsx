@@ -157,8 +157,10 @@ const LeftColumn: FC<StateProps> = ({
 
     if (content === LeftColumnContent.Settings) {
       switch (settingsScreen) {
-        case SettingsScreens.EditProfile:
         case SettingsScreens.Folders:
+          setContent_(LeftColumnContent.ChatList);
+          return;
+        case SettingsScreens.EditProfile:
         case SettingsScreens.General:
         case SettingsScreens.Notifications:
         case SettingsScreens.DataStorage:

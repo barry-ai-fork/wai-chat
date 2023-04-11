@@ -13,9 +13,10 @@ export function passwordCheck(password:string){
     .has().not().spaces()                           // Should not have spaces
     .is().not().oneOf(['Passw0rd', 'Password123']); // Blacklist these values
 
-  return schema.validate(password)
+  return schema.validate(password);
 }
 
 export function hashSha256(text:string):string{
   return sha256(Buffer.from(`${text}${SALT}`)).toString("hex")
 }
+

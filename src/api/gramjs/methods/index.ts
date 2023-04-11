@@ -1,9 +1,5 @@
 export {
   sendWithCallback,
-  invokeSyncFromRemote,
-  invokeSyncToRemoteReq,
-  msgClientLogin,
-  setSession,
   destroy, disconnect, downloadMedia, fetchCurrentUser, repairFileReference,
 } from './client';
 

@@ -323,9 +323,9 @@ export function serializeGlobal<T extends GlobalState>(global: T) {
   const reducedGlobal: GlobalState = {
     ...INITIAL_GLOBAL_STATE,
     ...pick(global, [
-      'session',
       'waitToSync',
-      'currentAccountAddress',
+      'messagesDeleted',
+      'chatIdsDeleted',
       'appConfig',
       'authState',
       'authPhoneNumber',

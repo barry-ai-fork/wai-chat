@@ -41,7 +41,6 @@ const NewChatStep2: FC<OwnProps & StateProps > = ({
   onReset,
 }) => {
   const {
-    syncToRemote,
     createGroupChat,
     createChannel,
     createChat,
@@ -111,7 +110,6 @@ const NewChatStep2: FC<OwnProps & StateProps > = ({
     });
     setTimeout(() => {
       onReset();
-      syncToRemote();
     }, 500);
   }, [title, createChannel, about, photo, memberIds, channelTitleEmptyError]);
 

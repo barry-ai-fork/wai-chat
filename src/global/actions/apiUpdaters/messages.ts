@@ -28,7 +28,7 @@ import {
   updateTopic,
   deleteTopic,
   updateMessageTranslations,
-  clearMessageTranslation, updateMessageWaitToSync,
+  clearMessageTranslation,
 } from '../../reducers';
 import {
   selectChatMessage,
@@ -132,10 +132,7 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
         }
 
       });
-      if(message && message.id && !isLocalMessageId(message!.id)){
-        global = updateSyncMessages(global,chatId,message!.id,false);
-        actions.syncToRemote();
-      }
+
       setGlobal(global);
 
       // Edge case: New message in an old (not loaded) chat.
@@ -221,10 +218,6 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
         global = clearMessageTranslation(global, chatId, id);
       }
 
-      if(message.id && !isLocalMessageId(message.id)){
-        global = updateSyncMessages(global,chatId,message.id,false);
-        actions.syncToRemote();
-      }
       setGlobal(global);
 
       break;
@@ -299,10 +292,6 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
         });
       }
 
-      if(!isLocalMessageId(message.id)){
-        global = updateSyncMessages(global,chatId,message.id,false);
-        actions.syncToRemote();
-      }
       setGlobal(global);
 
       break;
@@ -417,7 +406,6 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
     case 'deleteMessages': {
       const { ids, chatId } = update;
       deleteMessages(global, chatId, ids, actions);
-      actions.syncToRemote();
       break;
     }
 
@@ -446,7 +434,6 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
         const ids = Object.keys(chatMessages.byId).map(Number);
         global = getGlobal();
         deleteMessages(global, chatId, ids, actions);
-        actions.syncToRemote();
       } else {
         actions.requestChatUpdate({ chatId });
       }
@@ -850,15 +837,6 @@ function updateListedAndViewportIds<T extends GlobalState>(
 }
 
 
-function updateSyncMessages<T extends GlobalState>(
-  global: T,
-  chatId:string,
-  messageId:number,
-  isDelete:boolean
-) {
-  return updateMessageWaitToSync(global,chatId,messageId,isDelete)
-}
-
 function updateChatLastMessage<T extends GlobalState>(
   global: T,
   chatId: string,
@@ -914,11 +892,6 @@ function deleteMessages<T extends GlobalState>(
   global: T, chatId: string | undefined, ids: number[], actions: RequiredGlobalActions,
 ) {
 
-  ids.forEach((id) => {
-    if (!isLocalMessageId(id)) {
-      global = updateSyncMessages(global, chatId!,id, true);
-    }
-  })
   // Channel update
   if (chatId) {
     const chat = selectChat(global, chatId);
@@ -1014,13 +987,6 @@ function deleteScheduledMessages<T extends GlobalState>(
   if (!chatId) {
     return;
   }
-
-  ids.forEach((id) => {
-    global = updateScheduledMessage(global, chatId, id, {
-      isDeleting: true,
-    });
-  });
-
   setGlobal(global);
 
   setTimeout(() => {

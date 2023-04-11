@@ -1,16 +1,15 @@
 // eslint-disable-next-line import/no-named-default
-import { default as Api } from '../tl/api';
+import {default as Api} from '../tl/api';
 
 import type TelegramClient from './TelegramClient';
-import { generateRandomBytes, readBigIntFromBuffer, sleep } from '../Helpers';
-import { getUploadPartSize } from '../Utils';
+import {generateRandomBytes, readBigIntFromBuffer, sleep} from '../Helpers';
+import {getUploadPartSize} from '../Utils';
 import errors from '../errors';
-import { Foreman } from '../../../util/foreman';
+import {Foreman} from '../../../util/foreman';
 import {UploadReq} from "../../ptp/protobuf/PTPFile";
 import {CLOUD_MESSAGE_API, DEBUG} from "../../../config";
 import localDb from "../../../api/gramjs/localDb";
-import {UseLocalDb} from "../../../worker/setting";
-import {accountSession} from "../../../api/gramjs/methods/client";
+import Account from "../../../worker/share/Account";
 
 interface OnProgress {
     isCanceled?: boolean;
@@ -81,7 +80,7 @@ export async function uploadFileV1(
             // eslint-disable-next-line no-constant-condition
             while (true) {
                 try {
-                    if(CLOUD_MESSAGE_API){
+                    if(CLOUD_MESSAGE_API && Account.getCurrentAccount()?.getSession()){
                         if(DEBUG){
                             console.log("uploadProfilePhoto",fileIdStr,jMemo,partCount)
                         }
@@ -102,7 +101,7 @@ export async function uploadFileV1(
                             method: 'POST',
                             body,
                             headers:{
-                                Authorization: `Bearer ${accountSession.session}`,
+                                Authorization: `Bearer ${Account.getCurrentAccount()?.getSession()}`,
                             }
                         })
                     }

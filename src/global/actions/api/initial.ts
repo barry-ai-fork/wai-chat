@@ -4,7 +4,6 @@ import {callApi, callApiLocal, initApi} from '../../../api/gramjs';
 
 import {
   CUSTOM_BG_CACHE_NAME,
-  GLOBAL_STATE_CACHE_KEY,
   IS_TEST,
   LANG_CACHE_NAME,
   LOCK_SCREEN_ANIMATION_DURATION_MS,
@@ -23,29 +22,18 @@ import {
   loadStoredSession,
   storeSession,
 } from '../../../util/sessions';
-import {
-  addUsers,
-  addUserStatuses,
-  clearGlobalForLockScreen,
-  replaceChats,
-  replaceUsers,
-  updatePasscodeSettings
-} from '../../reducers';
+import {addUsers, clearGlobalForLockScreen, updatePasscodeSettings} from '../../reducers';
 import {clearEncryptedSession, encryptSession, forgetPasscode} from '../../../util/passcode';
 import {serializeGlobal} from '../../cache';
 import {parseInitialLocationHash} from '../../../util/routing';
 import type {ActionReturnType} from '../../types';
 import {buildCollectionByKey} from '../../../util/iteratees';
-import parseMessageInput from "../../../util/parseMessageInput";
 import Account from "../../../worker/share/Account";
 import LocalStorage from "../../../worker/share/db/LocalStorage";
-import {AuthPreLoginReq, AuthPreLoginRes} from "../../../lib/ptp/protobuf/PTPAuth";
-import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
 import Mnemonic from "../../../lib/ptp/wallet/Mnemonic";
 import {hashSha256} from "../../../worker/share/utils/helpers";
-import {selectChat, selectUser} from "../../selectors";
-import {Pdu} from "../../../lib/ptp/protobuf/BaseMsg";
-import {ApiUpdateMsgClientStateType} from "../../../api/types";
+import {callApiWithPdu} from "../../../worker/msg/utils";
+import {AuthNativeReq} from "../../../lib/ptp/protobuf/PTPAuth";
 
 addActionHandler('updateGlobal', (global,action,payload): ActionReturnType => {
   return {
@@ -54,37 +42,6 @@ addActionHandler('updateGlobal', (global,action,payload): ActionReturnType => {
   };
 });
 
-addActionHandler('updateMsg', (global,actions,payload:any): ActionReturnType => {
-
-});
-
-const handleRecvMsg = (global:any,actions:any,action:string,data:any)=>{
-  let {msg,localMsgId} = data;
-  console.log("[handleRecvMsg]",action,data)
-  const {chatId,content} = msg;
-  if(!msg.isOutgoing && content.text && content.text.text){
-    const { text, entities } = parseMessageInput(content.text.text);
-    msg.content.text.text = text;
-    if(msg.content.text.entities){
-      msg.content.text.entities ={
-        ...msg.content.text.entities,
-        ...entities
-      }
-    }else{
-      msg.content.text.entities = entities
-    }
-  }
-  actions.apiUpdate({
-    '@type': action,
-    localId: localMsgId,
-    chatId: chatId,
-    message: {
-      sendingState:undefined,
-      ...msg
-    },
-  });
-}
-
 addActionHandler('initApi', async (global, actions): Promise<void> => {
   if (!IS_TEST) {
     await importLegacySession();
@@ -92,20 +49,13 @@ addActionHandler('initApi', async (global, actions): Promise<void> => {
   }
 
   const initialLocationHash = parseInitialLocationHash();
-  Account.setKvStore(new LocalStorage())
+  Account.setClientKv(new LocalStorage())
   const accountId = Account.getCurrentAccountId();
   let account = Account.getInstance(accountId);
-  const session = global.session;
-  const currentAccountAddress = global.currentAccountAddress
-
   const entropy = await account.getEntropy();
+  const session = account.getSession()
+
   void initApi(actions.apiUpdate, {
-    payload:{
-      entropy,
-      session,
-      currentAccountAddress,
-      accountId
-    },
     userAgent: navigator.userAgent,
     platform: PLATFORM_ENV,
     sessionData: loadStoredSession(),
@@ -116,7 +66,9 @@ addActionHandler('initApi', async (global, actions): Promise<void> => {
     webAuthToken: initialLocationHash?.tgWebAuthToken,
     dcId: initialLocationHash?.tgWebAuthDcId ? Number(initialLocationHash?.tgWebAuthDcId) : undefined,
     mockScenario: initialLocationHash?.mockScenario,
+    accountId,entropy,session
   });
+
 });
 
 addActionHandler('setAuthPhoneNumber', (global, actions, payload): ActionReturnType => {
@@ -143,84 +95,8 @@ addActionHandler('setAuthCode', (global, actions, payload): ActionReturnType => 
   };
 });
 
-addActionHandler('setAuthPassword', async (global, actions, payload): ActionReturnType => {
-  const { password,mnemonic } = payload!;
-  const {session,currentAccountAddress} = global
-  if(mnemonic){
-    const account = Account.getInstance(Account.genAccountId());
-    await account.setEntropy(new Mnemonic(mnemonic).toEntropy())
-    Account.setCurrentAccountId(account.getAccountId())
-    console.log("[change account]",account.getAccountId())
-    const pwd = hashSha256(password)
-    const ts = +(new Date());
-    const {address,sign} = await account.signMessage(ts.toString(),pwd);
-    global = getGlobal();
-    setGlobal({
-      ...global,
-      currentAccountAddress:address,
-      session:sign.toString("hex") + "_" +ts.toString(),
-      authState:"authorizationStateReady",
-      authIsLoading: false,
-      authError: undefined,
-    })
-    await callApi("setSession",{
-      currentAccountAddress:address,
-      session:sign.toString("hex") + "_" +ts.toString(),
-      accountId:account.getAccountId()
-    })
-    actions.loadAllChats({listType:'active'});
-  }else{
-    const account = Account.getCurrentAccount()!;
-    if(session){
-      if(!currentAccountAddress){
-        const address = await account.verifySession(session!,password);
-        global = getGlobal();
-        if(!address){
-          setGlobal({
-            ...global,
-            authIsLoading: false,
-            authError: "密码不正确"
-          })
-        }else{
-          setGlobal({
-            ...global,
-            currentAccountAddress:address,
-            authState:"authorizationStateReady",
-            authIsLoading: false,
-            authError: undefined,
-          })
-
-          await callApi("setSession",{
-            currentAccountAddress:address,
-            accountId:account.getAccountId()
-          })
-
-          actions.loadAllChats({listType:'active'});
-        }
-      }
-    }else{
-      const pwd = hashSha256(password)
-      const ts = +(new Date());
-      const {address,sign} = await account.signMessage(ts.toString(),pwd);
-
-      global = getGlobal();
-      setGlobal({
-        ...global,
-        currentAccountAddress:address,
-        session:sign.toString("hex") + "_" +ts.toString(),
-        authState:"authorizationStateReady",
-        authIsLoading: false,
-        authError: undefined,
-      })
-
-      await callApi("setSession",{
-        currentAccountAddress:address,
-        session:sign.toString("hex") + "_" +ts.toString(),
-        accountId:account.getAccountId()
-      })
-      actions.loadAllChats({listType:'active'});
-    }
-  }
+// @ts-ignore
+addActionHandler('setAuthPassword', async (global, actions, payload): Promise<ActionReturnType> => {
 
 });
 
@@ -287,7 +163,6 @@ addActionHandler('saveSession', (global, actions, payload): ActionReturnType => 
 addActionHandler('signOut', async (global, actions, payload): Promise<void> => {
   setGlobal({
     ...global,
-    currentAccountAddress:"",
     isLoggingOut:true,
     passcode:{},
     chats:{

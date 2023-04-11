@@ -68,7 +68,6 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
     loadChatFolders,
     setActiveChatFolder,
     openChat,
-    syncFromRemote
   } = getActions();
 
   // eslint-disable-next-line no-null/no-null
@@ -125,7 +124,6 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
 
   const handleSwitchTab = useCallback((index: number) => {
     setActiveChatFolder({ activeChatFolder: index }, { forceOnHeavyAnimation: true });
-    syncFromRemote();
   }, [setActiveChatFolder]);
 
   // Prevent `activeTab` pointing at non-existing folder after update

@@ -1,5 +1,7 @@
 export { default as AuthLoginReq } from './AuthLoginReq';
 export { default as AuthLoginRes } from './AuthLoginRes';
+export { default as AuthNativeReq } from './AuthNativeReq';
+export { default as AuthNativeRes } from './AuthNativeRes';
 export { default as AuthPreLoginReq } from './AuthPreLoginReq';
 export { default as AuthPreLoginRes } from './AuthPreLoginRes';
 export { default as AuthStep1Req } from './AuthStep1Req';

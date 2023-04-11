@@ -1,38 +1,43 @@
-import type { FC } from '../../../lib/teact/teact';
-import React, {
-  memo, useCallback, useEffect, useMemo,
-} from '../../../lib/teact/teact';
-import { getActions, getGlobal, withGlobal } from '../../../global';
+import type {FC} from '../../../lib/teact/teact';
+import React, {memo, useCallback, useEffect, useMemo,} from '../../../lib/teact/teact';
+import {getActions, withGlobal} from '../../../global';
 
-import type { AnimationLevel, ISettings } from '../../../types';
-import { LeftColumnContent, SettingsScreens } from '../../../types';
-import type { ApiChat } from '../../../api/types';
-import type { TabState, GlobalState } from '../../../global/types';
+import type {AnimationLevel, ISettings} from '../../../types';
+import {LeftColumnContent, SettingsScreens} from '../../../types';
+import type {ApiChat} from '../../../api/types';
+import type {GlobalState, TabState} from '../../../global/types';
 
 import {
   ANIMATION_LEVEL_MAX,
-  APP_NAME, APP_VERSION, ASSET_CACHE_NAME,
-  BETA_CHANGELOG_URL, CLOUD_MESSAGE_ENABLE,
+  APP_NAME,
+  APP_VERSION,
+  ASSET_CACHE_NAME,
+  BETA_CHANGELOG_URL,
+  CLOUD_MESSAGE_ENABLE,
   DEBUG,
-  FEEDBACK_URL, GLOBAL_STATE_CACHE_KEY,
+  FEEDBACK_URL,
   IS_BETA,
-  IS_TEST, LANG_CACHE_NAME,
+  IS_TEST,
+  LANG_CACHE_NAME,
   PRODUCTION_HOSTNAME,
 } from '../../../config';
-import { IS_PWA } from '../../../util/environment';
+import {IS_PWA} from '../../../util/environment';
 import buildClassName from '../../../util/buildClassName';
-import { formatDateToString } from '../../../util/dateFormat';
+import {formatDateToString} from '../../../util/dateFormat';
 import switchTheme from '../../../util/switchTheme';
-import { setPermanentWebVersion } from '../../../util/permanentWebVersion';
-import { clearWebsync } from '../../../util/websync';
+import {setPermanentWebVersion} from '../../../util/permanentWebVersion';
+import {clearWebsync} from '../../../util/websync';
 import {
-  selectCurrentMessageList, selectIsCurrentUserPremium, selectTabState, selectTheme,
+  selectCurrentMessageList,
+  selectIsCurrentUserPremium,
+  selectTabState,
+  selectTheme,
 } from '../../../global/selectors';
-import { isChatArchived } from '../../../global/helpers';
+import {isChatArchived} from '../../../global/helpers';
 import useLang from '../../../hooks/useLang';
 import useConnectionStatus from '../../../hooks/useConnectionStatus';
-import { useHotkeys } from '../../../hooks/useHotkeys';
-import { getPromptInstall } from '../../../util/installPrompt';
+import {useHotkeys} from '../../../hooks/useHotkeys';
+import {getPromptInstall} from '../../../util/installPrompt';
 import captureEscKeyListener from '../../../util/captureEscKeyListener';
 import useLeftHeaderButtonRtlForumTransition from './hooks/useLeftHeaderButtonRtlForumTransition';
 import useAppLayout from '../../../hooks/useAppLayout';
@@ -49,7 +54,6 @@ import StatusButton from './StatusButton';
 
 import './LeftMainHeader.scss';
 import * as cacheApi from '../../../util/cacheApi';
-import {UseLocalDb} from "../../../worker/setting";
 
 type OwnProps = {
   shouldHideSearch?: boolean;
@@ -59,6 +63,7 @@ type OwnProps = {
   shouldSkipTransition?: boolean;
   onSearchQuery: (query: string) => void;
   onSelectSettings: () => void;
+  onSelectFolder: ()=>void;
   onSelectContacts: () => void;
   onSelectArchived: () => void;
   onReset: () => void;
@@ -91,6 +96,7 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
   content,
   contactsFilter,
   onSearchQuery,
+  onSelectFolder,
   isClosingSearch,
   onSelectSettings,
   onSelectContacts,
@@ -128,7 +134,6 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
     openUrl,
     signOut,
     updateGlobal,
-    syncFromRemote
   } = getActions();
 
   const lang = useLang();
@@ -201,7 +206,6 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
   }, [hasMenu, isMobile, lang, onReset, shouldSkipTransition]);
 
   const handleSearchFocus = useCallback(() => {
-    syncFromRemote();
     if (!searchQuery) {
       onSearchQuery('');
     }
@@ -257,23 +261,7 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
     openChat({ id: undefined }, { forceOnHeavyAnimation: true });
     await cacheApi.clear(LANG_CACHE_NAME);
     await cacheApi.clear(ASSET_CACHE_NAME);
-    if(!UseLocalDb){
-      setTimeout(async ()=>{
-        const {chats,messages} = getGlobal();
-        Object.values(chats.byId).forEach(chat=>{
-          chat.lastMessage = undefined
-          messages.byChatId[chat.id].byId = {}
-          messages.byChatId[chat.id].threadsById['-1'].lastViewportIds = []
-          messages.byChatId[chat.id].threadsById['-1'].listedIds = []
-          messages.byChatId[chat.id].threadsById['-1'].lastScrollOffset = undefined
-        })
-        updateGlobal({
-          messages,
-          chats
-        })
 
-      },500)
-    }
     setTimeout(()=>{
       location.reload();
     },500)
@@ -326,6 +314,12 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
 
   const menuItems = useMemo(() => (
     <>
+      <MenuItem
+        icon="folder"
+        onClick={onSelectFolder}
+      >
+        {lang('Filters')}
+      </MenuItem>
       {
         currentUserId &&
         <MenuItem
@@ -335,15 +329,15 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
           {lang('Settings')}
         </MenuItem>
       }
-      {
-        currentUserId && !UseLocalDb &&
-        <MenuItem
-          icon="saved-messages"
-          onClick={handleSelectSaved}
-        >
-          {lang('SavedMessages')}
-        </MenuItem>
-      }
+      {/*{*/}
+      {/*  currentUserId  &&*/}
+      {/*  <MenuItem*/}
+      {/*    icon="saved-messages"*/}
+      {/*    onClick={handleSelectSaved}*/}
+      {/*  >*/}
+      {/*    {lang('SavedMessages')}*/}
+      {/*  </MenuItem>*/}
+      {/*}*/}
       {/* {archiveSettings.isHidden && ( */}
       {/*   <MenuItem */}
       {/*     icon="archive" */}

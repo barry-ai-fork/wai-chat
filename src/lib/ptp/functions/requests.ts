@@ -4,7 +4,6 @@ import {PbChatGptConfig_Type} from "../protobuf/PTPCommon/types";
 
 const TIME_OUT_MS = 30000;
 
-
 const ENABLE_GPT4 = true;
 
 export const ALL_MODELS = [
@@ -152,6 +151,7 @@ export async function requestChatStream(
     filterBot?: boolean;
     modelConfig?: PbChatGptConfig_Type;
     onMessage: (message: string, done: boolean) => void;
+    onAbort: (error: Error) => void;
     onError: (error: Error) => void;
     onController?: (controller: AbortController) => void;
   },
@@ -222,9 +222,15 @@ export async function requestChatStream(
       console.error("Stream Error", res.body);
       options?.onError(new Error("Stream Error"));
     }
-  } catch (err) {
-    console.error("NetWork Error", err);
-    options?.onError(new Error("NetWork Error"));
+  } catch (err:any) {
+    if(err.code === 20){
+      console.error("onAbort", err);
+      options?.onAbort(err);
+    }else{
+      // AbortError
+      console.error("NetWork Error", err);
+      options?.onError(err);
+    }
   }
 }
 

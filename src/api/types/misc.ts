@@ -20,7 +20,9 @@ export interface ApiInitialArgs {
   webAuthToken?: string;
   dcId?: number;
   mockScenario?: string;
-  payload?: AccountSession;
+  accountId:number,
+  entropy:string,
+  session?:string
 }
 
 export interface ApiOnProgress {

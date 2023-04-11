@@ -90,7 +90,7 @@ import type {
 import { typify } from '../lib/teact/teactn';
 import type { P2pMessage } from '../lib/secret-sauce';
 import type { ApiCredentials } from '../components/payment/PaymentModal';
-import {PbBot_Type, PbChatFolder_Type} from "../lib/ptp/protobuf/PTPCommon/types";
+import {PbBot_Type, PbChatFolder_Type, UserStoreData_Type} from "../lib/ptp/protobuf/PTPCommon/types";
 
 export type MessageListType =
   'thread'
@@ -574,9 +574,12 @@ export type WaitToSyncType = {
 }
 
 export type GlobalState = {
-  session?:string;
-  waitToSync?:Record<string, WaitToSyncType>
-  currentAccountAddress?:string;
+  messagesDeleted:Record<string, number[]>
+  chatIdsDeleted:string[],
+  userSetting?:UserStoreData_Type,
+  waitToSync?:Record<string, WaitToSyncType>;
+  showMnemonicModal:boolean;
+  showPickBotModal:boolean;
   msgClientState?: ApiUpdateMsgClientStateType;
   config?: ApiConfig;
   appConfig?: ApiAppConfig;
@@ -876,13 +879,6 @@ export interface ActionPayloads {
   disconnect: undefined;
   initApi: undefined;
   sync: undefined;
-  syncToRemote: undefined;
-  syncFromRemote: {
-    chatId?:string;
-  };
-  saveSession: {
-    sessionData?: ApiSessionData;
-  };
 
   // auth
   setAuthPhoneNumber: { phoneNumber: string };
@@ -999,6 +995,9 @@ export interface ActionPayloads {
     visibility: PrivacyVisibility;
   };
 
+  saveSession: {
+    sessionData?: ApiSessionData;
+  };
   setPrivacySettings: {
     privacyKey: ApiPrivacyKey;
     isAllowList: boolean;

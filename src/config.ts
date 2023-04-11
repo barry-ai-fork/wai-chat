@@ -1,7 +1,17 @@
 import type { ApiLimitType } from './global/types';
+let adr
+try{
+  adr = localStorage.getItem("adr")
+  if(!adr){
+    adr = "0"
+  }
+}catch (e){
+  adr = "0"
+}
+export const GLOBAL_STATE_CACHE_KEY = 'tt-global-state-'+adr;
 
 export const CLOUD_MESSAGE_ENABLE = false
-export const CLOUD_MESSAGE_API = ""
+export const CLOUD_MESSAGE_API = process.env.CLOUD_MESSAGE_API;
 export const AI_PROXY_API = process.env.AI_PROXY_API;
 
 export const TEST_USERNAME = process.env.TEST_USERNAME;
@@ -39,8 +49,6 @@ export const LEGACY_SESSION_KEY = 'GramJs:sessionId';
 export const PASSCODE_CACHE_NAME = 'tt-passcode';
 
 export const GLOBAL_STATE_CACHE_DISABLED = false;
-
-export const GLOBAL_STATE_CACHE_KEY = 'tt-global-state';
 
 export const GLOBAL_STATE_CACHE_USER_LIST_LIMIT = 500;
 export const GLOBAL_STATE_CACHE_CHAT_LIST_LIMIT = 200;

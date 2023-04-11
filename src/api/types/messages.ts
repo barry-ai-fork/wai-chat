@@ -556,6 +556,11 @@ interface ApiKeyboardButtonCallback {
   data: string;
 }
 
+interface ApiKeyboardButtonRequestUploadImage {
+  type: 'requestUploadImage';
+  text: string;
+}
+
 interface ApiKeyboardButtonRequestPoll {
   type: 'requestPoll';
   text: string;
@@ -599,6 +604,7 @@ export type ApiKeyboardButton = (
   | ApiKeyboardButtonWebView
   | ApiKeyboardButtonSimpleWebView
   | ApiKeyboardButtonUrlAuth
+  | ApiKeyboardButtonRequestUploadImage
 );
 
 export type ApiKeyboardButtons = ApiKeyboardButton[][];

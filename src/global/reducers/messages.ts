@@ -320,7 +320,22 @@ export function deleteChatMessages<T extends GlobalState>(
   }
 
   global = replaceChatMessages(global, chatId, newById);
-
+  let {messagesDeleted} = global
+  if(!messagesDeleted[chatId]){
+    messagesDeleted[chatId] = []
+  }
+  messageIds.forEach(messageId=>{
+    if(!messagesDeleted[chatId].includes(messageId) && !isLocalMessageId(messageId)){
+      messagesDeleted[chatId].push(messageId)
+    }
+  })
+  global = {
+    ...global,
+    messagesDeleted:{
+      ...messagesDeleted,
+      [chatId]:messagesDeleted[chatId]
+    }
+  }
   return global;
 }
 

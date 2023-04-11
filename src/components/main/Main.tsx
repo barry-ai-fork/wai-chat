@@ -83,6 +83,12 @@ import AttachBotRecipientPicker from './AttachBotRecipientPicker.async';
 
 import './Main.scss';
 import PasswordModal from "../ui/PasswordModal";
+import Modal from "../ui/Modal";
+import QrCode from "../common/QrCode";
+import {UserIdFirstBot} from "../../worker/setting";
+import ChatOrUserPicker from "../common/ChatOrUserPicker";
+import MnemonicModal from "../ui/MnemonicModal";
+import PickBotModal from "../ui/PickBotModal";
 
 export interface OwnProps {
   isMobile?: boolean;
@@ -490,6 +496,8 @@ const Main: FC<OwnProps & StateProps> = ({
       <ReceiptModal isOpen={isReceiptModalOpen} onClose={clearReceipt} />
       <DeleteFolderDialog deleteFolderDialogId={deleteFolderDialogId} />
       <PasswordModal/>
+      <MnemonicModal />
+      <PickBotModal />
     </div>
   );
 };

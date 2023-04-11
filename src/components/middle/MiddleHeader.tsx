@@ -128,7 +128,6 @@ const MiddleHeader: FC<OwnProps & StateProps> = ({
   isSyncing,
 }) => {
   const {
-    syncFromRemote,
     openChatWithInfo,
     pinMessage,
     focusMessage,
@@ -192,7 +191,6 @@ const MiddleHeader: FC<OwnProps & StateProps> = ({
   const shouldAnimateTools = useRef<boolean>(true);
 
   const handleHeaderClick = useCallback(() => {
-    syncFromRemote({chatId})
     openChatWithInfo({ id: chatId, threadId });
   }, [openChatWithInfo, chatId, threadId]);
 

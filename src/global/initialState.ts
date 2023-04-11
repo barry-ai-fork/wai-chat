@@ -10,9 +10,10 @@ import {
 import { IS_IOS, IS_MAC_OS } from '../util/environment';
 
 export const INITIAL_GLOBAL_STATE: GlobalState = {
-  session:"",
-  waitToSync:{},
-  currentAccountAddress:"",
+  messagesDeleted:{},
+  chatIdsDeleted:[],
+  showMnemonicModal:false,
+  showPickBotModal:false,
   attachMenu: { bots: {} },
   blurredTabTokens: [],
   passcode: {},
