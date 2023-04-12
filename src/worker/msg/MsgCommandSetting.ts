@@ -333,6 +333,7 @@ export default class MsgCommandSetting{
             for (let index = 0; index < downloadUserRes.users.length; index++) {
               const {user} = downloadUserRes.users[index];
               if(!chatIdsDeleted.includes(user!.id)){
+                debugger
                 if(chatIds.includes(user!.id)){
                   // @ts-ignore
                   global = updateUser(global,user!.id, user!)

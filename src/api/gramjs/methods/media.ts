@@ -9,7 +9,7 @@ import {
   MEDIA_CACHE_DISABLED,
   MEDIA_CACHE_MAX_BYTES,
   MEDIA_CACHE_NAME,
-  MEDIA_CACHE_NAME_AVATARS,
+  MEDIA_CACHE_NAME_AVATARS, MEDIA_CACHE_NAME_WAI,
 } from '../../../config';
 import localDb from '../localDb';
 import * as cacheApi from '../../../util/cacheApi';
@@ -17,6 +17,7 @@ import {getEntityTypeById} from '../gramjsBuilders';
 import {DownloadReq, DownloadRes} from "../../../lib/ptp/protobuf/PTPFile";
 import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
 import {Pdu} from "../../../lib/ptp/protobuf/BaseMsg";
+import {Type} from "../../../util/cacheApi";
 
 const MEDIA_ENTITY_TYPES = new Set([
   'msg', 'sticker', 'gif', 'wallpaper', 'photo', 'webDocument', 'document', 'videoAvatar',
@@ -100,12 +101,16 @@ export default async function downloadMedia(
     })
     try {
       console.log("[DOWNLOAD media]",{url,id})
-      const res = await fetch(`${CLOUD_MESSAGE_API}/proto`,{
-        method: 'POST',
-        body: Buffer.from(downloadReq.pack().getPbData())
-      })
+      let arrayBuffer = await cacheApi.fetch(MEDIA_CACHE_NAME_WAI, id, Type.ArrayBuffer);
+      if(!arrayBuffer){
+        const res = await fetch(`${CLOUD_MESSAGE_API}/proto`,{
+          method: 'POST',
+          body: Buffer.from(downloadReq.pack().getPbData())
+        })
+        const arrayBuffer = await res.arrayBuffer();
+        await cacheApi.save(MEDIA_CACHE_NAME_WAI, id, arrayBuffer);
+      }
 
-      const arrayBuffer = await res.arrayBuffer();
       const downloadRes = DownloadRes.parseMsg(new Pdu(Buffer.from(arrayBuffer)));
       if(downloadRes.err !== ERR.NO_ERROR){
         return undefined
@@ -113,6 +118,7 @@ export default async function downloadMedia(
       data = Buffer.from(downloadRes.file!.buf);
       mimeType= downloadRes.file!.type
       fullSize = downloadRes.file!.size
+      debugger
     }catch (e){
       console.error('[DOWNLOAD FAILED]',e,{url,id})
       return undefined

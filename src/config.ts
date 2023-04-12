@@ -56,6 +56,7 @@ export const GLOBAL_STATE_CACHE_CHATS_WITH_MESSAGES_LIMIT = 30;
 export const GLOBAL_STATE_CACHE_CUSTOM_EMOJI_LIMIT = 150;
 
 export const MEDIA_CACHE_DISABLED = false;
+export const MEDIA_CACHE_NAME_WAI = 'wai-media';
 export const MEDIA_CACHE_NAME = 'tt-media';
 export const MEDIA_CACHE_NAME_AVATARS = 'tt-media-avatars';
 export const MEDIA_PROGRESSIVE_CACHE_DISABLED = false;

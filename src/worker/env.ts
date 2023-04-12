@@ -10,9 +10,6 @@ export const ENV: {
   USER_ID_START: string;
   WAI_WORKER_API_TOKEN:String;
 	Access_Control_Allow_Origin: string;
-  MEDIA_ENCRYPT_KEY_32_BITS: string;
-  MEDIA_ENCRYPT_IV_16_BITS: string;
-  MEDIA_ENCRYPT_AAD_16_BITS: string;
 } = {
 	IS_PROD: true,
   KV_NAMESPACE_BINDING_KEY: 'DATABASE',
@@ -20,9 +17,6 @@ export const ENV: {
   USER_ID_START: '623415',
   WAI_WORKER_API_TOKEN:"",
 	Access_Control_Allow_Origin: '*',
-  MEDIA_ENCRYPT_KEY_32_BITS: 'dac1c203d20fe98fb8d48d2e171e4234917cc60bcd410ef8aee6b267a3256fc1',
-  MEDIA_ENCRYPT_IV_16_BITS:"dc9ac78d37ceac1d7604333f17964e81",
-  MEDIA_ENCRYPT_AAD_16_BITS: 'dc9ac78d37ceac1d7604333f17964e81',
 };
 
 export let kv: CloudFlareKv;

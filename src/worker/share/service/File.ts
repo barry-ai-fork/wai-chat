@@ -1,28 +1,16 @@
-import { DownloadReq, DownloadRes, UploadReq } from '../../../lib/ptp/protobuf/PTPFile';
-import { Pdu } from '../../../lib/ptp/protobuf/BaseMsg';
-import { storage,ENV } from '../../env';
-import { ERR } from '../../../lib/ptp/protobuf/PTPCommon/types';
-import { FileInfo } from '../../../lib/ptp/protobuf/PTPCommon';
-import { getCorsHeader } from '../utils/utils';
-import Logger from '../../share/cls/Logger';
-import Account from "../Account";
-import Aes256Gcm from "../../../lib/ptp/wallet/Aes256Gcm";
+import {DownloadReq, DownloadRes, UploadReq} from '../../../lib/ptp/protobuf/PTPFile';
+import {Pdu} from '../../../lib/ptp/protobuf/BaseMsg';
+import {storage} from '../../env';
+import {ERR} from '../../../lib/ptp/protobuf/PTPCommon/types';
+import {FileInfo} from '../../../lib/ptp/protobuf/PTPCommon';
+import {getCorsHeader} from '../utils/utils';
 
 export async function Upload(pdu: Pdu) {
 	const req = UploadReq.parseMsg(pdu);
 	const { id, part, part_total, size, type } = req.file;
 	console.log('[UPLOAD]', { id, part, part_total, size, type });
-  const {MEDIA_ENCRYPT_KEY_32_BITS,MEDIA_ENCRYPT_IV_16_BITS,MEDIA_ENCRYPT_AAD_16_BITS} = ENV;
   const buff = new FileInfo(req.file).encode();
-
-  const cipher = Aes256Gcm.encrypt(
-    Buffer.from(buff),
-    Buffer.from(MEDIA_ENCRYPT_KEY_32_BITS,'hex'),
-    Buffer.from(MEDIA_ENCRYPT_IV_16_BITS,'hex'),
-    Buffer.from(MEDIA_ENCRYPT_AAD_16_BITS,'hex'),
-  );
-
-	await storage.put(`media/${id}_${part + 1}`, cipher);
+	await storage.put(`media/${id}_${part + 1}`, buff);
 
   return new Response('', {
 		status: 200,
@@ -44,16 +32,8 @@ export async function Download(pdu: Pdu) {
 			if (!res) {
 				throw new Error('Not Found media');
 			}
-      const {MEDIA_ENCRYPT_KEY_32_BITS,MEDIA_ENCRYPT_IV_16_BITS,MEDIA_ENCRYPT_AAD_16_BITS} = ENV;
 
-      const plain = Aes256Gcm.decrypt(
-        res,
-        Buffer.from(MEDIA_ENCRYPT_KEY_32_BITS,'hex'),
-        Buffer.from(MEDIA_ENCRYPT_IV_16_BITS,'hex'),
-        Buffer.from(MEDIA_ENCRYPT_AAD_16_BITS,'hex'),
-      );
-
-      const fileInfo1 = new FileInfo().decode(Uint8Array.from(plain));
+      const fileInfo1 = new FileInfo().decode(Uint8Array.from(res));
 			if (!fileInfo) {
 				fileInfo = fileInfo1;
 			} else {
