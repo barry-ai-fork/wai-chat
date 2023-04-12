@@ -1408,7 +1408,10 @@ export interface ActionPayloads {
     leftColumnWidth: number;
   };
   resetLeftColumnWidth: undefined;
-
+  saveMsgToCloud:{
+    chatId?: string;
+    msgId?: number;
+  } & WithTabId;
   copySelectedMessages: WithTabId;
   copyMessagesByIds: {
     messageIds?: number[];

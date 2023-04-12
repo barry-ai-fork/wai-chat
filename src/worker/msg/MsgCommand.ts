@@ -1,7 +1,6 @@
 import MsgDispatcher from "./MsgDispatcher";
 import {selectChat, selectChatMessage, selectUser} from "../../global/selectors";
 import {updateChat, updateUser} from "../../global/reducers";
-import {DEFAULT_BOT_COMMANDS, UserIdFirstBot} from "../setting";
 import {getActions, getGlobal, setGlobal} from "../../global";
 import {ApiBotCommand} from "../../api/types";
 import {callApiWithPdu} from "./utils";
@@ -19,6 +18,7 @@ import {hashSha256} from "../share/utils/helpers";
 import MsgCommandSetting from "./MsgCommandSetting";
 import {ControllerPool} from "../../lib/ptp/functions/requests";
 import MsgCommandChatGpt from "./MsgCommandChatGpt";
+import MsgCommandChatLab from "./MsgCommandChatLab";
 
 export default class MsgCommand {
   private msgDispatcher: MsgDispatcher;
@@ -173,13 +173,13 @@ export default class MsgCommand {
     await this.msgDispatcher.replyNewTextMessage({text:`正在上传.. ${ids.length}`})
     return true;
   }
-  async reloadCommands(){
+  static async reloadCommands(chatId:string,cmds:ApiBotCommand[]){
     let global = getGlobal();
-    let user = selectUser(global,this.msgDispatcher.getChatId())
+    let user = selectUser(global,chatId)
     const botInfo = user?.fullInfo?.botInfo;
     if(botInfo){
       //@ts-ignore
-      const commands:ApiBotCommand[] = DEFAULT_BOT_COMMANDS.map(cmd => {
+      const commands:ApiBotCommand[] = cmds.map(cmd => {
         return {
           ...cmd,
           botId: user?.id
@@ -197,13 +197,9 @@ export default class MsgCommand {
       })
       setGlobal(global)
       global = getGlobal()
-      const chat = selectChat(global,this.msgDispatcher.getChatId())
-      user = selectUser(global,chat?.id!)
+      user = selectUser(global,chatId)
 
-      await this.msgDispatcher.sendOutgoingMsg();
-      await this.msgDispatcher.replyNewTextMessage({text:"重载成功"})
-      // await this.msgDispatcher.replyNewTextMessage({text:"```\n"+JSON.stringify(chat,null,2)+"```"})
-      // await this.msgDispatcher.replyNewTextMessage({text:"```\n"+JSON.stringify(user,null,2)+"```"})
+      MsgDispatcher.newTextMessage(chatId,await MsgDispatcher.genMsgId(),"重载成功")
       return true;
     }
   }
@@ -216,105 +212,15 @@ export default class MsgCommand {
     await MsgCommandSetting.requestUploadImage(global,chatId,messageId,files)
   }
   static async answerCallbackButton(global:GlobalState,chatId:string,messageId:number,data:string){
+    console.log("answerCallbackButton",data)
     await MsgCommandSetting.answerCallbackButton(global,chatId,messageId,data)
     await MsgCommandChatGpt.answerCallbackButton(global,chatId,messageId,data)
+    await MsgCommandChatLab.answerCallbackButton(global,chatId,messageId,data)
     if(data.startsWith("requestChatStream/stop/")){
       const [chatId,messageId] = data.replace("requestChatStream/stop/","").split("/").map(Number)
       ControllerPool.stop(chatId,messageId);
     }
-  }
-  async temp(){
-    await this.msgDispatcher.sendOutgoingMsg();
-    await this.msgDispatcher.sendNewMessage({
-      text:{
-        text:"test"
-      }
-    },{
-      inlineButtons:[
-        [
-          {
-            data:"1",
-            text:"callback button",
-            type:"callback"
-          },
-        ],
-        [
-          {
-            text:"command button",
-            type:'command'
-          },
-          {
-            text:"unsupported button",
-            type:'unsupported'
-          },
-          {
-            text:"buy button",
-            type:'buy'
-          }
-        ],
-        [
-          {
-            text:"game button",
-            type:'game'
-          },
-          {
-            text:"requestPhone button",
-            type:'requestPhone'
-          }
-        ],
-        [
-          {
-            text:"receipt button",
-            type:'receipt',
-            receiptMessageId:1
-          },
-        ],
-        [
-          {
-            text:"url button",
-            type:'url',
-            url:"http://www.ai.com"
-          },
-        ],
-        [
-          {
-            text:"simpleWebView button",
-            type:'simpleWebView',
-            url:"http://www.ai.com"
-          },
-          {
-            text:"webView button",
-            type:'webView',
-            url:"http://www.ai.com"
-          },
-        ],
-        [
-          {
-            text:"requestPoll button",
-            type:'requestPoll',
-            isQuiz:true
-          },
-          {
-            text:"switchBotInline button",
-            type:'switchBotInline',
-            query: "",
-            isSamePeer: false
-          },
-          {
-            text:"userProfile button",
-            type:'userProfile',
-            userId: UserIdFirstBot,
-          },
-        ],
-        [
-          {
-            text:"requestUploadImage button",
-            type:'requestUploadImage',
-          },
-        ]
-      ],
-      senderId:this.msgDispatcher.getChatId()
-    });
-    await this.msgDispatcher.focusLastMessage()
+
+
   }
 }

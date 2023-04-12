@@ -453,18 +453,8 @@ export default class MsgCommandSetting{
           })
         }
       }
-      if(messages.length > 0){
-        const res = await callApiWithPdu(new UploadMsgReq({
-          messages,
-          chatId,
-          time:currentTs(),
-        }).pack())
-        if(!res){
-          getActions().showNotification({message:"更新失败"})
-        }else{
-          getActions().showNotification({message:"更新成功"})
-        }
-      }
+      await MsgCommandSetting.uploadMsgList(chatId,messages)
+
     }else{
       const res = await callApiWithPdu(new DownloadMsgReq({
         chatId,
@@ -488,6 +478,21 @@ export default class MsgCommandSetting{
         getActions().showNotification({message:"更新成功"})
       }else{
         getActions().showNotification({message:"更新失败"})
+      }
+    }
+  }
+  static async uploadMsgList(chatId:string,messages:MessageStoreRow_Type[]){
+
+    if(messages.length > 0){
+      const res = await callApiWithPdu(new UploadMsgReq({
+        messages,
+        chatId,
+        time:currentTs(),
+      }).pack())
+      if(!res){
+        getActions().showNotification({message:"更新失败"})
+      }else{
+        getActions().showNotification({message:"更新成功"})
       }
     }
   }

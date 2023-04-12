@@ -60,9 +60,8 @@ const MessageSelectToolbar: FC<OwnProps & StateProps> = ({
   selectedMessageIds,
 }) => {
   const {
+    saveMsgToCloud,
     exitMessageSelectMode,
-    toggleMessageSelectAll,
-    openForwardMenuForSelectedMessages,
     downloadSelectedMessages,
     copySelectedMessages,
     showNotification,
@@ -78,6 +77,10 @@ const MessageSelectToolbar: FC<OwnProps & StateProps> = ({
     exitMessageSelectMode();
   }, [exitMessageSelectMode]);
 
+
+  const handleSaveMsgToCloud = useCallback(() => {
+    saveMsgToCloud();
+  }, [saveMsgToCloud]);
 
   useEffect(() => {
     return isActive && !isDeleteModalOpen && !isReportModalOpen && !isAnyModalOpen
@@ -168,6 +171,10 @@ const MessageSelectToolbar: FC<OwnProps & StateProps> = ({
             {/*{canDeleteMessages && (*/}
             {/*  renderButton('delete', lang('EditAdminGroupDeleteMessages'), openDeleteModal, true)*/}
             {/*)}*/}
+
+            {(
+              renderButton('up', lang('保存到云端'), handleSaveMsgToCloud)
+            )}
 
             {renderButton('delete', lang('EditAdminGroupDeleteMessages'), openDeleteModal, true)}
 

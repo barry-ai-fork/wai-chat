@@ -89,6 +89,7 @@ import {UserIdFirstBot} from "../../worker/setting";
 import ChatOrUserPicker from "../common/ChatOrUserPicker";
 import MnemonicModal from "../ui/MnemonicModal";
 import PickBotModal from "../ui/PickBotModal";
+import GlobalModal from "../ui/GlobalModal";
 
 export interface OwnProps {
   isMobile?: boolean;
@@ -496,6 +497,7 @@ const Main: FC<OwnProps & StateProps> = ({
       <ReceiptModal isOpen={isReceiptModalOpen} onClose={clearReceipt} />
       <DeleteFolderDialog deleteFolderDialogId={deleteFolderDialogId} />
       <PasswordModal/>
+      <GlobalModal/>
       <MnemonicModal />
       <PickBotModal />
     </div>

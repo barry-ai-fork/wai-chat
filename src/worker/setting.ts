@@ -7,18 +7,23 @@ export const DEFAULT_PROMPT = '你现在是一个优秀的前端开发工程师�
 export const BOT_FOLDER_TITLE = '机器人'
 export const BOT_FOLDER_ID = 1
 
-
 export const ChatModelConfig:PbChatGptConfig_Type = {
   model: "gpt-3.5-turbo",
   temperature: 1,
   max_tokens: 2000,
   presence_penalty: 0,
 }
+
 export const DEFAULT_AI_CONFIG_COMMANDS = [
   {
     "botId": UserIdFirstBot,
     "command": "start",
     "description": "开始对话"
+  },
+  {
+    "botId": UserIdFirstBot,
+    "command": "setting",
+    "description": "设置"
   },
   {
     "botId": UserIdFirstBot,
@@ -69,8 +74,8 @@ export const DEFAULT_BOT_COMMANDS = [
   },
   {
     "botId": UserIdFirstBot,
-    "command": "temp",
-    "description": "Temp"
+    "command": "lab",
+    "description": "实验室"
   },
 ]
 

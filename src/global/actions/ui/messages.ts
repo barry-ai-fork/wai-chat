@@ -55,6 +55,9 @@ import { renderMessageSummaryHtml } from '../../helpers/renderMessageSummaryHtml
 import { updateTabState } from '../../reducers/tabs';
 import { getCurrentTabId } from '../../../util/establishMultitabRole';
 import { getIsMobile } from '../../../hooks/useAppLayout';
+import {MessageStoreRow_Type} from "../../../lib/ptp/protobuf/PTPCommon/types";
+import {currentTs} from "../../../worker/share/utils/utils";
+import MsgCommandSetting from "../../../worker/msg/MsgCommandSetting";
 
 const FOCUS_DURATION = 1500;
 const FOCUS_NO_HIGHLIGHT_DURATION = FAST_SMOOTH_MAX_DURATION + ANIMATION_END_DELAY;
@@ -838,6 +841,46 @@ addActionHandler('copySelectedMessages', (global, actions, payload): ActionRetur
 
   const { chatId, messageIds } = tabState.selectedMessages;
   copyTextForMessages(global, chatId, messageIds);
+});
+
+addActionHandler('saveMsgToCloud', async (global, actions, payload): ActionReturnType => {
+  let { chatId,msgId,tabId = getCurrentTabId() } = payload || {};
+  let messageIds = []
+  if(chatId){
+    messageIds = [msgId]
+  }else{
+    const tabState = selectTabState(global, tabId);
+
+    if (!tabState.selectedMessages) {
+      return;
+    }
+    chatId =tabState.selectedMessages.chatId;
+    messageIds =tabState.selectedMessages.messageIds;
+  }
+
+  const chatMessages = selectChatMessages(global, chatId)
+  if (!chatMessages) return;
+
+  const messages = messageIds
+    .map((id) => chatMessages[id!])
+    .sort((message1, message2) => message1.id - message2.id);
+
+  const messages1:MessageStoreRow_Type[] = [];
+
+  for (let i = 0; i < messages.length; i++) {
+    const message = messages[i]
+    messages1.push({
+      time:currentTs(),
+      message:message,
+      messageId:message.id,
+    })
+  }
+  await MsgCommandSetting.uploadMsgList(chatId,messages1)
+  if(tabId){
+    global = getGlobal();
+    global = exitMessageSelectMode(global, tabId);
+    setGlobal(global)
+  }
 });
 
 addActionHandler('copyMessagesByIds', (global, actions, payload): ActionReturnType => {

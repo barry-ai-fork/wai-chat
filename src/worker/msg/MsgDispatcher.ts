@@ -18,10 +18,11 @@ import {GenMsgIdReq, GenMsgIdRes} from "../../lib/ptp/protobuf/PTPMsg";
 import MsgCommand from "./MsgCommand";
 import {parseCodeBlock} from "../share/utils/stringParse";
 import MsgWorker from "./MsgWorker";
-import {UserIdFirstBot} from "../setting";
+import {DEFAULT_BOT_COMMANDS, UserIdFirstBot} from "../setting";
 import MsgCommandChatGpt from "./MsgCommandChatGpt";
 import MsgCommandSetting from "./MsgCommandSetting";
 import {selectUser} from "../../global/selectors";
+import MsgCommandChatLab from "./MsgCommandChatLab";
 
 export type ParamsType = {
   chat: ApiChat;
@@ -111,6 +112,34 @@ export default class MsgDispatcher {
         message,
       });
     return message
+  }
+  static newTextMessage(chatId:string,messageId:number,text:string,inlineButtons?:ApiKeyboardButtons){
+    const global = getGlobal();
+    const user = selectUser(global,chatId)
+    let message:ApiMessage = {
+      chatId,
+      id:messageId,
+      senderId:chatId,
+      isOutgoing:false,
+      date:currentTs(),
+      inlineButtons,
+      content:{
+        text:{
+          text
+        }
+      }
+    }
+    if(user && user.fullInfo?.botInfo){
+      message = MsgWorker.handleBotCmdText(message,user.fullInfo?.botInfo)
+    }
+    MsgDispatcher.apiUpdate({
+      '@type': "newMessage",
+      chatId,
+      id:messageId,
+      message,
+      shouldForceReply:false
+    });
+    return MsgDispatcher.newMessage(chatId,messageId,message)
   }
   static newMessage(chatId:string,messageId:number,message:ApiMessage){
     const global = getGlobal();
@@ -219,6 +248,9 @@ export default class MsgDispatcher {
     const msgCommandChatGpt = new MsgCommandChatGpt(this.getChatId(),this.params.botInfo!);
     await this.sendOutgoingMsg();
     switch(sendMsgText){
+      case "/setting":
+        await this.sendOutgoingMsg();
+        return msgCommandChatGpt.setting()
       case "/start":
         return await msgCommandChatGpt.start();
       case "/clearHistory":
@@ -242,11 +274,12 @@ export default class MsgDispatcher {
         await this.sendOutgoingMsg();
         return MsgCommandSetting.start(this.getChatId())
       case "/reloadCommands":
-        return await this.msgCommand.reloadCommands();
+        await this.sendOutgoingMsg();
+        return await MsgCommand.reloadCommands(this.getChatId(),DEFAULT_BOT_COMMANDS);
       case "/clearHistory":
         return await MsgCommand.clearHistory(this.getChatId());
-      case "/temp":
-        return await this.msgCommand.temp();
+      case "/lab":
+        return await new MsgCommandChatLab(this.getChatId(),this.params.botInfo!).lab();
       case "/setting":
         return await this.msgCommand.setting();
       default:

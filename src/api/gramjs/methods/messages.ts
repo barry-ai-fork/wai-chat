@@ -1,6 +1,7 @@
 import {Api as GramJs} from '../../../lib/gramjs';
 import type {
-  ApiAttachment, ApiBotInfo,
+  ApiAttachment,
+  ApiBotInfo,
   ApiChat,
   ApiContact,
   ApiFormattedText,
@@ -74,7 +75,7 @@ import {getServerTimeOffset} from '../../../util/serverTime';
 import {uploadFileV1} from "../../../lib/gramjs/client/uploadFile";
 import {MsgListReq, MsgListRes} from "../../../lib/ptp/protobuf/PTPMsg";
 import Account from '../../../worker/share/Account';
-import {ERR, PbBot_Type, PbBotInfo_Type} from "../../../lib/ptp/protobuf/PTPCommon/types";
+import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
 import MsgWorker from "../../../worker/msg/MsgWorker";
 
 const FAST_SEND_TIMEOUT = 1000;

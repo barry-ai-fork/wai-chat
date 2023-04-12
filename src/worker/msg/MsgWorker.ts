@@ -1,4 +1,4 @@
-import {ApiAttachment, ApiBotInfo, ApiChat, ApiMessage, ApiUpdate, OnApiUpdate} from "../../api/types";
+import {ApiAttachment, ApiBotInfo, ApiChat, ApiMediaFormat, ApiMessage, ApiUpdate, OnApiUpdate} from "../../api/types";
 import {LOCAL_MESSAGE_MIN_ID} from "../../config";
 import {DownloadMsgRes, GenMsgIdReq, GenMsgIdRes, UploadMsgReq} from "../../lib/ptp/protobuf/PTPMsg";
 import {getNextLocalMessageId} from "../../api/gramjs/apiBuilders/messages";
@@ -178,10 +178,10 @@ export default class MsgWorker {
     return new GenMsgIdRes({messageId:await MsgWorker.genMessageId(isLocal)}).pack().getPbData()
   }
 
-  static getMediaFileId(){
+  static getMediaFileId(media: GramJs.TypeInputMedia | undefined){
     let fileId;
     //@ts-ignore
-    if (this.media && this.media!.file && this.media.file.id) {
+    if (media && media!.file && media.file.id) {
       //@ts-ignore
       fileId = media!.file.id.toString()
     }
@@ -190,7 +190,7 @@ export default class MsgWorker {
   async handleMedia(){
     const {msgSend,attachment} = this;
     if(attachment){
-      let fileId = MsgWorker.getMediaFileId();
+      let fileId = MsgWorker.getMediaFileId(this.media);
 
       if (msgSend.content.photo || msgSend.content.document) {
         const getPhotoInfo = async (attachment: ApiAttachment) => {
@@ -236,16 +236,16 @@ export default class MsgWorker {
             ],
           }
         }
-        if(msgSend.content.voice){
-          msgSend.content.voice.id = fileId
-        }
-        if(msgSend.content.audio){
-          msgSend.content.audio.id = fileId
-        }
+      }
+
+      if(msgSend.content.voice){
+        msgSend.content.voice.id = fileId
+      }
+      if(msgSend.content.audio){
+        msgSend.content.audio.id = fileId
       }
       this.msgSend = msgSend;
     }
-
   }
   static handleMessageTextCode(msgSend:ApiMessage){
     if(msgSend.content.text && msgSend.content.text.text){
@@ -310,551 +310,6 @@ export default class MsgWorker {
     ){
       return await new MsgChatGptWorker(this.msgSend,botInfo).process()
     }
-    //
-    //
-    //     if(bot.bot){
-    //       if(bot.bot.chatGptConfig){
-    //         if(msgSend.content.text?.text.indexOf("/") === 0 && commands.includes(msgSend.content.text?.text.substring(1))){
-    //           switch (msgSend.content.text?.text.substring(1)){
-    //             case "start":
-    //               onUpdate({
-    //                 '@type': "newMessage",
-    //                 chatId: msgSend.chatId,
-    //                 id:msgId+1,
-    //                 message:{
-    //                   chatId: chat.id,
-    //                   date: Math.ceil(+(new Date())/1000),
-    //                   senderId:msgSend.chatId,
-    //                   id:msgId+1,
-    //                   isOutgoing:false,
-    //                   content:{
-    //                     text:{
-    //                       text:bot.botInfo?.description!
-    //                     }
-    //                   },
-    //                   sendingState: undefined
-    //                 },
-    //                 shouldForceReply:false
-    //               });
-    //               return
-    //             case "apiKey":
-    //               localDb.botWaitReply['waitReply_'+msgSend.chatId] = {
-    //                 command:"apiKey",
-    //                 payload:{
-    //                   messageId:msgId+1,
-    //                 }
-    //               };
-    //               message = {
-    //                 chatId: chat.id,
-    //                 date: Math.ceil(+(new Date())/1000),
-    //                 senderId:msgSend.chatId,
-    //                 id:msgId+1,
-    //                 isOutgoing:false,
-    //                 content:{
-    //                   text:parseCodeBlock((bot.bot.chatGptConfig.api_key ? `\n当前 openAi apiKey：\n\n`+"```\n"+`${bot.bot.chatGptConfig.api_key}`
-    //                     +"```"+`\n\n` : "\n>>> openAi apiKey 未设置！ <<<\n\n" )+ "修改设置,请直接回复:\n")
-    //                 },
-    //                 inlineButtons:[
-    //                   [
-    //                     {
-    //                       type:"command",
-    //                       text:"取消修改",
-    //                     }
-    //                   ]
-    //                 ],
-    //                 sendingState: undefined
-    //               }
-    //
-    //               onUpdate({
-    //                 '@type': "newMessage",
-    //                 chatId: msgSend.chatId,
-    //                 id:message.id,
-    //                 message,
-    //                 shouldForceReply:false
-    //               });
-    //               return;
-    //             case "initPrompt":
-    //               localDb.botWaitReply['waitReply_'+msgSend.chatId] = {
-    //                 command:"initPrompt",
-    //                 payload:{
-    //                   messageId:msgId+1,
-    //                 }
-    //               };
-    //               message = {
-    //                 chatId: chat.id,
-    //                 date: Math.ceil(+(new Date())/1000),
-    //                 senderId:msgSend.chatId,
-    //                 id:msgId+1,
-    //                 isOutgoing:false,
-    //                 content:{
-    //                   text:parseCodeBlock((bot.bot.chatGptConfig.init_system_content ? `\n当前 初始化上下文 Prompt：\n\n`+"```\n"+`${bot.bot.chatGptConfig.init_system_content}`
-    //                     +"```"+`\n\n` : "\n>>> 初始化上下文 Prompt 未设置！ <<<\n\n" )+ "修改设置,请直接回复:\n")
-    //                 },
-    //                 sendingState: undefined,
-    //                 inlineButtons:[
-    //                   [
-    //                     {
-    //                       type:"command",
-    //                       text:"取消修改",
-    //                     }
-    //                   ]
-    //                 ]
-    //               }
-    //
-    //               onUpdate({
-    //                 '@type': "newMessage",
-    //                 chatId: msgSend.chatId,
-    //                 id:message.id,
-    //                 message,
-    //                 shouldForceReply:false
-    //               });
-    //               return;
-    //             case "aiModel":
-    //               onUpdate({
-    //                 '@type': "newMessage",
-    //                 chatId: msgSend.chatId,
-    //                 id:msgId+1,
-    //                 message:{
-    //                   chatId: chat.id,
-    //                   date: Math.ceil(+(new Date())/1000),
-    //                   senderId:msgSend.chatId,
-    //                   id:msgId+1,
-    //                   inlineButtons:[
-    //                     [
-    //                       {
-    //                         type:"callback",
-    //                         data:"gpt-3.5-turbo",
-    //                         text:"✅ ChatGpt(gpt-3.5-turbo)",
-    //                       },
-    //                     ],
-    //                   ],
-    //                   isOutgoing:false,
-    //                   content:{
-    //                     text:{
-    //                       text:`当前模型:`
-    //                     }
-    //                   },
-    //                   sendingState: undefined
-    //                 },
-    //                 shouldForceReply:false
-    //               });
-    //               return;
-    //             case "enableAi":
-    //               onUpdate({
-    //                 '@type': "newMessage",
-    //                 chatId: msgSend.chatId,
-    //                 id:msgId+1,
-    //                 message:{
-    //                   chatId: chat.id,
-    //                   date: Math.ceil(+(new Date())/1000),
-    //                   senderId:msgSend.chatId,
-    //                   id:msgId+1,
-    //                   inlineButtons:[
-    //                     [
-    //                       {
-    //                         type:"command",
-    //                         text:bot.bot.enableAi ? "关闭Ai" : "开启Ai",
-    //                       }
-    //                     ],
-    //                   ],
-    //                   isOutgoing:false,
-    //                   content:{
-    //                     text:{
-    //                       text:`Ai开关：`
-    //                     }
-    //                   },
-    //                   sendingState: undefined
-    //                 },
-    //                 shouldForceReply:false
-    //               });
-    //               return;
-    //           }
-    //         }
-    //
-    //         if(localDb.botWaitReply['waitReply_'+msgSend.chatId]){
-    //           switch (localDb.botWaitReply['waitReply_'+msgSend.chatId]!.command) {
-    //             case "apiKey_confirm":
-    //               const {messageId,chatGptApiKey} = localDb.botWaitReply['waitReply_'+msgSend.chatId]?.payload!;
-    //               onUpdate({
-    //                 '@type': "updateMessage",
-    //                 chatId: msgSend.chatId,
-    //                 id:messageId,
-    //                 message: {
-    //                   inlineButtons:undefined
-    //                 }
-    //               });
-    //               localDb.botWaitReply['waitReply_'+msgSend.chatId] = undefined
-    //               let text;
-    //               if(msgSend.content.text?.text === "✅ 确定"){
-    //                 onUpdate({
-    //                   '@type': "updateGlobalUpdate",
-    //                   data:{
-    //                     action:"updateBot",
-    //                     payload:{
-    //                       botInfo:bot.botInfo,
-    //                       bot:{
-    //                         ...bot.bot,
-    //                         chatGptConfig:{
-    //                           ...bot.bot.chatGptConfig,
-    //                           api_key:chatGptApiKey.trim()
-    //                         }
-    //                       }
-    //                     }
-    //                   }
-    //                 });
-    //                 text = "更改成功"
-    //               }else{
-    //                 text = "放弃修改"
-    //               }
-    //               onUpdate({
-    //                 '@type': "newMessage",
-    //                 chatId: msgSend.chatId,
-    //                 id:msgId+1,
-    //                 message:{
-    //                   chatId: chat.id,
-    //                   date: Math.ceil(+(new Date())/1000),
-    //                   senderId:msgSend.chatId,
-    //                   id:msgId+1,
-    //                   isOutgoing:false,
-    //                   content:{
-    //                     text:{
-    //                       text
-    //                     }
-    //                   },
-    //                   sendingState: undefined
-    //                 },
-    //                 shouldForceReply:false
-    //               });
-    //               break;
-    //             case "apiKey":
-    //               const chatGptApiKey1 = msgSend.content.text?.text;
-    //               if(chatGptApiKey1 === "取消修改"){
-    //                 onUpdate({
-    //                   '@type': "updateMessage",
-    //                   chatId: msgSend.chatId,
-    //                   id:localDb.botWaitReply['waitReply_'+msgSend.chatId]!.payload!.messageId,
-    //                   message: {
-    //                     inlineButtons:undefined
-    //                   }
-    //                 });
-    //                 localDb.botWaitReply['waitReply_'+msgSend.chatId] = undefined
-    //                 return
-    //               }
-    //
-    //               localDb.botWaitReply['waitReply_'+msgSend.chatId] = {
-    //                 command:"apiKey_confirm",
-    //                 payload:{
-    //                   chatGptApiKey:chatGptApiKey1,
-    //                   messageId:msgId+1
-    //                 }
-    //               };
-    //               onUpdate({
-    //                 '@type': "newMessage",
-    //                 chatId: msgSend.chatId,
-    //                 id:msgId+1,
-    //                 message:{
-    //                   chatId: chat.id,
-    //                   date: Math.ceil(+(new Date())/1000),
-    //                   senderId:msgSend.chatId,
-    //                   id:msgId+1,
-    //                   inlineButtons:[
-    //                     [
-    //                       {
-    //                         type:"command",
-    //                         text:"✅ 确定",
-    //                       },
-    //                       {
-    //                         type:"command",
-    //                         text:"取消",
-    //                       }
-    //                     ]
-    //                   ],
-    //                   isOutgoing:false,
-    //                   content:{
-    //                     text:parseCodeBlock(`\n  确认将 apiKey 更改为:\n `+"```\n"+`${chatGptApiKey1}`+"```")
-    //                   },
-    //                   sendingState: undefined
-    //                 },
-    //                 shouldForceReply:false
-    //               });
-    //               break
-    //             case "initPrompt_confirm":
-    //               const initPrompt_confirm_payload = localDb.botWaitReply['waitReply_'+msgSend.chatId]?.payload!;
-    //               onUpdate({
-    //                 '@type': "updateMessage",
-    //                 chatId: msgSend.chatId,
-    //                 id:initPrompt_confirm_payload.messageId,
-    //                 message: {
-    //                   inlineButtons:undefined
-    //                 }
-    //               });
-    //               localDb.botWaitReply['waitReply_'+msgSend.chatId] = undefined
-    //               let text1;
-    //               if(msgSend.content.text?.text === "✅ 确定"){
-    //                 onUpdate({
-    //                   '@type': "updateGlobalUpdate",
-    //                   data:{
-    //                     action:"updateBot",
-    //                     payload:{
-    //                       botInfo:bot.botInfo,
-    //                       bot:{
-    //                         ...bot,
-    //                         chatGptConfig:{
-    //                           ...bot.bot.chatGptConfig,
-    //                           init_system_content:initPrompt_confirm_payload.prompt.trim()
-    //                         }
-    //                       }
-    //                     }
-    //                   }
-    //                 });
-    //                 text1 = "更改成功"
-    //               }else{
-    //                 text1 = "放弃修改"
-    //               }
-    //               onUpdate({
-    //                 '@type': "newMessage",
-    //                 chatId: msgSend.chatId,
-    //                 id:msgId+1,
-    //                 message:{
-    //                   chatId: chat.id,
-    //                   date: Math.ceil(+(new Date())/1000),
-    //                   senderId:msgSend.chatId,
-    //                   id:msgId+1,
-    //                   isOutgoing:false,
-    //                   content:{
-    //                     text:{
-    //                       text:text1
-    //                     }
-    //                   },
-    //                   sendingState: undefined
-    //                 },
-    //                 shouldForceReply:false
-    //               });
-    //               break;
-    //             case "initPrompt":
-    //               const prompt = msgSend.content.text?.text;
-    //               if(prompt === "取消修改"){
-    //                 onUpdate({
-    //                   '@type': "updateMessage",
-    //                   chatId: msgSend.chatId,
-    //                   id:localDb.botWaitReply['waitReply_'+msgSend.chatId]!.payload!.messageId,
-    //                   message: {
-    //                     inlineButtons:undefined
-    //                   }
-    //                 });
-    //                 localDb.botWaitReply['waitReply_'+msgSend.chatId] = undefined
-    //                 return
-    //               }
-    //               localDb.botWaitReply['waitReply_'+msgSend.chatId] = {
-    //                 command:"initPrompt_confirm",
-    //                 payload:{
-    //                   prompt:prompt,
-    //                   messageId:msgId+1
-    //                 }
-    //               };
-    //               onUpdate({
-    //                 '@type': "newMessage",
-    //                 chatId: msgSend.chatId,
-    //                 id:msgId+1,
-    //                 message:{
-    //                   chatId: chat.id,
-    //                   date: Math.ceil(+(new Date())/1000),
-    //                   senderId:msgSend.chatId,
-    //                   id:msgId+1,
-    //                   inlineButtons:[
-    //                     [
-    //                       {
-    //                         type:"command",
-    //                         text:"✅ 确定",
-    //                       },
-    //                       {
-    //                         type:"command",
-    //                         text:"取消",
-    //                       }
-    //                     ]
-    //                   ],
-    //                   isOutgoing:false,
-    //                   content:{
-    //                     text:parseCodeBlock(`\n  确认将 初始化 上下文 Prompt 更改为:\n `+"```\n"+`${prompt}`+"```")
-    //                   },
-    //                   sendingState: undefined
-    //                 },
-    //                 shouldForceReply:false
-    //               });
-    //               break
-    //           }
-    //           return;
-    //         }
-    //       }
-    //       if(
-    //         msgSend.content.text?.text &&
-    //         ["取消","确定","关闭Ai","开启Ai","✅ 确定","取消修改"].includes(msgSend.content!.text?.text!)
-    //       ){
-    //         switch (msgSend.content.text?.text){
-    //           case "开启Ai":
-    //             onUpdate({
-    //               '@type': "updateGlobalUpdate",
-    //               data:{
-    //                 action:"updateBot",
-    //                 payload:{
-    //                   botInfo:bot.botInfo,
-    //                   bot:{
-    //                     ...bot.bot,
-    //                     enableAi:true
-    //                   }
-    //                 }
-    //               }
-    //             });
-    //             onUpdate({
-    //               '@type': "newMessage",
-    //               chatId: msgSend.chatId,
-    //               id:msgId+1,
-    //               message:{
-    //                 chatId: chat.id,
-    //                 date: Math.ceil(+(new Date())/1000),
-    //                 senderId:msgSend.chatId,
-    //                 id:msgId+1,
-    //                 isOutgoing:false,
-    //                 content:{
-    //                   text:{
-    //                     text:"开启Ai成功"
-    //                   }
-    //                 },
-    //                 sendingState: undefined
-    //               },
-    //               shouldForceReply:false
-    //             });
-    //             break
-    //           case "关闭Ai":
-    //             onUpdate({
-    //               '@type': "updateGlobalUpdate",
-    //               data:{
-    //                 action:"updateBot",
-    //                 payload:{
-    //                   botInfo:bot.botInfo,
-    //                   bot:{
-    //                     ...bot.bot,
-    //                     enableAi:false
-    //                   }
-    //                 }
-    //               }
-    //             });
-    //             onUpdate({
-    //               '@type': "newMessage",
-    //               chatId: msgSend.chatId,
-    //               id:msgId+1,
-    //               message:{
-    //                 chatId: chat.id,
-    //                 date: Math.ceil(+(new Date())/1000),
-    //                 senderId:msgSend.chatId,
-    //                 id:msgId+1,
-    //                 isOutgoing:false,
-    //                 content:{
-    //                   text:{
-    //                     text:"关闭Ai成功"
-    //                   }
-    //                 },
-    //                 sendingState: undefined
-    //               },
-    //               shouldForceReply:false
-    //             });
-    //             break
-    //         }
-    //         return
-    //       }
-    //       if(
-    //         msgSend.content.text?.text &&
-    //         !msgSend.content.text?.text.startsWith("/") &&
-    //         !["取消","确定","关闭Ai","开启Ai","✅ 确定","取消修改"].includes(msgSend.content.text?.text!)
-    //       ){
-    //         if(bot.bot.enableAi && bot.bot.chatGptConfig){
-    //           if(!bot.bot.chatGptConfig.api_key){
-    //             if(DEBUG && process.env.OPENAI_APIKEY){
-    //               console.log("DEBUG OPENAI_APIKEY")
-    //             }else{
-    //               message = {
-    //                 chatId: chat.id,
-    //                 date: Math.ceil(+(new Date())/1000),
-    //                 senderId:msgSend.chatId,
-    //                 id:msgId+1,
-    //                 isOutgoing:false,
-    //                 content:{
-    //                   text:{
-    //                     text:"还没有配置 请点击 /apiKey 进行配置"
-    //                   }
-    //                 },
-    //                 sendingState: undefined
-    //               }
-    //               if(message.content && message.content.text && message.content.text.text){
-    //                 // @ts-ignore
-    //                 message.content.text!.entities = [
-    //                   ...message.content.text!.entities||[],
-    //                   ...parseEntities(message.content.text!.text!,commands)
-    //                 ]
-    //               }
-    //               onUpdate({
-    //                 '@type': "newMessage",
-    //                 chatId: msgSend.chatId,
-    //                 id:message.id,
-    //                 message,
-    //                 shouldForceReply:false
-    //               });
-    //               return
-    //             }
-    //
-    //           }
-    //
-    //
-    //           if(!msgSend.content.text?.text.startsWith("/")){
-    //             const apiKey = process.env.OPENAI_APIKEY!
-    //             let localId = msgId! + 1
-    //             message = {
-    //               ...msgSend,
-    //               senderId:msgSend.chatId,
-    //               id:localId,
-    //               isOutgoing:false,
-    //               content:{
-    //                 text:{
-    //                   text:"..."
-    //                 }
-    //               },
-    //               sendingState: undefined,
-    //             }
-    //             onUpdate({
-    //               '@type': "newMessage",
-    //               chatId: msgSend.chatId,
-    //               id:localId,
-    //               message,
-    //               shouldForceReply:false
-    //             });
-    //
-    //             onUpdate({
-    //               '@type': "updateGlobalUpdate",
-    //               data:{
-    //                 action:"setPauseSyncToRemote",
-    //                 payload:{
-    //                   pauseSyncToRemote:true
-    //                 }
-    //               }
-    //             });
-    //
-    //
-    //           }
-    //         }
-    //
-    //       }
-    //
-    //     }
-    //   }else {
-    //     await Account.getCurrentAccount()?.sendPduWithCallback(new SendReq({
-    //       payload:JSON.stringify({
-    //         msg:msgSend
-    //       })
-    //     }).pack());
-    //   }
-    // } catch (error: any) {
-
-    // }
   }
   async process(){
     const {msgSend,chat,botInfo} = this;
@@ -862,13 +317,14 @@ export default class MsgWorker {
     try {
       await this.handleMedia();
       if(botInfo){
-        this.msgSend = MsgWorker.handleBotCmdText(msgSend,botInfo);
+        this.msgSend = MsgWorker.handleBotCmdText(this.msgSend,botInfo);
       }
       await this.processOutGoing();
       if(this.botInfo){
         await this.processBotMsg();
       }
     }catch (error:any){
+      console.error(error)
       MsgWorker.onUpdate({
         '@type': 'updateMessageSendFailed',
         chatId: chat.id,

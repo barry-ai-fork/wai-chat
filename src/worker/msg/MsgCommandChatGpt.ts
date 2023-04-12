@@ -1,13 +1,16 @@
 import MsgDispatcher from "./MsgDispatcher";
 import {currentTs} from "../share/utils/utils";
-import {ApiBotInfo, ApiMessage} from "../../api/types";
+import {ApiBotInfo, ApiKeyboardButtons, ApiMessage} from "../../api/types";
 import {GlobalState} from "../../global/types";
 import {getGlobal, setGlobal} from "../../global";
 import {selectUser} from "../../global/selectors";
 import {updateUser} from "../../global/reducers";
-import {DEFAULT_PROMPT} from "../setting";
+import {DEFAULT_AI_CONFIG_COMMANDS, DEFAULT_PROMPT} from "../setting";
 import {callApiWithPdu} from "./utils";
 import {StopChatStreamReq} from "../../lib/ptp/protobuf/PTPOther";
+import Account from "../share/Account";
+import MsgCommand from "./MsgCommand";
+import {showModalFromEvent} from "../share/utils/modal";
 
 export default class MsgCommandChatGpt{
   private chatId: string;
@@ -15,6 +18,57 @@ export default class MsgCommandChatGpt{
   constructor(chatId:string,botInfo:ApiBotInfo) {
     this.chatId = chatId
     this.botInfo = botInfo;
+  }
+  static getInlineButtons(chatId:string,isEnableSync:boolean):ApiKeyboardButtons{
+    return isEnableSync ? [
+      // [
+      //   {
+      //     data:`${chatId}/setting/uploadMessages`,
+      //     text:"上传消息",
+      //     type:"callback"
+      //   },
+      //   {
+      //     data:`${chatId}/setting/downloadMessages`,
+      //     text:"下载消息",
+      //     type:"callback"
+      //   },
+      // ],
+      [
+        {
+          data:`${chatId}/setting/reloadCommands`,
+          text:"重载命令",
+          type:"callback"
+        },
+      ],
+    ]:[
+      [
+        {
+          data:`${chatId}/setting/reloadCommands`,
+          text:"重载命令",
+          type:"callback"
+        },
+      ],
+    ]
+  }
+
+  async setting(){
+    const {chatId} = this;
+    const account = Account.getCurrentAccount();
+    const isEnableSync = account?.getSession();
+    const messageId = await MsgDispatcher.genMsgId();
+    return MsgDispatcher.newMessage(chatId,messageId,{
+      chatId,
+      id:messageId,
+      senderId:chatId,
+      isOutgoing:false,
+      date:currentTs(),
+      content:{
+        text:{
+          text:"设置面板"
+        }
+      },
+      inlineButtons:MsgCommandChatGpt.getInlineButtons(chatId,!!isEnableSync),
+    })
   }
   async start(){
     const messageId = await MsgDispatcher.genMsgId();
@@ -46,7 +100,7 @@ export default class MsgCommandChatGpt{
       date:currentTs(),
       content:{
         text:{
-          text:`当前 上下文 prompt:\n ${init_system_content?init_system_content:"未设置"}`
+          text:`${init_system_content?init_system_content:"未设置"}`
         }
       },
       inlineButtons:[
@@ -139,6 +193,9 @@ export default class MsgCommandChatGpt{
   }
   static async answerCallbackButton(global:GlobalState,chatId:string,messageId:number,data:string){
     switch (data){
+      case `${chatId}/setting/reloadCommands`:
+        await MsgCommand.reloadCommands(chatId, DEFAULT_AI_CONFIG_COMMANDS)
+        break
       case `${chatId}/requestChatStream/stop`:
         MsgDispatcher.updateMessage(chatId,messageId, {
           inlineButtons:[
@@ -156,50 +213,61 @@ export default class MsgCommandChatGpt{
         }).pack())
         break
       case `${chatId}/init_system_content`:
-        const init_system_content = prompt("请输入")
+        const {value} = await showModalFromEvent({
+          type:"singleInput",
+          title:"请输入 上下文记忆",
+          desc:"每次请求都会带入 上下文记忆",
+          initVal:""
+        });
+        const init_system_content = value
         if(init_system_content){
-          global = getGlobal();
-          const user = selectUser(global,chatId);
-          global = updateUser(global,chatId,{
-            ...user,
-            fullInfo:{
-              ...user?.fullInfo,
-              botInfo:{
-                ...user?.fullInfo?.botInfo!,
-                aiBot:{
-                  ...user?.fullInfo?.botInfo?.aiBot,
-                  chatGptConfig:{
-                    ...user?.fullInfo?.botInfo?.aiBot?.chatGptConfig,
-                    init_system_content
+            global = getGlobal();
+            const user = selectUser(global,chatId);
+            global = updateUser(global,chatId,{
+              ...user,
+              fullInfo:{
+                ...user?.fullInfo,
+                botInfo:{
+                  ...user?.fullInfo?.botInfo!,
+                  aiBot:{
+                    ...user?.fullInfo?.botInfo?.aiBot,
+                    chatGptConfig:{
+                      ...user?.fullInfo?.botInfo?.aiBot?.chatGptConfig,
+                      init_system_content
+                    }
                   }
                 }
               }
-            }
-          })
-          setGlobal(global)
+            })
+            setGlobal(global)
 
-          const message1 = {
-            content:{
-              text:{
-                text:`当前 上下文 prompt:\n ${init_system_content?init_system_content:"未设置"}`
-              }
-            },
-            inlineButtons:[
-              [
-                {
-                  text:"点击修改",
-                  type:"callback",
-                  data:`${chatId}/apiKey`
+            const message1 = {
+              content:{
+                text:{
+                  text:`当前 上下文 prompt:\n ${init_system_content?init_system_content:"未设置"}`
                 }
+              },
+              inlineButtons:[
+                [
+                  {
+                    text:"点击修改",
+                    type:"callback",
+                    data:`${chatId}/apiKey`
+                  }
+                ]
               ]
-            ]
-          }
-          // @ts-ignore
-          MsgDispatcher.newMessage(chatId,messageId,message1)
+            }
+            // @ts-ignore
+            MsgDispatcher.newMessage(chatId,messageId,message1)
         }
         break;
       case `${chatId}/apiKey`:
-        const api_key = prompt("请输入")
+        const res = await showModalFromEvent({
+          type:"singleInput",
+          title:"请输入 ApiKey",
+          desc:""
+        });
+        const api_key = res.value
         if(api_key){
           global = getGlobal();
           const user = selectUser(global,chatId);

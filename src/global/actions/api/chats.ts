@@ -1981,7 +1981,6 @@ export async function loadChats<T extends GlobalState>(
   global = getGlobal();
   let lastLocalServiceMessage = selectLastServiceNotification(global)?.message;
   try {
-
     let result: { folderIds?: number[],chatFolders?: any[]; users?: any; userStatusesById?: any; chats?: any; chatIds?: any; draftsById?: any; replyingToById?: any; orderedPinnedIds?: string[] | never[] | undefined; totalChatCount?: number; };
     if(!global.users.byId[UserIdFirstBot]) {
       result = LoadAllChats;

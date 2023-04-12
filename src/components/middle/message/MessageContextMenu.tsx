@@ -183,7 +183,7 @@ const MessageContextMenu: FC<OwnProps> = ({
   onShowOriginal,
   onSelectLanguage,
 }) => {
-  const { showNotification, openStickerSet, openCustomEmojiSets } = getActions();
+  const { showNotification, openStickerSet, openCustomEmojiSets,saveMsgToCloud } = getActions();
   // eslint-disable-next-line no-null/no-null
   const menuRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line no-null/no-null
@@ -279,6 +279,15 @@ const MessageContextMenu: FC<OwnProps> = ({
     return enableScrolling;
   }, [withScroll]);
 
+  const handleSaveMsgToCloud = useCallback(() => {
+    if ("id" in message) {
+      saveMsgToCloud({
+        chatId: message.chatId!,
+        msgId: message.id
+      });
+    }
+    onClose();
+  }, [saveMsgToCloud]);
   return (
     <Menu
       ref={menuRef}
@@ -314,6 +323,13 @@ const MessageContextMenu: FC<OwnProps> = ({
         style={menuStyle}
         ref={scrollableRef}
       >
+        {/*{true && <MenuItem icon="language" onClick={onTranslate}>{lang('TranslateMessage')}</MenuItem>}*/}
+        {/*{true && <MenuItem icon="language" onClick={onShowOriginal}>{lang('ShowOriginalButton')}</MenuItem>}*/}
+        {/*{true && (*/}
+        {/*  <MenuItem icon="web" onClick={onSelectLanguage}>{lang('lng_settings_change_lang')}</MenuItem>*/}
+        {/*)}*/}
+        <MenuItem icon="up" onClick={handleSaveMsgToCloud}>{lang('保存到云端')}</MenuItem>
+
         {/* {canSendNow && <MenuItem icon="send-outline" onClick={onSend}>{lang('MessageScheduleSend')}</MenuItem>} */}
         {/* {canReschedule && ( */}
         {/*   <MenuItem icon="schedule" onClick={onReschedule}>{lang('MessageScheduleEditTime')}</MenuItem> */}
@@ -324,7 +340,9 @@ const MessageContextMenu: FC<OwnProps> = ({
         {/*     {lang('Conversation.ContextViewReplies', repliesThreadInfo!.messagesCount, 'i')}*/}
         {/*   </MenuItem>*/}
         {/* )}*/}
-         {canEdit && <MenuItem icon="edit" onClick={onEdit}>{lang('Edit')}</MenuItem>}
+
+
+        {canEdit && <MenuItem icon="edit" onClick={onEdit}>{lang('Edit')}</MenuItem>}
         {/* {canFaveSticker && ( */}
         {/*   <MenuItem icon="favorite" onClick={onFaveSticker}>{lang('AddToFavorites')}</MenuItem> */}
         {/* )} */}
@@ -386,6 +404,7 @@ const MessageContextMenu: FC<OwnProps> = ({
         {/*     </div> */}
         {/*   </MenuItem> */}
         {/* )} */}
+
          {canDelete && <MenuItem destructive icon="delete" onClick={onDelete}>{lang('Delete')}</MenuItem>}
         {/* {hasCustomEmoji && ( */}
         {/*   <> */}

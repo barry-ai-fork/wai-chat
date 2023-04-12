@@ -114,6 +114,7 @@ export default class MsgChatGptWorker{
       return await this.replyNotApiKey();
     }
     await this.replyThinking()
+    let i = 0;
     requestChatStream(this.prepareSendMessages(), {
       apiKey:this.getApiKey()!,
       modelConfig: this.setting?.config || ChatModelConfig,
@@ -122,15 +123,18 @@ export default class MsgChatGptWorker{
           this.updateReply(content,[],done)
           ControllerPool.remove(parseInt(this.getChatId()), this.replyMessage?.id!);
         }else{
-          this.updateReply(content,[
-            [
-              {
-                text:"停止输出",
-                data:`${this.getChatId()}/requestChatStream/stop`,
-                type:"callback"
-              }
-            ]
-          ],done)
+          i++;
+          if(i%5 === 0){
+            this.updateReply(content,[
+              [
+                {
+                  text:"停止输出",
+                  data:`${this.getChatId()}/requestChatStream/stop`,
+                  type:"callback"
+                }
+              ]
+            ],done)
+          }
         }
       },
       onAbort:(error) =>{

@@ -118,7 +118,6 @@ export default async function downloadMedia(
       data = Buffer.from(downloadRes.file!.buf);
       mimeType= downloadRes.file!.type
       fullSize = downloadRes.file!.size
-      debugger
     }catch (e){
       console.error('[DOWNLOAD FAILED]',e,{url,id})
       return undefined

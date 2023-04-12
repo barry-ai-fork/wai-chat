@@ -76,7 +76,7 @@ export function requestOpenaiClient(path: string,apiKey:string) {
     fetch(AI_PROXY_API +"/api/openai", {
       method,
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json; charset=utf-8",
         path,
         ...getHeaders(apiKey),
       },
@@ -175,7 +175,7 @@ export async function requestChatStream(
     const res = await fetch(AI_PROXY_API + "/api/chat-stream", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json; charset=utf-8",
         path: "v1/chat/completions",
         ...getHeaders(options!.apiKey),
       },
