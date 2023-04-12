@@ -147,7 +147,7 @@ export default class MsgCommandChatGpt{
             fullInfo:{
               ...user?.fullInfo,
               botInfo:{
-                ...user?.fullInfo?.botInfo,
+                ...user?.fullInfo?.botInfo!,
                 aiBot:{
                   ...user?.fullInfo?.botInfo?.aiBot,
                   chatGptConfig:{
@@ -176,6 +176,7 @@ export default class MsgCommandChatGpt{
               ]
             ]
           }
+          // @ts-ignore
           MsgDispatcher.newMessage(chatId,messageId,message1)
         }
         break;
@@ -189,7 +190,7 @@ export default class MsgCommandChatGpt{
             fullInfo:{
               ...user?.fullInfo,
               botInfo:{
-                ...user?.fullInfo?.botInfo,
+                ...user?.fullInfo?.botInfo!,
                 aiBot:{
                   ...user?.fullInfo?.botInfo?.aiBot,
                   chatGptConfig:{
@@ -217,6 +218,7 @@ export default class MsgCommandChatGpt{
               ]
             ]
           }
+          // @ts-ignore
           MsgDispatcher.newMessage(chatId,messageId,message2)
         }
 
@@ -231,7 +233,7 @@ export default class MsgCommandChatGpt{
           fullInfo:{
             ...user?.fullInfo,
             botInfo:{
-              ...user?.fullInfo?.botInfo,
+              ...user?.fullInfo?.botInfo!,
               aiBot:{
                 ...user?.fullInfo?.botInfo?.aiBot,
                 enableAi:isEnable

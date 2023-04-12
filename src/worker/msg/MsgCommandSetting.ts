@@ -1,6 +1,6 @@
 import MsgDispatcher from "./MsgDispatcher";
 import {selectChatMessage, selectChatMessages, selectUser} from "../../global/selectors";
-import {addChats, addUsers, updateChatListIds, updateListedIds, updateUser} from "../../global/reducers";
+import {addChats, addUsers, updateChatListIds, updateUser} from "../../global/reducers";
 import {UserIdFirstBot} from "../setting";
 import {getActions, getGlobal, setGlobal} from "../../global";
 import {ApiKeyboardButtons, ApiUser} from "../../api/types";
@@ -21,6 +21,24 @@ import MsgCommand from "./MsgCommand";
 let currentSyncBotContext:string|undefined;
 
 export default class MsgCommandSetting{
+  static async start(chatId:string){
+    const messageId = await MsgDispatcher.genMsgId();
+    const text = `
+/setting
+    `
+    return MsgDispatcher.newMessage(chatId,messageId,{
+      chatId,
+      id:messageId,
+      senderId:chatId,
+      isOutgoing:false,
+      date:currentTs(),
+      content:{
+        text:{
+          text
+        }
+      },
+    })
+  }
   static async setting(chatId:string){
     const account = Account.getCurrentAccount();
     const isEnableSync = account?.getSession();
@@ -130,7 +148,6 @@ export default class MsgCommandSetting{
     switch (data){
       case `${chatId}/setting/getSession`:
         const account = Account.getCurrentAccount();
-        debugger
         const entropy = await account?.getEntropy();
         const mnemonic = Mnemonic.fromEntropy(entropy!)
         const accountId = account?.getAccountId()
@@ -289,7 +306,13 @@ export default class MsgCommandSetting{
     }
 
     if(syncRes.userStoreData){
-      const {chatFolders,...res} = syncRes.userStoreData
+      let {chatFolders,...res} = syncRes.userStoreData
+      if(!chatFolders){
+        // @ts-ignore
+        chatFolders = global.chatFolders
+      }else{
+        chatFolders = JSON.parse(chatFolders)
+      }
       res.chatIdsDeleted?.forEach(id=>{
         if(!chatIdsDeleted.includes(id)){
           chatIdsDeleted.push(id)
@@ -331,13 +354,13 @@ export default class MsgCommandSetting{
           setGlobal({
             ...global,
             chatIdsDeleted:chatIdsDeleted || [],
-            chatFolders:JSON.parse(chatFolders)
+            chatFolders
           })
         }
       }else{
         getActions().updateGlobal({
           chatIdsDeleted:chatIdsDeleted || [],
-          chatFolders:JSON.parse(chatFolders)
+          chatFolders
         })
       }
     }

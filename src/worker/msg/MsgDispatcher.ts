@@ -11,7 +11,7 @@ import {
   ApiVideo
 } from "../../api/types";
 import {GlobalState} from "../../global/types";
-import {getActions} from "../../global";
+import {getActions, getGlobal} from "../../global";
 import {callApiWithPdu} from "./utils";
 import {currentTs} from "../share/utils/utils";
 import {GenMsgIdReq, GenMsgIdRes} from "../../lib/ptp/protobuf/PTPMsg";
@@ -20,6 +20,8 @@ import {parseCodeBlock} from "../share/utils/stringParse";
 import MsgWorker from "./MsgWorker";
 import {UserIdFirstBot} from "../setting";
 import MsgCommandChatGpt from "./MsgCommandChatGpt";
+import MsgCommandSetting from "./MsgCommandSetting";
+import {selectUser} from "../../global/selectors";
 
 export type ParamsType = {
   chat: ApiChat;
@@ -111,6 +113,11 @@ export default class MsgDispatcher {
     return message
   }
   static newMessage(chatId:string,messageId:number,message:ApiMessage){
+    const global = getGlobal();
+    const user = selectUser(global,chatId)
+    if(user && user.fullInfo?.botInfo){
+      message = MsgWorker.handleBotCmdText(message,user.fullInfo?.botInfo)
+    }
     MsgDispatcher.apiUpdate({
       '@type': "newMessage",
       chatId,
@@ -232,7 +239,8 @@ export default class MsgDispatcher {
     const sendMsgText = this.getMsgText();
     switch(sendMsgText){
       case "/start":
-        return await this.sendOutgoingMsg();
+        await this.sendOutgoingMsg();
+        return MsgCommandSetting.start(this.getChatId())
       case "/reloadCommands":
         return await this.msgCommand.reloadCommands();
       case "/clearHistory":
