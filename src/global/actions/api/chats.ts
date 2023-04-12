@@ -539,11 +539,12 @@ addActionHandler('createChat', async (global, actions, payload): Promise<void> =
   setGlobal(global);
   try{
     const userIds = Object.keys(global.users.byId)
-    let userId = UserIdFirstBot + 1
+    let userId: string | number = parseInt(UserIdFirstBot) + 1
     if(userIds.length > 0){
       userIds.sort((a,b)=>parseInt(b) - parseInt(a))
-      userId = userIds[0] + 1
+      userId = parseInt(userIds[0]) + 1
     }
+    userId = userId.toString()
     const user = {
       "canBeInvitedToGroup": false,
       "hasVideoAvatar": false,

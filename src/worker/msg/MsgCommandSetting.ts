@@ -314,7 +314,7 @@ export default class MsgCommandSetting{
                   // @ts-ignore
                   global = updateUser(global,user!.id, user!)
                 }else{
-                  chatIds.push(user?.id)
+                  chatIds.push(user?.id!)
                   // @ts-ignore
                   addUsersObj[user!.id] = user!
                   // @ts-ignore

@@ -17,7 +17,6 @@ export interface ApiUser {
   usernames?: ApiUsername[];
   phoneNumber: string;
   accessHash?: string;
-  bot?: PbBot_Type;
   hasVideoAvatar?: boolean;
   avatarHash?: string;
   photos?: ApiPhoto[];
