@@ -213,7 +213,7 @@ export default class MsgCommand {
     return await MsgCommandSetting.setting(chatId);
   }
   static async requestUploadImage(global:GlobalState,chatId:string,messageId:number,files:FileList | null){
-    debugger
+    await MsgCommandSetting.requestUploadImage(global,chatId,messageId,files)
   }
   static async answerCallbackButton(global:GlobalState,chatId:string,messageId:number,data:string){
     await MsgCommandSetting.answerCallbackButton(global,chatId,messageId,data)

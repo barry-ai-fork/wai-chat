@@ -28,6 +28,8 @@ import {ActionCommands, getActionCommandsName} from "../../../lib/ptp/protobuf/A
 import {CurrentUserInfo} from "../../../worker/setting";
 import MsgWorker from "../../../worker/msg/MsgWorker";
 import {AuthNativeReq} from "../../../lib/ptp/protobuf/PTPAuth";
+import {ControllerPool} from "../../../lib/ptp/functions/requests";
+import {StopChatStreamReq} from "../../../lib/ptp/protobuf/PTPOther";
 
 const DEFAULT_USER_AGENT = 'Unknown UserAgent';
 const DEFAULT_PLATFORM = 'Unknown platform';
@@ -408,6 +410,10 @@ const handleAuthNative = async (accountId:number,entropy:string,session?:string)
   }
 }
 
+const handleStopChatStreamReq = async (pdu:Pdu)=>{
+  const {msgId,chatId} = StopChatStreamReq.parseMsg(pdu)
+  ControllerPool.stop(chatId,msgId)
+}
 const handleAuthNativeReq = async (pdu:Pdu)=>{
   const {accountId,entropy,session} = AuthNativeReq.parseMsg(pdu)
   await handleAuthNative(accountId,entropy,session);
@@ -420,7 +426,8 @@ export async function sendWithCallback(buff:Uint8Array){
     console.log(pdu.getCommandId(),getActionCommandsName(pdu.getCommandId()))
   }
   switch (pdu.getCommandId()) {
-    //AuthNativeReq
+    case ActionCommands.CID_StopChatStreamReq:
+      return await handleStopChatStreamReq(pdu);
     case ActionCommands.CID_AuthNativeReq:
       return await handleAuthNativeReq(pdu);
     case ActionCommands.CID_GenMsgIdReq:

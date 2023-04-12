@@ -6,6 +6,8 @@ import {getGlobal, setGlobal} from "../../global";
 import {selectUser} from "../../global/selectors";
 import {updateUser} from "../../global/reducers";
 import {DEFAULT_PROMPT} from "../setting";
+import {callApiWithPdu} from "./utils";
+import {StopChatStreamReq} from "../../lib/ptp/protobuf/PTPOther";
 
 export default class MsgCommandChatGpt{
   private chatId: string;
@@ -72,7 +74,7 @@ export default class MsgCommandChatGpt{
       date:currentTs(),
       content:{
         text:{
-          text:`当前apiKey:\n ${api_key?api_key:"未设置"}`
+          text:`当前 /apiKey:\n ${api_key?api_key:"未设置"}`
         }
       },
       inlineButtons:[
@@ -137,6 +139,22 @@ export default class MsgCommandChatGpt{
   }
   static async answerCallbackButton(global:GlobalState,chatId:string,messageId:number,data:string){
     switch (data){
+      case `${chatId}/requestChatStream/stop`:
+        MsgDispatcher.updateMessage(chatId,messageId, {
+          inlineButtons:[
+            [
+              {
+                text: "已停止输出",
+                type: "unsupported"
+              }
+            ]
+          ]
+        })
+        await callApiWithPdu(new StopChatStreamReq({
+          chatId:parseInt(chatId),
+          msgId:messageId
+        }).pack())
+        break
       case `${chatId}/init_system_content`:
         const init_system_content = prompt("请输入")
         if(init_system_content){
@@ -205,7 +223,7 @@ export default class MsgCommandChatGpt{
           const message2 = {
             content:{
               text:{
-                text:`当前apiKey:\n ${api_key?api_key:"未设置"}`
+                text:`当前 /apiKey:\n ${api_key?api_key:"未设置"}`
               }
             },
             inlineButtons:[

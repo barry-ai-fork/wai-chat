@@ -126,7 +126,7 @@ export default class MsgChatGptWorker{
             [
               {
                 text:"停止输出",
-                data:`requestChatStream/stop/${this.getChatId()}/${this.replyMessage?.id!}`,
+                data:`${this.getChatId()}/requestChatStream/stop`,
                 type:"callback"
               }
             ]
@@ -134,6 +134,7 @@ export default class MsgChatGptWorker{
         }
       },
       onAbort:(error) =>{
+        const text = this.replyMessage?.content.text?.text! === "..." ? error.message : this.replyMessage?.content.text?.text!
         this.updateReply(this.replyMessage?.content.text?.text!,[
           [
             {

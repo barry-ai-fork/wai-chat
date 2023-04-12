@@ -830,6 +830,9 @@ var $conv_message = $createConverter([
             Other: {
                 OtherNotify: {
                     '$': {"100":["err","uint32",0]}
+                },
+                StopChatStreamReq: {
+                    '$': {"1":["chatId","uint32",0],"2":["msgId","uint32",0]}
                 }
             },
             Sync: {

@@ -6,7 +6,12 @@ import {getActions, getGlobal, setGlobal} from "../../global";
 import {ApiKeyboardButtons, ApiUser} from "../../api/types";
 import {callApiWithPdu} from "./utils";
 import {currentTs} from "../share/utils/utils";
-import {MessageStoreRow_Type, UserStoreData_Type, UserStoreRow_Type} from "../../lib/ptp/protobuf/PTPCommon/types";
+import {
+  MessageStoreRow_Type,
+  QrCodeType,
+  UserStoreData_Type,
+  UserStoreRow_Type
+} from "../../lib/ptp/protobuf/PTPCommon/types";
 import {DownloadMsgReq, DownloadMsgRes, UploadMsgReq} from "../../lib/ptp/protobuf/PTPMsg";
 import {DownloadUserReq, DownloadUserRes, UploadUserReq} from "../../lib/ptp/protobuf/PTPUser";
 import Mnemonic from "../../lib/ptp/wallet/Mnemonic";
@@ -17,6 +22,10 @@ import {getPasswordFromEvent} from "../share/utils/password";
 import {hashSha256} from "../share/utils/helpers";
 import {SyncReq, SyncRes} from "../../lib/ptp/protobuf/PTPSync";
 import MsgCommand from "./MsgCommand";
+import {Decoder} from "@nuintun/qrcode";
+import {PbQrCode} from "../../lib/ptp/protobuf/PTPCommon";
+import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
+import {aesDecrypt} from "../../util/passcode";
 
 let currentSyncBotContext:string|undefined;
 
@@ -83,37 +92,23 @@ export default class MsgCommandSetting{
           type:"callback"
         },
       ],
-
-      [
-        {
-          data:`${chatId}/setting/getSession`,
-          text:"获取session",
-          type:"callback"
-        },
-      ],
       [
         {
           data:`${chatId}/setting/showMnemonic`,
-          text:"showMnemonic",
-          type:"callback"
-        },
-        {
-          data:`${chatId}/setting/setMnemonic`,
-          text:"setMnemonic",
+          text:"二维码导出账户",
           type:"callback"
         },
       ],
       [
         {
-          data:`${chatId}/setting/import`,
-          text:"导入账户",
-          type:"callback"
+          text:"二维码导入账户",
+          type:"requestUploadImage"
         },
       ],
       [
         {
           data:`${chatId}/setting/disableSync`,
-          text:"关闭同步",
+          text:"退出登录",
           type:"callback"
         },
         {
@@ -125,15 +120,14 @@ export default class MsgCommandSetting{
     ]:[
       [
         {
-          data:`${chatId}/setting/import`,
-          text:"导入账户",
-          type:"callback"
-        }
+          text:"二维码导入账户",
+          type:'requestUploadImage',
+        },
       ],
       [
         {
           data:`${chatId}/setting/enableSync`,
-          text:"开启同步",
+          text:"登录",
           type:"callback"
         },
         {
@@ -143,6 +137,74 @@ export default class MsgCommandSetting{
         },
       ],
     ]
+  }
+  static async requestUploadImage(global:GlobalState,chatId:string,messageId:number,files:FileList | null){
+    if(files && files.length > 0){
+      const file = files[0]
+      const qrcode = new Decoder();
+      const blob = new Blob([file], { type: file.type });
+      const blobUrl = URL.createObjectURL(blob);
+      try {
+        const result = await qrcode.scan(blobUrl)
+        if(result && result.data.startsWith('wai://')){
+          const mnemonic =  result.data
+          const qrcodeData = mnemonic.replace('wai://','')
+          const qrcodeDataBuf = Buffer.from(qrcodeData,'hex')
+          const decodeRes = PbQrCode.parseMsg(new Pdu(qrcodeDataBuf))
+          if(decodeRes){
+            const {type,data} = decodeRes;
+            if(type !== QrCodeType.QrCodeType_MNEMONIC){
+              throw new Error("解析二维码失败")
+            }
+            const {password} = await getPasswordFromEvent();
+            const res = await aesDecrypt(data,Buffer.from(hashSha256(password),"hex"))
+            if(res){
+              await MsgCommandSetting.setMnemonic(chatId,res,password);
+              return;
+            }
+          }
+        }
+      }catch (e){
+
+      }finally {
+        getActions().showNotification({message:"解析二维码失败"})
+      }
+    }
+  }
+  static async setMnemonic(chatId:string,data:string,password?:string){
+    const mnemonic = new Mnemonic(data)
+    if(mnemonic.checkMnemonic()){
+      await MsgCommand.sendText(chatId,mnemonic.toEntropy())
+      if(!password){
+        const res = await getPasswordFromEvent()
+        if(res.password){
+          password = res.password
+        }else{
+          return
+        }
+      }
+      if(password){
+        const entropy = mnemonic.toEntropy();
+        let accountId = Account.getAccountIdByEntropy(entropy);
+        if(!accountId){
+          accountId = Account.genAccountId()
+        }
+        const account = Account.getInstance(accountId);
+        Account.setCurrentAccountId(accountId);
+        await account?.setEntropy(entropy)
+        const pwd = hashSha256(password)
+        const ts = +(new Date());
+        const {address, sign} = await account!.signMessage(ts.toString(), pwd);
+        const session = Account.formatSession({address,sign,ts});
+        account!.saveSession(session)
+        await callApiWithPdu(new AuthNativeReq({
+          accountId,entropy:mnemonic.toEntropy(),session
+        }).pack())
+        window.location.reload()
+      }
+    }else{
+      await MsgCommand.sendText(chatId,"mnemonic 不合法")
+    }
   }
   static async answerCallbackButton(global:GlobalState,chatId:string,messageId:number,data:string){
     switch (data){
@@ -166,33 +228,7 @@ export default class MsgCommandSetting{
       case `${chatId}/setting/import`:
         const res = prompt("setMnemonic")
         if(res){
-          const mnemonic = new Mnemonic(res)
-          if(mnemonic.checkMnemonic()){
-            await MsgCommand.sendText(chatId,mnemonic.toEntropy())
-            const {password} = await getPasswordFromEvent()
-            if(password){
-              const entropy = mnemonic.toEntropy();
-              let accountId = Account.getAccountIdByEntropy(entropy);
-              if(!accountId){
-                accountId = Account.genAccountId()
-              }
-              const account = Account.getInstance(accountId);
-              Account.setCurrentAccountId(accountId);
-              await account?.setEntropy(entropy)
-              const pwd = hashSha256(password)
-              const ts = +(new Date());
-              const {address, sign} = await account!.signMessage(ts.toString(), pwd);
-              const session = Account.formatSession({address,sign,ts});
-              account!.saveSession(session)
-              await callApiWithPdu(new AuthNativeReq({
-                accountId,entropy:mnemonic.toEntropy(),session
-              }).pack())
-              await MsgCommand.sendText(chatId,session)
-              window.location.reload()
-            }
-          }else{
-            await MsgCommand.sendText(chatId,"mnemonic 不合法")
-          }
+          await MsgCommandSetting.setMnemonic(chatId,res)
         }
         break
       case `${chatId}/setting/uploadFolder`:
@@ -333,7 +369,6 @@ export default class MsgCommandSetting{
             for (let index = 0; index < downloadUserRes.users.length; index++) {
               const {user} = downloadUserRes.users[index];
               if(!chatIdsDeleted.includes(user!.id)){
-                debugger
                 if(chatIds.includes(user!.id)){
                   // @ts-ignore
                   global = updateUser(global,user!.id, user!)
@@ -352,10 +387,11 @@ export default class MsgCommandSetting{
             }
           }
           global = updateChatListIds(global, "active", chatIds);
+          // @ts-ignore
+          global = {...global,chatFolders}
           setGlobal({
             ...global,
             chatIdsDeleted:chatIdsDeleted || [],
-            chatFolders
           })
         }
       }else{
@@ -385,7 +421,6 @@ export default class MsgCommandSetting{
     getActions().showNotification({message:"开启成功"})
     setTimeout(()=>window.location.reload(),500)
   }
-
   static async disableSync(global:GlobalState,chatId:string,messageId:number){
     const account = Account.getCurrentAccount();
     account?.delSession();
@@ -400,12 +435,10 @@ export default class MsgCommandSetting{
     getActions().showNotification({message:"关闭成功"})
     setTimeout(()=>window.location.reload(),500)
   }
-
   static async onSelectSyncBot(chatId:string){
     const data = currentSyncBotContext;
     const isUpload = !data?.endsWith("downloadMessages");
     currentSyncBotContext = undefined
-    await MsgCommand.sendText(UserIdFirstBot,data!)
     let global = getGlobal();
     if(isUpload){
       const messageById = selectChatMessages(global,chatId);
@@ -428,6 +461,8 @@ export default class MsgCommandSetting{
         }).pack())
         if(!res){
           getActions().showNotification({message:"更新失败"})
+        }else{
+          getActions().showNotification({message:"更新成功"})
         }
       }
     }else{
@@ -450,7 +485,7 @@ export default class MsgCommandSetting{
             }
           }
         }
-
+        getActions().showNotification({message:"更新成功"})
       }else{
         getActions().showNotification({message:"更新失败"})
       }

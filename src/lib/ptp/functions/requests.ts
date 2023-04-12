@@ -264,9 +264,11 @@ export const ControllerPool = {
 
   stop(sessionIndex: number, messageIndex: number) {
     const key = this.key(sessionIndex, messageIndex);
-    const controller = this.controllers[key];
-    console.log(controller);
-    controller?.abort();
+    if(this.controllers[key]){
+      const controller = this.controllers[key];
+      console.log(controller);
+      controller?.abort();
+    }
   },
 
   remove(sessionIndex: number, messageIndex: number) {
