@@ -79,6 +79,11 @@ const IGNORE_KEYS = [
   'Esc', 'Escape', 'Enter', 'PageUp', 'PageDown', 'Meta', 'Alt', 'Ctrl', 'ArrowDown', 'ArrowUp', 'Control', 'Shift',
 ];
 
+// @ts-ignore
+let recognition
+let recordStartTime = 0
+let timer = 0;
+
 function clearSelection() {
   const selection = window.getSelection();
   if (!selection) {
@@ -302,9 +307,52 @@ const MessageInput: FC<OwnProps & StateProps> = ({
   }
 
   function handleMouseDown(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+
+    if (e.button === 0) {
+      console.log("handleMouseDown")
+      if(!timer){
+        recordStartTime = new Date().getTime();
+        timer = setInterval(()=>{
+          if(recordStartTime > 0){
+            recordStartTime += 80
+            if(recordStartTime > 1000){
+              if(!recognition){
+                console.log("recognition start")
+                // @ts-ignore
+                recognition = new window.webkitSpeechRecognition();
+                recognition.continuous = true;
+                recognition.interimResults = false;
+                recognition.lang = 'zh-CN';
+                recognition.onresult = (event: { results: string | any[]; }) => {
+                  const results = event.results;
+                  let finalTranscript = '';
+                  let interimTranscript = '';
+                  for (let i = event.resultIndex; i < results.length; i += 1) {
+                    const transcript = results[i][0].transcript;
+                    if (results[i].isFinal) {
+                      finalTranscript += transcript
+                    } else {
+                      interimTranscript += transcript;
+                    }
+                  }
+                  document.execCommand('insertText', false, finalTranscript);
+                };
+                recognition.start();
+              }
+
+              const tickVolume = (recordStartTime % 30 ) / 100
+              document.querySelector(".Composer .mainSendBtn").style.boxShadow =
+                `0 0 0 ${(tickVolume || 0) * 50}px rgba(0,0,0,.15)`;
+            }
+          }else{
+            clearInterval(timer)
+          }
+        },80)
+      }
+
+    }
     if (e.button !== 2) {
       const listenerEl = e.currentTarget.closest(`.${INPUT_WRAPPER_CLASS}`) || e.target;
-
       listenerEl.addEventListener('mouseup', processSelectionWithTimeout, { once: true });
       return;
     }
@@ -330,6 +378,20 @@ const MessageInput: FC<OwnProps & StateProps> = ({
 
     document.addEventListener('mousedown', handleCloseContextMenu);
     document.addEventListener('keydown', handleCloseContextMenu);
+  }
+  function handleMouseUp(e: React.KeyboardEvent<HTMLDivElement>) {
+    const pressTime = new Date().getTime() - recordStartTime;
+    console.log("handleMouseUp",pressTime)
+    if(timer){
+      if(recognition){
+        recognition.stop();
+      }
+      recognition = null;
+      document.querySelector(".Composer .mainSendBtn").style.boxShadow =
+        `0 0 0 0 rgba(0,0,0,.15)`;
+      clearInterval(timer)
+      timer = 0
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
@@ -539,6 +601,7 @@ const MessageInput: FC<OwnProps & StateProps> = ({
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
             onContextMenu={IS_ANDROID ? handleAndroidContextMenu : undefined}
             onTouchCancel={IS_ANDROID ? processSelectionWithTimeout : undefined}
             aria-label={placeholder}

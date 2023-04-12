@@ -1530,7 +1530,7 @@ const Composer: FC<OwnProps & StateProps> = ({
         ref={mainButtonRef}
         round
         color="secondary"
-        className={buildClassName(mainButtonState, !isReady && 'not-ready', ( activeVoiceRecording) && 'recording')}
+        className={buildClassName(mainButtonState,"mainSendBtn", !isReady && 'not-ready', ( activeVoiceRecording) && 'recording')}
         disabled={areVoiceMessagesNotAllowed}
         allowDisabledClick
         ariaLabel={lang(sendButtonAriaLabel)}
