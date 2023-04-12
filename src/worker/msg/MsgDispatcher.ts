@@ -229,7 +229,6 @@ export default class MsgDispatcher {
     }
   }
   async processFirstBotCmd(){
-
     const sendMsgText = this.getMsgText();
     switch(sendMsgText){
       case "/start":

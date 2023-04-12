@@ -406,12 +406,6 @@ const handleAuthNative = async (accountId:number,entropy:string,session?:string)
   }else{
     account.delSession()
   }
-
-  if(DEBUG){
-    console.log("accountId",accountId)
-    console.log("entropy",entropy)
-    console.log("session",session)
-  }
 }
 
 const handleAuthNativeReq = async (pdu:Pdu)=>{

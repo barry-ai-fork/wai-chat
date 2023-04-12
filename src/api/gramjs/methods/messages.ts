@@ -110,6 +110,7 @@ export async function fetchMessages({
   lastMessageId?:number,
   isUp?:boolean
 }) {
+  return
   const pdu = await Account.getCurrentAccount()?.sendPduWithCallback(new MsgListReq({
     lastMessageId:lastMessageId!,
     chatId:chat.id,

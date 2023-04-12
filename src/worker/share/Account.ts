@@ -19,7 +19,6 @@ import {EncryptType} from "../../lib/ptp/protobuf/PTPCommon/types";
 const KEY_PREFIX = "a-k-";
 const KEYS_PREFIX = "a-ks";
 const SESSIONS_PREFIX = "a-ss";
-const SESSION_PREFIX = "a-si-";
 
 export type IMsgConn = {
   send?: (buf:Buffer|Uint8Array) => void,
@@ -47,7 +46,6 @@ export default class Account {
   private iv?: Buffer;
   private aad?: Buffer;
   private entropy?:string;
-  private msgConn?: WebSocket | IMsgConn;
   private session?: string;
   constructor(accountId: number) {
     this.accountId = accountId;
@@ -245,31 +243,47 @@ export default class Account {
     return EthEcies.decrypt(prvKey, cipher)
   }
 
+  static getEntropyList(){
+    const keys = Account.getKeys()
+    for (let i = 0; i < Object.keys(keys).length; i++) {
+      const key = Object.keys(keys)[i]
+      const value = keys[key]
+      const accountIdsStr =  Account.getClientKv().get("a-as");
+      if(accountIdsStr){
+        const accountIds = JSON.parse(accountIdsStr);
+        for (let j = 0; j < accountIds.length; j++) {
+          const key1 = sha256(
+            Buffer.from(`${KEY_PREFIX}${accountIds[j]}`)
+          ).toString('hex');
+          const key2 = `${KEY_PREFIX}${key1}`
+          if(key2 === key){
+            const plain = decrypt(
+              Buffer.from(value.substring(64), 'hex'),
+              Buffer.from(key.substring(0, 16)),
+              Buffer.from(key.substring(16, 32))
+            );
+            const entropy = plain.toString('hex');
+            const m = Mnemonic.fromEntropy(entropy)
+            console.log("entropy:",accountIds[j],entropy,m.getWords())
+          }
+        }
+      }
+    }
+    return null
+  }
   static getAccountIdByEntropy(entropy:string){
     const keys = Account.getKeys()
     for (let i = 0; i < Object.keys(keys).length; i++) {
       const key = Object.keys(keys)[i]
       const value = keys[key]
-      if(0 === value.indexOf(hashSha256(entropy))){
-        const accountIdsStr =  Account.getClientKv().get("a-as");
-        if(accountIdsStr){
-          const accountIds = JSON.parse(accountIdsStr);
-          for (let j = 0; j < accountIds.length; j++) {
-            const key1 = sha256(
-              Buffer.from(`${KEY_PREFIX}${accountIds[j]}`)
-            ).toString('hex');
-            const key2 = `${KEY_PREFIX}${key1}`
-            if(key2 === key){
-              return accountIds[j]
-            }
-          }
-        }
-        break
+      if(entropy === value){
+        return parseInt(key)
       }
     }
     return null
   }
-  static saveKey(key:string,value:string){
+
+  static saveKey(key:number,value:string){
     const keys = Account.getKeys()
     keys[key] = value;
     Account.getClientKv().put(
@@ -278,10 +292,10 @@ export default class Account {
     );
   }
 
-  static getKey(key:string){
+  static getKey(key:number){
     const keys = Account.getKeys()
     if(keys[key]){
-      return keys[key].substring(64)
+      return keys[key]
     }else{
       return undefined
     }
@@ -299,21 +313,10 @@ export default class Account {
   async setEntropy(entropy:string,skipSave?:boolean) {
     this.entropy = entropy;
     if(!skipSave){
-      const key = sha256(
-        Buffer.from(`${KEY_PREFIX}${this.getAccountId()}`)
-      ).toString('hex');
-      let cipher = encrypt(
-        Buffer.from(entropy, 'hex'),
-        Buffer.from(key.substring(0, 16)),
-        Buffer.from(key.substring(16, 32))
-      );
-
       await Account.saveKey(
-        `${KEY_PREFIX}${key}`,
-        Buffer.concat([
-          Buffer.from(hashSha256(entropy),"hex"),
-          cipher
-        ]).toString('hex'))
+        this.getAccountId(),
+        entropy
+      )
     }
   }
 
@@ -321,33 +324,14 @@ export default class Account {
     if(this.entropy){
       return this.entropy
     }
-    const key = sha256(
-      Buffer.from(`${KEY_PREFIX}${this.getAccountId()}`)
-    ).toString('hex');
-
-    let entropy = await Account.getKey(`${KEY_PREFIX}${key}`);
+    let entropy = await Account.getKey(this.getAccountId());
     if (!entropy) {
       let mnemonic = new Mnemonic();
       entropy = mnemonic.toEntropy();
-      let cipher = encrypt(
-        Buffer.from(entropy, 'hex'),
-        Buffer.from(key.substring(0, 16)),
-        Buffer.from(key.substring(16, 32))
-      );
-      console.log("====>>",Buffer.from(hashSha256(entropy),'hex').length)
       await Account.saveKey(
-        `${KEY_PREFIX}${key}`,
-        Buffer.concat([
-          Buffer.from(hashSha256(entropy),'hex'),
-          cipher
-        ]).toString('hex'))
-    } else {
-      const plain = decrypt(
-        Buffer.from(entropy, 'hex'),
-        Buffer.from(key.substring(0, 16)),
-        Buffer.from(key.substring(16, 32))
-      );
-      entropy = plain.toString('hex');
+        this.getAccountId(),
+        entropy
+      )
     }
     this.entropy = entropy;
     return entropy;
@@ -406,24 +390,6 @@ export default class Account {
   }
   recoverAddressAndPubKey(sig: Buffer, message: string) {
     return EcdsaHelper.recoverAddressAndPubKey({ message, sig });
-  }
-
-  setMsgConn(msgConn:WebSocket | IMsgConn){
-    this.msgConn = msgConn
-  }
-
-  sendPdu(pdu: Pdu,seq_num:number = 0){
-    // return undefined
-    // if(seq_num > 0){
-    //   pdu.updateSeqNo(seq_num)
-    // }
-    // console.log("[SEND]","seq_num",pdu.getSeqNum(),"cid:",getActionCommandsName(pdu.getCommandId()))
-    // this.msgConn?.send!(pdu.getPbData());
-  }
-  async sendPduWithCallback(pdu: Pdu){
-    return undefined
-    // @ts-ignore
-    // return this.msgConn?.sendPduWithCallback(pdu);
   }
 
   static setCurrentAccount(account:Account) {

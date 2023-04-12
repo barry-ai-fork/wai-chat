@@ -1,6 +1,6 @@
 import MsgDispatcher from "./MsgDispatcher";
 import {selectChatMessage, selectChatMessages, selectUser} from "../../global/selectors";
-import {addChats, addUsers, updateUser} from "../../global/reducers";
+import {addChats, addUsers, updateChatListIds, updateListedIds, updateUser} from "../../global/reducers";
 import {UserIdFirstBot} from "../setting";
 import {getActions, getGlobal, setGlobal} from "../../global";
 import {ApiKeyboardButtons, ApiUser} from "../../api/types";
@@ -25,7 +25,7 @@ export default class MsgCommandSetting{
     const account = Account.getCurrentAccount();
     const isEnableSync = account?.getSession();
     const messageId = await MsgDispatcher.genMsgId();
-    MsgDispatcher.newMessage(chatId,messageId,{
+    return MsgDispatcher.newMessage(chatId,messageId,{
       chatId,
       id:messageId,
       senderId:chatId,
@@ -87,6 +87,13 @@ export default class MsgCommandSetting{
       ],
       [
         {
+          data:`${chatId}/setting/import`,
+          text:"导入账户",
+          type:"callback"
+        },
+      ],
+      [
+        {
           data:`${chatId}/setting/disableSync`,
           text:"关闭同步",
           type:"callback"
@@ -98,6 +105,13 @@ export default class MsgCommandSetting{
         },
       ],
     ]:[
+      [
+        {
+          data:`${chatId}/setting/import`,
+          text:"导入账户",
+          type:"callback"
+        }
+      ],
       [
         {
           data:`${chatId}/setting/enableSync`,
@@ -116,14 +130,23 @@ export default class MsgCommandSetting{
     switch (data){
       case `${chatId}/setting/getSession`:
         const account = Account.getCurrentAccount();
+        debugger
         const entropy = await account?.getEntropy();
         const mnemonic = Mnemonic.fromEntropy(entropy!)
-        await MsgCommand.sendText(chatId,account?.getSession()!)
+        const accountId = account?.getAccountId()
+        Account.getEntropyList();
+
+        await MsgCommand.sendText(chatId,accountId!.toString())
         await MsgCommand.sendText(chatId,entropy!)
         await MsgCommand.sendText(chatId,mnemonic.getWords())
+        const session = account?.getSession()
+        if(session){
+          const {address} = Account.parseSession(session)!
+          await MsgCommand.sendText(chatId,address)
+        }
         break
-
       case `${chatId}/setting/setMnemonic`:
+      case `${chatId}/setting/import`:
         const res = prompt("setMnemonic")
         if(res){
           const mnemonic = new Mnemonic(res)
@@ -138,7 +161,7 @@ export default class MsgCommandSetting{
               }
               const account = Account.getInstance(accountId);
               Account.setCurrentAccountId(accountId);
-              await account?.setEntropy(entropy,true)
+              await account?.setEntropy(entropy)
               const pwd = hashSha256(password)
               const ts = +(new Date());
               const {address, sign} = await account!.signMessage(ts.toString(), pwd);
@@ -291,18 +314,20 @@ export default class MsgCommandSetting{
                   // @ts-ignore
                   global = updateUser(global,user!.id, user!)
                 }else{
+                  chatIds.push(user?.id)
                   // @ts-ignore
                   addUsersObj[user!.id] = user!
                   // @ts-ignore
                   addChatsObj[user!.id] = MsgCommandSetting.buildDefaultChat(user!)
                 }
-                if(Object.keys(addUsersObj).length > 0){
-                  global = addUsers(global,addUsersObj)
-                  global = addChats(global,addChatsObj)
-                }
               }
             }
+            if(Object.keys(addUsersObj).length > 0){
+              global = addUsers(global,addUsersObj)
+              global = addChats(global,addChatsObj)
+            }
           }
+          global = updateChatListIds(global, "active", chatIds);
           setGlobal({
             ...global,
             chatIdsDeleted:chatIdsDeleted || [],

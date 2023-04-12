@@ -210,7 +210,7 @@ export default class MsgCommand {
   async setting(){
     const chatId = this.msgDispatcher.getChatId()
     await this.msgDispatcher.sendOutgoingMsg();
-    await MsgCommandSetting.setting(chatId);
+    return await MsgCommandSetting.setting(chatId);
   }
   static async requestUploadImage(global:GlobalState,chatId:string,messageId:number,files:FileList | null){
     debugger

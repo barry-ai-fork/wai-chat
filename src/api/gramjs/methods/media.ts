@@ -100,23 +100,19 @@ export default async function downloadMedia(
     })
     try {
       console.log("[DOWNLOAD media]",{url,id})
-      if(CLOUD_MESSAGE_ENABLE){
-        const res = await fetch(`${CLOUD_MESSAGE_API}/proto`,{
-          method: 'POST',
-          body: Buffer.from(downloadReq.pack().getPbData())
-        })
+      const res = await fetch(`${CLOUD_MESSAGE_API}/proto`,{
+        method: 'POST',
+        body: Buffer.from(downloadReq.pack().getPbData())
+      })
 
-        const arrayBuffer = await res.arrayBuffer();
-        const downloadRes = DownloadRes.parseMsg(new Pdu(Buffer.from(arrayBuffer)));
-        if(downloadRes.err !== ERR.NO_ERROR){
-          return undefined
-        }
-        data = Buffer.from(downloadRes.file!.buf);
-        mimeType= downloadRes.file!.type
-        fullSize = downloadRes.file!.size
-      }else{
+      const arrayBuffer = await res.arrayBuffer();
+      const downloadRes = DownloadRes.parseMsg(new Pdu(Buffer.from(arrayBuffer)));
+      if(downloadRes.err !== ERR.NO_ERROR){
         return undefined
       }
+      data = Buffer.from(downloadRes.file!.buf);
+      mimeType= downloadRes.file!.type
+      fullSize = downloadRes.file!.size
     }catch (e){
       console.error('[DOWNLOAD FAILED]',e,{url,id})
       return undefined
