@@ -1,7 +1,7 @@
 export type ShowModalFromEventPayload = {
-  title:string,
-  type:'singleInput',
-  desc?:string,
+  title?:string,
+  type?:'singleInput'|'multipleInput',
+  placeholder?:string,
   initVal?:string
 }
 export type ShowModalFromEventResult = {

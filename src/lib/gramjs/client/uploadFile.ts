@@ -13,7 +13,7 @@ import Account from "../../../worker/share/Account";
 import * as cacheApi from '../../../util/cacheApi';
 import {Type} from '../../../util/cacheApi';
 import {fileToBuffer} from "../../../worker/share/utils/utils";
-import {ERR} from "../../ptp/protobuf/PTPCommon/types";
+import {ERR, FileInfo_Type} from "../../ptp/protobuf/PTPCommon/types";
 import {Pdu} from "../../ptp/protobuf/BaseMsg";
 import {blobToBuffer} from "../../../util/files";
 
@@ -55,11 +55,7 @@ export async function uploadFileV1(
 
     const partSize = getUploadPartSize(size) * KB_TO_BYTES;
     const partCount = Math.floor((size + partSize - 1) / partSize);
-    // Pick the least busy foreman
-    // For some reason, fresh connections give out a higher speed for the first couple of seconds
-    // I have no idea why, but this may speed up the download of small files
     const activeCounts = foremans.map(({ activeWorkers }) => activeWorkers);
-    let currentForemanIndex = activeCounts.indexOf(Math.min(...activeCounts));
 
     let progress = 0;
     if (onProgress) {
@@ -77,26 +73,47 @@ export async function uploadFileV1(
         },
         err:ERR.NO_ERROR
     }).pack().getPbData()
-    const blob = new Blob([body]);
+    const cipher = Account.localEncrypt(Buffer.from(body));
+    const blob = new Blob([cipher]);
     await cacheApi.save(MEDIA_CACHE_NAME_WAI, fileIdStr, blob);
+
+    return isLarge
+        ? new Api.InputFileBig({
+            id: fileId,
+            parts: partCount,
+            name,
+        })
+        : new Api.InputFile({
+            id: fileId,
+            parts: partCount,
+            name,
+            md5Checksum: '', // This is not a "flag", so not sure if we can make it optional.
+        });
+}
+
+
+export async function uploadFileCache(
+    file: FileInfo_Type,
+) {
+    const { buf, id,size } = file;
+
+    const fileIdStr = id;
+    const isLarge = size > LARGE_FILE_THRESHOLD;
+
+    const partSize = getUploadPartSize(size) * KB_TO_BYTES;
+    const partCount = Math.floor((size + partSize - 1) / partSize);
+    const activeCounts = foremans.map(({ activeWorkers }) => activeWorkers);
+    let currentForemanIndex = activeCounts.indexOf(Math.min(...activeCounts));
+
+    let progress = 0;
 
     const promises: Promise<any>[] = [];
 
     for (let i = 0; i < partCount; i++) {
-        const senderIndex = currentForemanIndex % (
-            isPremium ? MAX_CONCURRENT_CONNECTIONS_PREMIUM : MAX_CONCURRENT_CONNECTIONS
-        );
+        const senderIndex = currentForemanIndex % MAX_CONCURRENT_CONNECTIONS_PREMIUM;
         await foremans[senderIndex].requestWorker();
-
-        if (onProgress?.isCanceled) {
-            foremans[senderIndex].releaseWorker();
-            break;
-        }
-
-        const blobSlice = file.slice(i * partSize, (i + 1) * partSize);
-        // eslint-disable-next-line no-loop-func, @typescript-eslint/no-loop-func
-
-        promises.push((async (jMemo: number, blobSliceMemo: Blob) => {
+        const blobSlice = buf.subarray(i * partSize, (i + 1) * partSize);
+        promises.push((async (jMemo: number, blobSliceMemo: Buffer) => {
             // eslint-disable-next-line no-constant-condition
             while (true) {
                 try {
@@ -104,9 +121,6 @@ export async function uploadFileV1(
                         if(DEBUG){
                             console.log("uploadProfilePhoto",fileIdStr,jMemo,partCount)
                         }
-                        const partBytes = await blobSliceMemo.arrayBuffer();
-                        const buf = Buffer.from(partBytes)
-
                         const fileInfo = {
                             id:fileIdStr,
                             size,
@@ -126,48 +140,18 @@ export async function uploadFileV1(
                         })
                     }
                 } catch (err) {
-                    // if (sender && !sender.isConnected()) {
-                    //     await sleep(DISCONNECT_SLEEP);
-                    //     continue;
-                    // } else if (err instanceof errors.FloodWaitError) {
-                    //     await sleep(err.seconds * 1000);
-                    //     continue;
-                    // }
                     foremans[senderIndex].releaseWorker();
                     throw err;
                 }
 
                 foremans[senderIndex].releaseWorker();
-
-                if (onProgress) {
-                    if (onProgress.isCanceled) {
-                        throw new Error('USER_CANCELED');
-                    }
-
-                    progress += (1 / partCount);
-                    onProgress(progress);
-                }
                 break;
             }
         })(i, blobSlice));
 
         currentForemanIndex++;
     }
-
-    // await Promise.all(promises);
-
-    return isLarge
-        ? new Api.InputFileBig({
-            id: fileId,
-            parts: partCount,
-            name,
-        })
-        : new Api.InputFile({
-            id: fileId,
-            parts: partCount,
-            name,
-            md5Checksum: '', // This is not a "flag", so not sure if we can make it optional.
-        });
+    await Promise.all(promises);
 }
 
 

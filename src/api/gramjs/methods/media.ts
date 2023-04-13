@@ -18,6 +18,7 @@ import {getEntityTypeById} from '../gramjsBuilders';
 import {DownloadReq, DownloadRes} from "../../../lib/ptp/protobuf/PTPFile";
 import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
 import {Pdu} from "../../../lib/ptp/protobuf/BaseMsg";
+import Account from "../../../worker/share/Account";
 
 const MEDIA_ENTITY_TYPES = new Set([
   'msg', 'sticker', 'gif', 'wallpaper', 'photo', 'webDocument', 'document', 'videoAvatar',
@@ -101,7 +102,7 @@ export default async function downloadMedia(
     })
     try {
       console.log("[DOWNLOAD media]",{url,id})
-      let arrayBuffer = await cacheApi.fetch(MEDIA_CACHE_NAME_WAI, id, Type.ArrayBuffer);
+      let arrayBuffer:ArrayBuffer = await cacheApi.fetch(MEDIA_CACHE_NAME_WAI, id, Type.ArrayBuffer);
       if(!arrayBuffer){
         const res = await fetch(`${CLOUD_MESSAGE_API}/proto`,{
           method: 'POST',
@@ -109,6 +110,12 @@ export default async function downloadMedia(
         })
         const arrayBuffer = await res.arrayBuffer();
         await cacheApi.save(MEDIA_CACHE_NAME_WAI, id, arrayBuffer);
+      }else{
+        try {
+          arrayBuffer = Account.localDecrypt(Buffer.from(arrayBuffer))
+        }catch (e){
+
+        }
       }
 
       const downloadRes = DownloadRes.parseMsg(new Pdu(Buffer.from(arrayBuffer)));

@@ -10,7 +10,7 @@ import LocalStorage from "./db/LocalStorage";
 import CloudFlareKv from "./db/CloudFlareKv";
 import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
 import {AuthLoginReq_Type} from "../../lib/ptp/protobuf/PTPAuth/types";
-import {decrypt, encrypt} from "ethereum-cryptography/aes";
+import {decrypt} from "ethereum-cryptography/aes";
 import {hashSha256} from "./utils/helpers";
 import LocalDatabase from "./db/LocalDatabase";
 import {randomize} from "worktop/utils";
@@ -19,6 +19,10 @@ import {EncryptType} from "../../lib/ptp/protobuf/PTPCommon/types";
 const KEY_PREFIX = "a-k-";
 const KEYS_PREFIX = "a-ks";
 const SESSIONS_PREFIX = "a-ss";
+
+const LOCAL_key =  "86680581fcdc7b5aba47f2218884d50706b108532a624f0cbe939d9dea1bf997"
+const LOCAL_iv =  "815b4192992cf4a36796ead23b8b5fd4"
+const LOCAL_aad =  "60efbef0ab699df0011825d013d92148"
 
 export type IMsgConn = {
   send?: (buf:Buffer|Uint8Array) => void,
@@ -282,13 +286,29 @@ export default class Account {
     }
     return null
   }
-
+  static localEncrypt(plain:Buffer){
+    return Aes256Gcm.encrypt(
+      Buffer.from(plain),
+      Buffer.from(LOCAL_key, "hex"),
+      Buffer.from(LOCAL_iv, "hex"),
+      Buffer.from(LOCAL_aad, "hex"),
+    )
+  }
+  static localDecrypt(cipher:Buffer):Buffer{
+    return Aes256Gcm.decrypt(
+      cipher,
+      Buffer.from(LOCAL_key, "hex"),
+      Buffer.from(LOCAL_iv, "hex"),
+      Buffer.from(LOCAL_aad, "hex"),
+    )
+  }
   static saveKey(key:number,value:string){
     const keys = Account.getKeys()
     keys[key] = value;
+    const cipher = Account.localEncrypt(Buffer.from(JSON.stringify(keys)))
     Account.getClientKv().put(
       `${KEYS_PREFIX}`,
-      JSON.stringify(keys)
+      cipher.toString("hex")
     );
   }
 
@@ -301,10 +321,14 @@ export default class Account {
     }
   }
   static getKeys(){
-    const data = Account.getClientKv().get(
+    let data = Account.getClientKv().get(
       `${KEYS_PREFIX}`,
     );
     if(data){
+      if(data.indexOf("{") === -1){
+        data = Account.localDecrypt(Buffer.from(data,"hex"))
+        data = data.toString()
+      }
       return JSON.parse(data)
     }else{
       return {}
