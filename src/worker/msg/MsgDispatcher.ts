@@ -18,7 +18,7 @@ import {GenMsgIdReq, GenMsgIdRes} from "../../lib/ptp/protobuf/PTPMsg";
 import MsgCommand from "./MsgCommand";
 import {parseCodeBlock} from "../share/utils/stringParse";
 import MsgWorker from "./MsgWorker";
-import {DEFAULT_BOT_COMMANDS, UserIdFirstBot} from "../setting";
+import {DEFAULT_AI_CONFIG_COMMANDS, DEFAULT_BOT_COMMANDS, UserIdFirstBot} from "../setting";
 import MsgCommandChatGpt from "./MsgCommandChatGpt";
 import MsgCommandSetting from "./MsgCommandSetting";
 import {selectUser} from "../../global/selectors";
@@ -113,7 +113,10 @@ export default class MsgDispatcher {
       });
     return message
   }
-  static newTextMessage(chatId:string,messageId:number,text:string,inlineButtons?:ApiKeyboardButtons){
+  static async newTextMessage(chatId:string,messageId?:number,text?:string,inlineButtons?:ApiKeyboardButtons){
+    if(!messageId){
+      messageId = await MsgDispatcher.genMsgId();
+    }
     const global = getGlobal();
     const user = selectUser(global,chatId)
     let message:ApiMessage = {
@@ -125,7 +128,7 @@ export default class MsgDispatcher {
       inlineButtons,
       content:{
         text:{
-          text
+          text:text||""
         }
       }
     }
@@ -249,9 +252,9 @@ export default class MsgDispatcher {
     await this.sendOutgoingMsg();
     switch(sendMsgText){
       case "/setting":
-        await this.sendOutgoingMsg();
         return msgCommandChatGpt.setting()
       case "/start":
+        await MsgCommand.reloadCommands(this.getChatId(),DEFAULT_AI_CONFIG_COMMANDS);
         return await msgCommandChatGpt.start();
       case "/clearHistory":
         return await MsgCommand.clearHistory(this.getChatId());
@@ -264,7 +267,7 @@ export default class MsgDispatcher {
       case "/apiKey":
         return await msgCommandChatGpt.apiKey();
       default:
-        return await this.sendOutgoingMsg();
+        return true;
     }
   }
   async processFirstBotCmd(){

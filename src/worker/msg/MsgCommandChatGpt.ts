@@ -11,6 +11,8 @@ import {StopChatStreamReq} from "../../lib/ptp/protobuf/PTPOther";
 import Account from "../share/Account";
 import MsgCommand from "./MsgCommand";
 import {showModalFromEvent} from "../share/utils/modal";
+import {PbChatGptConfig} from "../../lib/ptp/protobuf/PTPCommon";
+import {PbChatGpBotConfig_Type, PbChatGptConfig_Type} from "../../lib/ptp/protobuf/PTPCommon/types";
 
 export default class MsgCommandChatGpt{
   private chatId: string;
@@ -56,6 +58,7 @@ export default class MsgCommandChatGpt{
     const account = Account.getCurrentAccount();
     const isEnableSync = account?.getSession();
     const messageId = await MsgDispatcher.genMsgId();
+    const text = `设置面板`
     return MsgDispatcher.newMessage(chatId,messageId,{
       chatId,
       id:messageId,
@@ -64,7 +67,7 @@ export default class MsgCommandChatGpt{
       date:currentTs(),
       content:{
         text:{
-          text:"设置面板"
+          text
         }
       },
       inlineButtons:MsgCommandChatGpt.getInlineButtons(chatId,!!isEnableSync),
@@ -81,7 +84,10 @@ export default class MsgCommandChatGpt{
       date:currentTs(),
       content:{
         text:{
-          text:"welcome"
+          text:`你可以通过发送以下命令来控制我：
+
+/setting - 设置面板
+`
         }
       },
     }
@@ -91,7 +97,8 @@ export default class MsgCommandChatGpt{
   async initPrompt(){
     const messageId = await MsgDispatcher.genMsgId();
     const {chatId} = this
-    const init_system_content = this.botInfo.aiBot?.chatGptConfig?.init_system_content || DEFAULT_PROMPT
+    const init_system_content = MsgCommandChatGpt.getChatGptConfig(getGlobal(),chatId,"init_system_content")
+
     const message:ApiMessage = {
       chatId,
       id:messageId,
@@ -116,33 +123,53 @@ export default class MsgCommandChatGpt{
     MsgDispatcher.newMessage(chatId,messageId,message)
     return message
   }
-  async apiKey(){
-    const messageId = await MsgDispatcher.genMsgId();
-    const {chatId} = this
-    const api_key = this.botInfo.aiBot?.chatGptConfig?.api_key
-    const message:ApiMessage = {
-      chatId,
-      id:messageId,
-      senderId:chatId,
-      isOutgoing:false,
-      date:currentTs(),
-      content:{
-        text:{
-          text:`当前 /apiKey:\n ${api_key?api_key:"未设置"}`
-        }
-      },
-      inlineButtons:[
-        [
-          {
-            text:"点击修改",
-            type:"callback",
-            data:`${chatId}/apiKey`
-          }
-        ]
-      ]
+  static getChatGptConfig(global:GlobalState,chatId:string,key:'api_key'|'init_system_content'){
+    const user = selectUser(global,chatId);
+    if(
+      user?.fullInfo &&
+      user?.fullInfo.botInfo &&
+      user?.fullInfo.botInfo.aiBot &&
+      user?.fullInfo.botInfo.aiBot.chatGptConfig &&
+      user?.fullInfo.botInfo.aiBot.chatGptConfig[key]
+    ){
+      return user?.fullInfo.botInfo.aiBot.chatGptConfig[key]
+    }else{
+      return ""
     }
-    MsgDispatcher.newMessage(chatId,messageId,message)
-    return message
+  }
+  static changeChatGptConfig(botId:string,chatGptConfig:Partial<PbChatGpBotConfig_Type>){
+    let global = getGlobal();
+    const user = selectUser(global,botId);
+    global = updateUser(global,botId,{
+      ...user,
+      fullInfo:{
+        ...user?.fullInfo,
+        botInfo:{
+          ...user?.fullInfo?.botInfo!,
+          aiBot:{
+            ...user?.fullInfo?.botInfo?.aiBot,
+            chatGptConfig:{
+              ...user?.fullInfo?.botInfo?.aiBot?.chatGptConfig,
+              ...chatGptConfig
+            }
+          }
+        }
+      }
+    })
+    setGlobal(global)
+  }
+  async apiKey(){
+    const {chatId} = this
+    const api_key = MsgCommandChatGpt.getChatGptConfig(getGlobal(),chatId,"api_key")
+    const {value} = await showModalFromEvent({
+      initVal:api_key
+    })
+    if(value && value!== api_key){
+      localStorage.setItem("cg-key",value)
+      MsgCommandChatGpt.changeChatGptConfig(chatId,{api_key:value})
+      return await MsgDispatcher.newTextMessage(chatId,undefined,'修改成功')
+    }
+    return true
   }
   async aiModel(){
     const messageId = await MsgDispatcher.genMsgId();
@@ -213,59 +240,42 @@ export default class MsgCommandChatGpt{
         }).pack())
         break
       case `${chatId}/init_system_content`:
+        global = getGlobal();
+        let init_system_content = MsgCommandChatGpt.getChatGptConfig(global,chatId,"init_system_content")
         const {value} = await showModalFromEvent({
           type:"singleInput",
           title:"请输入 上下文记忆",
-          desc:"每次请求都会带入 上下文记忆",
-          initVal:""
+          placeholder:"每次请求都会带入 上下文记忆",
+          initVal:init_system_content
         });
-        const init_system_content = value
-        if(init_system_content){
-            global = getGlobal();
-            const user = selectUser(global,chatId);
-            global = updateUser(global,chatId,{
-              ...user,
-              fullInfo:{
-                ...user?.fullInfo,
-                botInfo:{
-                  ...user?.fullInfo?.botInfo!,
-                  aiBot:{
-                    ...user?.fullInfo?.botInfo?.aiBot,
-                    chatGptConfig:{
-                      ...user?.fullInfo?.botInfo?.aiBot?.chatGptConfig,
-                      init_system_content
-                    }
-                  }
-                }
-              }
-            })
-            setGlobal(global)
-
-            const message1 = {
-              content:{
-                text:{
-                  text:`${init_system_content?init_system_content:"上下文 prompt 未设置"}`
-                }
-              },
-              inlineButtons:[
-                [
-                  {
-                    text:"点击修改",
-                    type:"callback",
-                    data:`${chatId}/init_system_content`
-                  }
-                ]
-              ]
+        init_system_content = value
+        MsgCommandChatGpt.changeChatGptConfig(chatId,{
+          init_system_content:value
+        })
+        const message1 = {
+          content:{
+            text:{
+              text:`${init_system_content?init_system_content:"未设置"}`
             }
-            // @ts-ignore
-            MsgDispatcher.newMessage(chatId,messageId,message1)
+          },
+          inlineButtons:[
+            [
+              {
+                text:"点击修改",
+                type:"callback",
+                data:`${chatId}/init_system_content`
+              }
+            ]
+          ]
         }
+        // @ts-ignore
+        MsgDispatcher.newMessage(chatId,messageId,message1)
         break;
       case `${chatId}/apiKey`:
         const res = await showModalFromEvent({
           type:"singleInput",
           title:"请输入 ApiKey",
-          desc:""
+          placeholder:""
         });
         let api_key = res.value
         if(api_key){

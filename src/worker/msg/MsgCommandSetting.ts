@@ -3,11 +3,11 @@ import {selectChatMessage, selectChatMessages, selectUser} from "../../global/se
 import {addChats, addUsers, updateChatListIds, updateUser} from "../../global/reducers";
 import {UserIdFirstBot} from "../setting";
 import {getActions, getGlobal, setGlobal} from "../../global";
-import {ApiKeyboardButtons, ApiUser} from "../../api/types";
+import {ApiKeyboardButtons, ApiMessage, ApiUser} from "../../api/types";
 import {callApiWithPdu} from "./utils";
 import {currentTs} from "../share/utils/utils";
 import {
-  MessageStoreRow_Type,
+  MessageStoreRow_Type, PbMsg_Type,
   QrCodeType,
   UserStoreData_Type,
   UserStoreRow_Type
@@ -32,9 +32,10 @@ let currentSyncBotContext:string|undefined;
 export default class MsgCommandSetting{
   static async start(chatId:string){
     const messageId = await MsgDispatcher.genMsgId();
-    const text = `
-/setting
-    `
+    const text = `你可以通过发送以下命令来控制我：
+
+/setting - 设置面板
+/lab - 实验室`
     return MsgDispatcher.newMessage(chatId,messageId,{
       chatId,
       id:messageId,
@@ -446,9 +447,11 @@ export default class MsgCommandSetting{
       if(messageById){
         for (let i = 0; i < Object.keys(messageById).length; i++) {
           const msgId = parseInt(Object.keys(messageById)[i])
+          // @ts-ignore
+          const message:PbMsg_Type = messageById[msgId]
           messages.push({
             time:currentTs(),
-            message:messageById[msgId],
+            message,
             messageId:msgId,
           })
         }

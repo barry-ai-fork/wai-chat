@@ -1,5 +1,5 @@
 import {ApiAttachment, ApiBotInfo, ApiChat, ApiMediaFormat, ApiMessage, ApiUpdate, OnApiUpdate} from "../../api/types";
-import {LOCAL_MESSAGE_MIN_ID} from "../../config";
+import {LOCAL_MESSAGE_MIN_ID, MEDIA_CACHE_NAME_WAI} from "../../config";
 import {DownloadMsgRes, GenMsgIdReq, GenMsgIdRes, UploadMsgReq} from "../../lib/ptp/protobuf/PTPMsg";
 import {getNextLocalMessageId} from "../../api/gramjs/apiBuilders/messages";
 import {
@@ -15,13 +15,18 @@ import {
   writeInt32
 } from "../../lib/ptp/protobuf/BaseMsg";
 import {PbMsg, PbUser} from "../../lib/ptp/protobuf/PTPCommon";
-import {account} from "../../api/gramjs/methods/client";
+import {account, sendWithCallback} from "../../api/gramjs/methods/client";
 import {DownloadUserRes, UploadUserReq} from "../../lib/ptp/protobuf/PTPUser";
 import {sleep} from "../../lib/gramjs/Helpers";
 import {Api as GramJs} from "../../lib/gramjs";
 import {blobToDataUri, fetchBlob} from "../../util/files";
 import {parseCodeBlock, parseEntities} from "../share/utils/stringParse";
 import MsgChatGptWorker from "./MsgChatGpWorker";
+import {Type} from "../../util/cacheApi";
+import * as cacheApi from '../../util/cacheApi';
+import {DownloadRes} from "../../lib/ptp/protobuf/PTPFile";
+import {ERR} from "../../lib/ptp/protobuf/PTPCommon/types";
+import {uploadFileCache} from "../../lib/gramjs/client/uploadFile";
 
 let messageIds:number[] = [];
 
@@ -138,6 +143,31 @@ export default class MsgWorker {
     const {messages,...res} = UploadMsgReq.parseMsg(pdu)
 
     if(messages){
+
+      if(messages.length === 1){
+        const {photo,voice,audio,document} = messages[0].message!.content;
+        let id;
+        if(photo && photo.id){
+          id = photo.id;
+        }else if(voice && voice.id){
+          id = voice.id;
+        }else if(audio && audio.id){
+          id = audio.id;
+        }else if(document && document.id){
+          id = document.id;
+        }
+        debugger
+        if(id){
+          let arrayBuffer = await cacheApi.fetch(MEDIA_CACHE_NAME_WAI, id, Type.ArrayBuffer);
+
+          if(arrayBuffer){
+            // @ts-ignore
+            const {file} = DownloadRes.parseMsg(new Pdu(Buffer.from(arrayBuffer)));
+            await uploadFileCache(file!)
+          }
+        }
+
+      }
       for (let i = 0; i < messages?.length; i++) {
         const {time,message} = messages[i]
         let buf = Buffer.from(new PbMsg(message!).pack().getPbData())

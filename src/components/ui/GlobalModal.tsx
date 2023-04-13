@@ -7,6 +7,7 @@ import {ShowModalFromEventPayload} from "../../worker/share/utils/modal";
 import Button from "./Button";
 import TextArea from "./TextArea";
 import {ChangeEvent} from "react";
+import InputText from "./InputText";
 
 type OwnProps = {};
 
@@ -33,7 +34,11 @@ const GlobalModal: FC<OwnProps> = ({}: OwnProps) => {
       if (!open) {
         //@ts-ignore
         const payload = e.detail.payload;
-        setPayload(payload)
+        setPayload({
+          type:"singleInput",
+          title:"请输入",
+          ...payload,
+        })
         //@ts-ignore
         onConfirm = e.detail.callback;
         setOpen(true);
@@ -61,15 +66,27 @@ const GlobalModal: FC<OwnProps> = ({}: OwnProps) => {
       className=""
     >
       {
-        payload && payload.type === 'singleInput' &&
+        payload && (payload.type === 'multipleInput' || payload.type === 'singleInput' )&&
         <div className="settings-content password-form custom-scroll background">
           <div className="pt-4 pb-4 mb-2 background">
-            <TextArea
-              value={value}
-              onChange={handleChange}
-              label={payload.desc}
-              disabled={false}
-            />
+            {
+              payload.type === 'multipleInput' ?
+                <InputText
+                  type={"text"}
+                  label={payload.placeholder||""}
+                  onChange={(e) => {
+                    setValue(e.target.value)
+                  }}
+                  value={value}
+                  autoComplete="given-name"
+                />:
+                <TextArea
+                  value={value}
+                  onChange={handleChange}
+                  label={payload.placeholder||""}
+                  disabled={false}
+                />
+            }
           </div>
           <Button type="button" onClick={handleSubmit} ripple={true} isLoading={false} disabled={false}>
             下一步

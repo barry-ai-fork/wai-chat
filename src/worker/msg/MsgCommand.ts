@@ -6,7 +6,7 @@ import {ApiBotCommand} from "../../api/types";
 import {callApiWithPdu} from "./utils";
 import {currentTs} from "../share/utils/utils";
 
-import {MessageStoreRow_Type, UserStoreRow_Type} from "../../lib/ptp/protobuf/PTPCommon/types";
+import {MessageStoreRow_Type, PbMsg_Type, UserStoreRow_Type} from "../../lib/ptp/protobuf/PTPCommon/types";
 import {UploadMsgReq} from "../../lib/ptp/protobuf/PTPMsg";
 import {DownloadUserReq, UploadUserReq} from "../../lib/ptp/protobuf/PTPUser";
 import Mnemonic from "../../lib/ptp/wallet/Mnemonic";
@@ -19,6 +19,7 @@ import MsgCommandSetting from "./MsgCommandSetting";
 import {ControllerPool} from "../../lib/ptp/functions/requests";
 import MsgCommandChatGpt from "./MsgCommandChatGpt";
 import MsgCommandChatLab from "./MsgCommandChatLab";
+import {PbMsg} from "../../lib/ptp/protobuf/PTPCommon";
 
 export default class MsgCommand {
   private msgDispatcher: MsgDispatcher;
@@ -50,14 +51,10 @@ export default class MsgCommand {
       chatId,
       ids
     })
-    setTimeout(()=>{
-      global = getGlobal();
-      global = updateChat(global,chatId,{
-        ...chat,
-        unreadCount:0,
-        lastMessage:MsgDispatcher.buildMsgHistoryClear(chatId)
-      })
-      setGlobal(global)
+    setTimeout(async ()=>{
+      const lastMessage = MsgDispatcher.buildMsgHistoryClear(chatId)
+      lastMessage.id = await MsgDispatcher.genMsgId()
+      MsgDispatcher.newMessage(chatId,lastMessage.id,lastMessage)
     },500)
 
     return true;
@@ -157,11 +154,12 @@ export default class MsgCommand {
         break
       }
       const id = ids[i]
-
+      //@ts-ignore
+      const message:PbMsg_Type = selectChatMessage(global,chatId,id);
       messages.push({
         time:currentTs(),
         messageId:id,
-        message:selectChatMessage(global,chatId,id)
+        message
       })
     }
     const res = await callApiWithPdu(new UploadMsgReq({
@@ -198,8 +196,7 @@ export default class MsgCommand {
       setGlobal(global)
       global = getGlobal()
       user = selectUser(global,chatId)
-
-      MsgDispatcher.newTextMessage(chatId,await MsgDispatcher.genMsgId(),"重载成功")
+      // await MsgDispatcher.newTextMessage(chatId,await MsgDispatcher.genMsgId(),"重载成功")
       return true;
     }
   }
