@@ -17,6 +17,7 @@ import AvatarEditable from '../../ui/AvatarEditable';
 import Button from '../../ui/Button';
 import ListItem from '../../ui/ListItem';
 import PrivateChatInfo from '../../common/PrivateChatInfo';
+import TextArea from "../../ui/TextArea";
 
 export type OwnProps = {
   isChannel?: boolean;
@@ -106,7 +107,7 @@ const NewChatStep2: FC<OwnProps & StateProps > = ({
     }
     createChat({
       title,
-      about
+      promptInit:about
     });
     setTimeout(() => {
       onReset();
@@ -153,12 +154,12 @@ const NewChatStep2: FC<OwnProps & StateProps > = ({
         />
         {isChannel && (
           <>
-            <InputText
+            <TextArea
               value={about}
               onChange={handleDescriptionChange}
-              label={"简介"}
+              label={"初始化 prompt"}
             />
-            <p className="note">{"为机器人添加简介"}</p>
+            <p className="note">{"每次请求都会带入该prompt"}</p>
           </>
         )}
 

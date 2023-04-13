@@ -109,7 +109,7 @@ export default class MsgCommandSetting{
       [
         {
           data:`${chatId}/setting/disableSync`,
-          text:"退出登录",
+          text:"单机模式",
           type:"callback"
         },
         {
@@ -128,7 +128,7 @@ export default class MsgCommandSetting{
       [
         {
           data:`${chatId}/setting/enableSync`,
-          text:"登录",
+          text:"云端模式",
           type:"callback"
         },
         {
@@ -273,8 +273,9 @@ export default class MsgCommandSetting{
           MsgDispatcher.updateMessage(chatId,messageId,{
             inlineButtons:[],
           })
+        }else{
+          await MsgCommandSetting.enableSync(global,chatId,messageId,password)
         }
-        await MsgCommandSetting.enableSync(global,chatId,messageId,password)
         break
     }
   }

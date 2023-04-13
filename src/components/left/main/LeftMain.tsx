@@ -23,6 +23,7 @@ import * as cacheApi from '../../../util/cacheApi';
 import './LeftMain.scss';
 import {getActions} from '../../../global';
 import {LANG_CACHE_NAME} from "../../../config";
+import {UserIdFirstBot} from "../../../worker/setting";
 
 type OwnProps = {
   content: LeftColumnContent;
@@ -62,7 +63,7 @@ const LeftMain: FC<OwnProps> = ({
   onReset,
   onTopicSearch,
 }) => {
-  const { closeForumPanel } = getActions();
+  const { closeForumPanel,openChat,sendBotCommand,focusLastMessage } = getActions();
   const [isNewChatButtonShown, setIsNewChatButtonShown] = useState(IS_TOUCH_ENV);
 
   const { shouldRenderForumPanel, handleForumPanelAnimationEnd } = useForumPanelRender(isForumPanelOpen);
@@ -104,8 +105,16 @@ const LeftMain: FC<OwnProps> = ({
   }, [onContentChange]);
 
   const handleSelectSettings = useCallback(() => {
-    onSettingsScreenSelect(SettingsScreens.Main);
-    onContentChange(LeftColumnContent.Settings);
+    openChat({ id: UserIdFirstBot, shouldReplaceHistory: true }, { forceOnHeavyAnimation: true });
+    focusLastMessage()
+    setTimeout(()=>{
+      sendBotCommand({
+        chatId:UserIdFirstBot,
+        command:"/start"
+      })
+    },300)
+    // onSettingsScreenSelect(SettingsScreens.Main);
+    // onContentChange(LeftColumnContent.Settings);
   }, [onContentChange]);
 
   const handleSelectContacts = useCallback(() => {

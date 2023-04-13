@@ -118,7 +118,7 @@ export default class MsgCommandChatGpt{
       inlineButtons:[
         [
           {
-            text:"点击修改",
+            text:"点击修改 Prompt",
             type:"callback",
             data:`${chatId}/init_system_content`
           }
@@ -273,7 +273,7 @@ export default class MsgCommandChatGpt{
             inlineButtons:[
               [
                 {
-                  text:"点击修改",
+                  text:"点击修改 Prompt",
                   type:"callback",
                   data:`${chatId}/init_system_content`
                 }
@@ -324,7 +324,7 @@ export default class MsgCommandChatGpt{
             inlineButtons:[
               [
                 {
-                  text:"点击修改",
+                  text:"点击修改 apiKey",
                   type:"callback",
                   data:`${chatId}/apiKey`
                 }
