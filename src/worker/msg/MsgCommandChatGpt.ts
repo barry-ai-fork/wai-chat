@@ -252,7 +252,7 @@ export default class MsgCommandChatGpt{
                   {
                     text:"点击修改",
                     type:"callback",
-                    data:`${chatId}/apiKey`
+                    data:`${chatId}/init_system_content`
                   }
                 ]
               ]
