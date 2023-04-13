@@ -151,33 +151,30 @@ const Photo: FC<OwnProps> = ({
     }
 
     if (isSpoilerShown) {
-      if(message.chatId === UserIdFirstBot){
-        const data = await fetchBlob(fullMediaData);
-        const buf = await blobToBuffer(data);
-        const bb = wrapByteBuffer(buf);
-        const encryptTypeLne = readInt16(bb)
-        const encryptType = readBytes(bb,encryptTypeLne)
-        if(encryptType.toString() === "EN"){
-          const typeLen = readInt16(bb)
-          const type = readBytes(bb,typeLen);
-          if(type.toString().indexOf("image/") === 0){
-            const hintLen = readInt16(bb)
-            let hint
-            if(hintLen){
-              hint = readBytes(bb,hintLen);
-              hint = hint.toString();
-            }
-            const {password} = await getPasswordFromEvent(hint,true,'messageEncryptPassword');
-            const body = buf.subarray(2 * 3 + encryptTypeLne + typeLen + hintLen)
-            const decryptData = await Account.getCurrentAccount()?.decryptData(body,password);
-            const uri = await blobToDataUri(new Blob([decryptData],{type:"image/jpeg"}))
-            setDecryptUrl(uri);
-            photosMap[getMessageMediaHash(message, 'full')!] = uri;
-            photosMap[getMessageMediaHash(message, 'preview')!] = uri;
+      const data = await fetchBlob(fullMediaData);
+      const buf = await blobToBuffer(data);
+      const bb = wrapByteBuffer(buf);
+      const encryptTypeLne = readInt16(bb)
+      const encryptType = readBytes(bb,encryptTypeLne)
+      if(encryptType.toString() === "EN"){
+        const typeLen = readInt16(bb)
+        const type = readBytes(bb,typeLen);
+        if(type.toString().indexOf("image/") === 0){
+          const hintLen = readInt16(bb)
+          let hint
+          if(hintLen){
+            hint = readBytes(bb,hintLen);
+            hint = hint.toString();
           }
+          const {password} = await getPasswordFromEvent(hint,true,'messageEncryptPassword');
+          const body = buf.subarray(2 * 3 + encryptTypeLne + typeLen + hintLen)
+          const decryptData = await Account.getCurrentAccount()?.decryptData(body,password);
+          const uri = await blobToDataUri(new Blob([decryptData],{type:"image/jpeg"}))
+          setDecryptUrl(uri);
+          photosMap[getMessageMediaHash(message, 'full')!] = uri;
+          photosMap[getMessageMediaHash(message, 'preview')!] = uri;
         }
       }
-
       hideSpoiler();
       return;
     }

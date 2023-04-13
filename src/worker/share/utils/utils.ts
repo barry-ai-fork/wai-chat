@@ -239,3 +239,41 @@ export function currentTs(){
 export function currentTs1000(){
   return Math.ceil(+(new Date))
 }
+
+export async function fileToArrayBuffer(file:File) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve(reader.result);
+    };
+    reader.onerror = () => {
+      reject(reader.error);
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+export async function fileToBuffer(file:File) {
+  return new Promise<Buffer>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      // @ts-ignore
+      const buffer = Buffer.from(reader.result);
+      resolve(buffer);
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function blobToBuffer(blob:Blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsArrayBuffer(blob);
+    reader.onload = () => {
+      // @ts-ignore
+      const buffer = Buffer.from(reader.result);
+      resolve(buffer);
+    };
+    reader.onerror = reject;
+  });
+}

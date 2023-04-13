@@ -1,4 +1,4 @@
-import {ApiBotInfo, ApiKeyboardButton, ApiKeyboardButtons, ApiMessage} from "../../api/types";
+import {ApiBotInfo, ApiKeyboardButton, ApiKeyboardButtons, ApiMessage, ApiMessageEntityTypes} from "../../api/types";
 import {PbChatGpBotConfig_Type} from "../../lib/ptp/protobuf/PTPCommon/types";
 import {DEBUG} from "../../config";
 import {Message} from "../../../functions/api/types";
@@ -37,6 +37,9 @@ export default class MsgChatGptWorker{
   }
   getMsgText(){
     return this.msgSend.content.text?.text!
+  }
+  isMsgCipher(){
+    return this.msgSend.content.text?.entities?.some((e) => e.type === ApiMessageEntityTypes.Spoiler);
   }
   prepareSendMessages(){
     const text = this.getMsgText();
@@ -113,8 +116,10 @@ export default class MsgChatGptWorker{
     if(!apiKey){
       return await this.replyNotApiKey();
     }
+    if(this.isMsgCipher()){
+      return
+    }
     await this.replyThinking()
-    let i = 0;
     requestChatStream(this.prepareSendMessages(), {
       apiKey:this.getApiKey()!,
       modelConfig: this.setting?.config || ChatModelConfig,
@@ -123,18 +128,15 @@ export default class MsgChatGptWorker{
           this.updateReply(content,[],done)
           ControllerPool.remove(parseInt(this.getChatId()), this.replyMessage?.id!);
         }else{
-          i++;
-          if(i%5 === 0){
-            this.updateReply(content,[
-              [
-                {
-                  text:"停止输出",
-                  data:`${this.getChatId()}/requestChatStream/stop`,
-                  type:"callback"
-                }
-              ]
-            ],done)
-          }
+          this.updateReply(content,[
+            [
+              {
+                text:"停止输出",
+                data:`${this.getChatId()}/requestChatStream/stop`,
+                type:"callback"
+              }
+            ]
+          ],done)
         }
       },
       onAbort:(error) =>{

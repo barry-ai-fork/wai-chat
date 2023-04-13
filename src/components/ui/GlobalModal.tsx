@@ -3,9 +3,10 @@ import React, {memo, useCallback, useEffect, useState,} from '../../lib/teact/te
 
 import useLang from '../../hooks/useLang';
 import Modal from './Modal';
-import InputText from "./InputText";
 import {ShowModalFromEventPayload} from "../../worker/share/utils/modal";
 import Button from "./Button";
+import TextArea from "./TextArea";
+import {ChangeEvent} from "react";
 
 type OwnProps = {};
 
@@ -15,6 +16,9 @@ const GlobalModal: FC<OwnProps> = ({}: OwnProps) => {
   const [payload, setPayload] = useState<ShowModalFromEventPayload|undefined>(undefined);
   const [open, setOpen] = useState<boolean>(false);
   const [value, setValue] = useState<string>("");
+  const handleChange = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
+    setValue(e.target.value);
+  }, []);
 
   const handleSubmit = useCallback((password) => {
     if (onConfirm) {
@@ -59,16 +63,12 @@ const GlobalModal: FC<OwnProps> = ({}: OwnProps) => {
       {
         payload && payload.type === 'singleInput' &&
         <div className="settings-content password-form custom-scroll background">
-          <div className="pt-0 pb-0 mb-2 background">
-            <InputText
-              id="pwd-hint"
-              type={"text"}
-              label={payload.desc}
-              onChange={(e) => {
-                setValue(e.target.value)
-              }}
+          <div className="pt-4 pb-4 mb-2 background">
+            <TextArea
               value={value}
-              autoComplete="given-name"
+              onChange={handleChange}
+              label={payload.desc}
+              disabled={false}
             />
           </div>
           <Button type="button" onClick={handleSubmit} ripple={true} isLoading={false} disabled={false}>

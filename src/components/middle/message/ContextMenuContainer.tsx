@@ -150,6 +150,7 @@ const ContextMenuContainer: FC<OwnProps & StateProps> = ({
   const {
     openChat,
     setReplyingToId,
+    onSpeak,
     setEditingId,
     pinMessage,
     openForwardMenu,
@@ -266,6 +267,11 @@ const ContextMenuContainer: FC<OwnProps & StateProps> = ({
     setIsPinModalOpen(false);
     onClose();
   }, [onClose]);
+
+  const handleSpeak = useCallback(() => {
+    onSpeak({ messageId: message.id });
+    closeMenu();
+  },  [message.id, closeMenu]);
 
   const handleReply = useCallback(() => {
     setReplyingToId({ messageId: message.id });
@@ -485,6 +491,7 @@ const ContextMenuContainer: FC<OwnProps & StateProps> = ({
         noReplies={noReplies}
         onOpenThread={handleOpenThread}
         onReply={handleReply}
+        onSpeak={handleSpeak}
         onEdit={handleEdit}
         onPin={handlePin}
         onUnpin={handleUnpin}

@@ -6,10 +6,16 @@ import {generateRandomBytes, readBigIntFromBuffer, sleep} from '../Helpers';
 import {getUploadPartSize} from '../Utils';
 import errors from '../errors';
 import {Foreman} from '../../../util/foreman';
-import {UploadReq} from "../../ptp/protobuf/PTPFile";
-import {CLOUD_MESSAGE_API, DEBUG} from "../../../config";
+import {DownloadRes, UploadReq} from "../../ptp/protobuf/PTPFile";
+import {CLOUD_MESSAGE_API, DEBUG, MEDIA_CACHE_NAME_WAI} from "../../../config";
 import localDb from "../../../api/gramjs/localDb";
 import Account from "../../../worker/share/Account";
+import * as cacheApi from '../../../util/cacheApi';
+import {Type} from '../../../util/cacheApi';
+import {fileToBuffer} from "../../../worker/share/utils/utils";
+import {ERR} from "../../ptp/protobuf/PTPCommon/types";
+import {Pdu} from "../../ptp/protobuf/BaseMsg";
+import {blobToBuffer} from "../../../util/files";
 
 interface OnProgress {
     isCanceled?: boolean;
@@ -59,6 +65,20 @@ export async function uploadFileV1(
     if (onProgress) {
         onProgress(progress);
     }
+    const buf = await fileToBuffer(file)
+    const body = new DownloadRes({
+        file:{
+            id:fileIdStr,
+            part:0,
+            part_total:1,
+            buf,
+            size,
+            type:file.type
+        },
+        err:ERR.NO_ERROR
+    }).pack().getPbData()
+    const blob = new Blob([body]);
+    await cacheApi.save(MEDIA_CACHE_NAME_WAI, fileIdStr, blob);
 
     const promises: Promise<any>[] = [];
 
@@ -134,7 +154,7 @@ export async function uploadFileV1(
         currentForemanIndex++;
     }
 
-    await Promise.all(promises);
+    // await Promise.all(promises);
 
     return isLarge
         ? new Api.InputFileBig({

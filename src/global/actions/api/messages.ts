@@ -242,7 +242,6 @@ addActionHandler('sendMessage', async (global, actions, payload): ActionReturnTy
   payload = omit(payload, ['tabId']);
   const {currentUserId} = getGlobal();
 
-
   if(payload.attachments){
     const hasMessageEntitySpoiler = payload.attachments.find((a:ApiAttachment)=>a.shouldSendAsSpoiler);
     if(hasMessageEntitySpoiler){

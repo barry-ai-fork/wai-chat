@@ -244,7 +244,7 @@ export default class MsgCommandChatGpt{
             const message1 = {
               content:{
                 text:{
-                  text:`当前 上下文 prompt:\n ${init_system_content?init_system_content:"未设置"}`
+                  text:`${init_system_content?init_system_content:"上下文 prompt 未设置"}`
                 }
               },
               inlineButtons:[
@@ -267,7 +267,7 @@ export default class MsgCommandChatGpt{
           title:"请输入 ApiKey",
           desc:""
         });
-        const api_key = res.value
+        let api_key = res.value
         if(api_key){
           global = getGlobal();
           const user = selectUser(global,chatId);
@@ -288,10 +288,13 @@ export default class MsgCommandChatGpt{
             }
           })
           setGlobal(global)
+          if(api_key){
+            api_key = "```\n"+api_key+"```";
+          }
           const message2 = {
             content:{
               text:{
-                text:`当前 /apiKey:\n ${api_key?api_key:"未设置"}`
+                text:`当前 /apiKey:\n ${api_key? api_key:"未设置"}`
               }
             },
             inlineButtons:[

@@ -515,7 +515,7 @@ function sendGroupedMedia(
           }
         }
       }
-      // debugger
+
       await onProgress(2, localMessage)
     }
     // await invokeRequest(new GramJs.messages.SendMultiMedia({

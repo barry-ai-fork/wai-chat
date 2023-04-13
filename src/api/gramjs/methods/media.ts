@@ -4,20 +4,20 @@ import type {ApiOnProgress, ApiParsedMedia} from '../../types';
 import {ApiMediaFormat,} from '../../types';
 
 import {
-  CLOUD_MESSAGE_API, CLOUD_MESSAGE_ENABLE,
+  CLOUD_MESSAGE_API,
   DOWNLOAD_WORKERS,
   MEDIA_CACHE_DISABLED,
-  MEDIA_CACHE_MAX_BYTES,
   MEDIA_CACHE_NAME,
-  MEDIA_CACHE_NAME_AVATARS, MEDIA_CACHE_NAME_WAI,
+  MEDIA_CACHE_NAME_AVATARS,
+  MEDIA_CACHE_NAME_WAI,
 } from '../../../config';
 import localDb from '../localDb';
 import * as cacheApi from '../../../util/cacheApi';
+import {Type} from '../../../util/cacheApi';
 import {getEntityTypeById} from '../gramjsBuilders';
 import {DownloadReq, DownloadRes} from "../../../lib/ptp/protobuf/PTPFile";
 import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
 import {Pdu} from "../../../lib/ptp/protobuf/BaseMsg";
-import {Type} from "../../../util/cacheApi";
 
 const MEDIA_ENTITY_TYPES = new Set([
   'msg', 'sticker', 'gif', 'wallpaper', 'photo', 'webDocument', 'document', 'videoAvatar',

@@ -217,7 +217,7 @@ function renderSummary(
   }
 
   const isSpoiler = getMessageIsSpoiler(message);
-  if(isSpoiler && message.chatId === UserIdFirstBot){
+  if(isSpoiler){
     return messageSummary
   }
 

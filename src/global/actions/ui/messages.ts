@@ -77,6 +77,22 @@ addActionHandler('setScrollOffset', (global, actions, payload): ActionReturnType
   return replaceTabThreadParam(global, chatId, threadId, 'scrollOffset', scrollOffset, tabId);
 });
 
+addActionHandler('onSpeak', (global, actions, payload): ActionReturnType => {
+  const { messageId, tabId = getCurrentTabId() } = payload;
+  const utterance = new SpeechSynthesisUtterance();
+  var selectedText = "";
+  if (window.getSelection) {
+    selectedText = window.getSelection().toString();
+  } else if (document.selection && document.selection.type != "Control") {
+    selectedText = document.selection.createRange().text;
+  }
+  if(selectedText){
+    utterance.lang = 'zh-CN';
+    utterance.text = selectedText
+    speechSynthesis.speak(utterance)
+  }
+})
+
 addActionHandler('setReplyingToId', (global, actions, payload): ActionReturnType => {
   const { messageId, tabId = getCurrentTabId() } = payload;
   const currentMessageList = selectCurrentMessageList(global, tabId);

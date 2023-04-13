@@ -1565,6 +1565,9 @@ export interface ActionPayloads {
   } & WithTabId;
 
   focusLastMessage: WithTabId | undefined;
+  onSpeak: {
+    messageId?: number;
+  } & WithTabId;
   setReplyingToId: {
     messageId?: number;
   } & WithTabId;

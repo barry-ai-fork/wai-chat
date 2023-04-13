@@ -77,6 +77,7 @@ type OwnProps = {
   hasCustomEmoji?: boolean;
   customEmojiSets?: ApiStickerSet[];
   onReply?: () => void;
+  onSpeak?: () => void;
   onOpenThread?: VoidFunction;
   onEdit?: () => void;
   onPin?: () => void;
@@ -160,6 +161,7 @@ const MessageContextMenu: FC<OwnProps> = ({
   onForward,
   onDelete,
   onReport,
+  onSpeak,
   onFaveSticker,
   onUnfaveSticker,
   onSelect,
@@ -329,6 +331,7 @@ const MessageContextMenu: FC<OwnProps> = ({
         {/*  <MenuItem icon="web" onClick={onSelectLanguage}>{lang('lng_settings_change_lang')}</MenuItem>*/}
         {/*)}*/}
         <MenuItem icon="up" onClick={handleSaveMsgToCloud}>{lang('保存到云端')}</MenuItem>
+        <MenuItem icon="allow-speak" onClick={onSpeak}>{lang('朗读')}</MenuItem>
 
         {/* {canSendNow && <MenuItem icon="send-outline" onClick={onSend}>{lang('MessageScheduleSend')}</MenuItem>} */}
         {/* {canReschedule && ( */}
