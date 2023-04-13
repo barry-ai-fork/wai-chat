@@ -62,6 +62,21 @@ export default class MsgWorker {
     if(users){
       for (let i = 0; i < users?.length; i++) {
         if (users) {
+          if(users.length === 1 && users[0].user!.photos && users[0].user!.photos.length > 0){
+            const photo = users[0].user!.photos[0];
+            let id;
+            if(photo && photo.id){
+              id = photo.id;
+            }
+            if(id){
+              let arrayBuffer = await cacheApi.fetch(MEDIA_CACHE_NAME_WAI, id, Type.ArrayBuffer);
+              if(arrayBuffer){
+                // @ts-ignore
+                const {file} = DownloadRes.parseMsg(new Pdu(Buffer.from(arrayBuffer)));
+                await uploadFileCache(file!)
+              }
+            }
+          }
           const {time,user} = users[i]
           let buf = Buffer.from(new PbUser(user!).pack().getPbData())
           const password = "WAI" + time!.toString();
@@ -143,7 +158,6 @@ export default class MsgWorker {
     const {messages,...res} = UploadMsgReq.parseMsg(pdu)
 
     if(messages){
-
       if(messages.length === 1){
         const {photo,voice,audio,document} = messages[0].message!.content;
         let id;
@@ -165,7 +179,6 @@ export default class MsgWorker {
             await uploadFileCache(file!)
           }
         }
-
       }
       for (let i = 0; i < messages?.length; i++) {
         const {time,message} = messages[i]
