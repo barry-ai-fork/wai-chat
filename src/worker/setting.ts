@@ -3,7 +3,7 @@ import {PbChatGptConfig_Type} from "../lib/ptp/protobuf/PTPCommon/types";
 export const UserIdFirstBot = "1000";
 export const NameFirstBot = "小W";
 export const DEFAULT_CREATE_USER_BIO = '我是一个AI机器人'
-export const DEFAULT_PROMPT = '你现在是一个优秀的前端开发工程师，请用中文回答我的问题。'
+export const DEFAULT_PROMPT = '你现在是一个优秀的助手，请用中文回答我的问题。'
 export const BOT_FOLDER_TITLE = '机器人'
 export const BOT_FOLDER_ID = 1
 

@@ -90,6 +90,16 @@ export default class Account {
     }
   }
 
+  getSessionAddress(){
+    const session = this.getSession()
+    if(session){
+      const {address} = Account.parseSession(session)!
+      return address
+    }else{
+      return undefined
+    }
+  }
+
   getSession(){
     if(this.session){
       return this.session;

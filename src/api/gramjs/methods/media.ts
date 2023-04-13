@@ -19,6 +19,7 @@ import {DownloadReq, DownloadRes} from "../../../lib/ptp/protobuf/PTPFile";
 import {ERR} from "../../../lib/ptp/protobuf/PTPCommon/types";
 import {Pdu} from "../../../lib/ptp/protobuf/BaseMsg";
 import Account from "../../../worker/share/Account";
+import {blobToBuffer} from "../../../worker/share/utils/utils";
 
 const MEDIA_ENTITY_TYPES = new Set([
   'msg', 'sticker', 'gif', 'wallpaper', 'photo', 'webDocument', 'document', 'videoAvatar',
@@ -51,7 +52,7 @@ export default async function downloadMedia(
   isConnected: boolean,
   onProgress?: ApiOnProgress,
 ) {
-  let data:Buffer,fullSize:number,blob:Blob,mimeType:string;
+  let data:Buffer,fullSize:number,mimeType:string;
   let flag = false;
   let id;
   const t = url.split("?")
@@ -97,34 +98,55 @@ export default async function downloadMedia(
     //   return undefined;
     // }
 
-    const downloadReq = new DownloadReq({
+    let downloadReq = new DownloadReq({
       id,
     })
     try {
       console.log("[DOWNLOAD media]",{url,id})
-      let arrayBuffer:ArrayBuffer = await cacheApi.fetch(MEDIA_CACHE_NAME_WAI, id, Type.ArrayBuffer);
+      let blob = await cacheApi.fetch(MEDIA_CACHE_NAME_WAI, id, Type.Blob);
       let downloadRes;
-      if(!arrayBuffer){
-        const res = await fetch(`${CLOUD_MESSAGE_API}/proto`,{
-          method: 'POST',
-          body: Buffer.from(downloadReq.pack().getPbData())
-        })
-        const arrayBuffer = await res.arrayBuffer();
-        await cacheApi.save(MEDIA_CACHE_NAME_WAI, id, arrayBuffer);
-        downloadRes = DownloadRes.parseMsg(new Pdu(Buffer.from(arrayBuffer)));
-        if(!downloadRes || downloadRes.err !== ERR.NO_ERROR){
-          return undefined
+      let arrayBuffer;
+      if(!blob){
+        let finalBuf = Buffer.alloc(0);
+        while (true){
+          const res = await fetch(`${CLOUD_MESSAGE_API}/proto`,{
+            method: 'POST',
+            body: Buffer.from(downloadReq.pack().getPbData())
+          })
+          arrayBuffer = await res.arrayBuffer();
+          downloadRes = DownloadRes.parseMsg(new Pdu(Buffer.from(arrayBuffer)));
+          if(!downloadRes || downloadRes.err !== ERR.NO_ERROR || !downloadRes.file){
+            return undefined
+          }
+          finalBuf = Buffer.concat([finalBuf,Buffer.from(downloadRes.file.buf)])
+          if(downloadRes.file.part_total && downloadRes.file.part < downloadRes.file.part_total){
+            downloadReq = new DownloadReq({
+              id,
+              part:downloadRes.file.part+1
+            })
+          }else{
+            downloadRes.file!.buf = finalBuf
+            try {
+              const body = new DownloadRes(downloadRes).pack().getPbData()
+              await cacheApi.save(MEDIA_CACHE_NAME_WAI, id, new Blob([Buffer.from(body)]));
+              downloadRes.file.buf = Account.localDecrypt(finalBuf)
+            }catch (e){
+              console.error(e)
+              return undefined
+            }
+            break
+          }
         }
       }else{
-        downloadRes = DownloadRes.parseMsg(new Pdu(Buffer.from(arrayBuffer)));
+        // @ts-ignore
+        const buf = await blobToBuffer(blob)
+        downloadRes = DownloadRes.parseMsg(new Pdu(buf));
         if(!downloadRes || downloadRes.err !== ERR.NO_ERROR){
           return undefined
         }
         try {
-          downloadRes.file!.buf = Account.localDecrypt(Buffer.from(arrayBuffer))
-        }catch (e){
-
-        }
+          downloadRes.file!.buf = Account.localDecrypt(Buffer.from(downloadRes.file!.buf))
+        }catch (e){}
       }
       data = Buffer.from(downloadRes.file!.buf);
       mimeType= downloadRes.file!.type

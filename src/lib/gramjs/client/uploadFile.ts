@@ -44,7 +44,6 @@ export async function uploadFileV1(
     fileParams: UploadFileParams,
 ): Promise<Api.InputFile | Api.InputFileBig> {
     const { file, onProgress } = fileParams;
-    const isPremium = false;
     const { name, size } = file;
     let fileId1 = readBigIntFromBuffer(generateRandomBytes(8), true, true);
     let fileIdStr = fileId1.toString().replace("-","").replace("n","")
@@ -73,6 +72,7 @@ export async function uploadFileV1(
         },
         err:ERR.NO_ERROR
     }).pack().getPbData()
+
     const blob = new Blob([Buffer.from(body)]);
     await cacheApi.save(MEDIA_CACHE_NAME_WAI, fileIdStr, blob);
 
@@ -94,10 +94,9 @@ export async function uploadFileV1(
 export async function uploadFileCache(
     file: FileInfo_Type,
 ) {
-    const { buf, id,size } = file;
-
+    const { buf, id } = file;
+    const size = buf.length
     const fileIdStr = id;
-    const isLarge = size > LARGE_FILE_THRESHOLD;
 
     const partSize = getUploadPartSize(size) * KB_TO_BYTES;
     const partCount = Math.floor((size + partSize - 1) / partSize);
@@ -120,11 +119,11 @@ export async function uploadFileCache(
                         }
                         const fileInfo = {
                             id:fileIdStr,
-                            size,
+                            size:file.size,
                             type:file.type,
-                            part:jMemo,
+                            part:jMemo+1,
                             part_total:partCount,
-                            buf
+                            buf:blobSliceMemo
                         }
                         const uploadReq = new UploadReq({file:fileInfo})
                         const body = Buffer.from(uploadReq.pack().getPbData());

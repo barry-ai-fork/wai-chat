@@ -227,37 +227,10 @@ export default class MsgCommandChatGpt{
   static async answerCallbackButton(global:GlobalState,chatId:string,messageId:number,data:string){
     switch (data){
       case `${chatId}/setting/uploadUser`:
-        const users:UserStoreRow_Type[] = [];
-        const ids = [chatId]
-        for (let i = 0; i < ids.length; i++) {
-          if(i > 0){
-            break
-          }
-          const id = ids[i];
-          users.push({
-            time:currentTs(),
-            userId:id!,
-            user:selectUser(global,chatId)
-          })
-        }
-        await callApiWithPdu(new UploadUserReq({
-          users,
-          time:currentTs()
-        }).pack())
-        MsgDispatcher.showNotification("更新成功")
+        await MsgCommand.uploadUser(global,chatId)
         break
       case `${chatId}/setting/downloadUser`:
-        const DownloadUserReqRes = await callApiWithPdu(new DownloadUserReq({
-          userIds:[chatId],
-        }).pack())
-        const downloadUserRes = DownloadUserRes.parseMsg(DownloadUserReqRes?.pdu!)
-        if(downloadUserRes.users){
-          const {user} = downloadUserRes.users[0]
-          global = getGlobal();
-          // @ts-ignore
-          global = updateUser(global,user!.id, user)
-          setGlobal(global)
-        }
+        await MsgCommand.downloadUser(global,chatId)
         break
       case `${chatId}/setting/reloadCommands`:
         await MsgCommand.reloadCommands(chatId, DEFAULT_AI_CONFIG_COMMANDS)

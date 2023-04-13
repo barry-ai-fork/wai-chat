@@ -15,6 +15,7 @@ message UploadRes{
 
 message DownloadReq{
   required string id = 1;
+  optional uint32 part = 2;
 }
 
 message DownloadRes{

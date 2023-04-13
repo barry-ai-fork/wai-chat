@@ -3,6 +3,7 @@ import type * as PTPCommon from '../PTPCommon/types';
 
 export interface DownloadReq_Type {
   id: string;
+  part?: number;
 }
 export interface DownloadRes_Type {
   file?: PTPCommon.FileInfo_Type;

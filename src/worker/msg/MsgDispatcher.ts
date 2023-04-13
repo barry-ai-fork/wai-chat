@@ -113,6 +113,11 @@ export default class MsgDispatcher {
       });
     return message
   }
+  static async newCodeMessage(chatId:string,messageId?:number,text?:string){
+    text = "```\n"+text!+"```"
+    return await MsgDispatcher.newTextMessage(chatId,messageId,text,[])
+  }
+
   static async newTextMessage(chatId:string,messageId?:number,text?:string,inlineButtons?:ApiKeyboardButtons){
     if(!messageId){
       messageId = await MsgDispatcher.genMsgId();
@@ -132,6 +137,7 @@ export default class MsgDispatcher {
         }
       }
     }
+    message = MsgWorker.handleMessageTextCode(message)
     if(user && user.fullInfo?.botInfo){
       message = MsgWorker.handleBotCmdText(message,user.fullInfo?.botInfo)
     }

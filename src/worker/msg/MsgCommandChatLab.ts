@@ -5,6 +5,7 @@ import {GlobalState} from "../../global/types";
 import {showModalFromEvent} from "../share/utils/modal";
 import {getActions} from "../../global";
 import {currentTs} from "../share/utils/utils";
+import {DEBUG} from "../../config";
 
 export default class MsgCommandChatLab{
   private chatId: string;
@@ -104,6 +105,12 @@ export default class MsgCommandChatLab{
       case `${chatId}/lab/InlineButs`:
         await MsgDispatcher.newTextMessage(chatId,undefined,"",MsgCommandChatLab.getInlineButtonsDemo())
         break
+
+      case `${chatId}/lab/dumpUsers`:
+        if(DEBUG){
+          await MsgDispatcher.newCodeMessage(chatId,undefined,JSON.stringify(global.users.byId,null,2))
+        }
+        break
       case `${chatId}/lab/testMsg`:
         const {value} = await showModalFromEvent({
           title: "输入JSON 格式的 msg", type: "singleInput"
@@ -131,11 +138,18 @@ export default class MsgCommandChatLab{
   }
   async lab(){
     const messageId = await MsgDispatcher.genMsgId();
-    return await MsgDispatcher.newTextMessage(this.chatId,messageId,"welcome",[
+    return await MsgDispatcher.newTextMessage(this.chatId,messageId,"LAB",[
       [
         {
           data:`${this.chatId}/lab/testMsg`,
           text:"Test Msg",
+          type:"callback"
+        },
+      ],
+      [
+        {
+          data:`${this.chatId}/lab/dumpUsers`,
+          text:"DumpUsers",
           type:"callback"
         },
       ],

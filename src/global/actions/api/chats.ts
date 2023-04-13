@@ -84,7 +84,7 @@ import {getCurrentTabId} from '../../../util/establishMultitabRole';
 import {
   ChatModelConfig, DEFAULT_AI_CONFIG_COMMANDS,
   DEFAULT_BOT_COMMANDS,
-  DEFAULT_CREATE_USER_BIO,
+  DEFAULT_CREATE_USER_BIO, DEFAULT_PROMPT,
   LoadAllChats,
   UserIdFirstBot
 } from "../../../worker/setting";
@@ -575,7 +575,7 @@ addActionHandler('createChat', async (global, actions, payload): Promise<void> =
           aiBot:{
             enableAi:true,
             chatGptConfig:{
-              init_system_content:"",
+              init_system_content:DEFAULT_PROMPT,
               api_key:chatGptApiKey,
               max_history_length:10,
               config:ChatModelConfig
@@ -599,6 +599,7 @@ addActionHandler('createChat', async (global, actions, payload): Promise<void> =
     // @ts-ignore
     const users:ApiUser[] = [user]
 
+    // @ts-ignore
     const chats:ApiChat[] = [MsgCommandSetting.buildDefaultChat(user)]
 
     let activeChatFolder = window.sessionStorage.getItem("activeChatFolder")
@@ -617,7 +618,6 @@ addActionHandler('createChat', async (global, actions, payload): Promise<void> =
         }
       })
     }
-
 
     const userStatusesById:Record<string,ApiUserStatus> = {
       [user.id] : {

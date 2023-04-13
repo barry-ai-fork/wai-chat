@@ -768,7 +768,7 @@ var $conv_message = $createConverter([
             },
             File: {
                 DownloadReq: {
-                    '$': {"1":["id","string",""]}
+                    '$': {"1":["id","string",""],"2":["part","uint32",0]}
                 },
                 DownloadRes: {
                     '$': {"1":["file","default.PTP.Common.FileInfo",null],"100":["err","uint32",0]}

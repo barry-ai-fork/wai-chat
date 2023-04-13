@@ -34,7 +34,10 @@ export default class MsgCommandSetting{
     const messageId = await MsgDispatcher.genMsgId();
     const text = `你可以通过发送以下命令来控制我：
 
+
 /setting - 设置面板
+/clearHistory - 清除历史记录
+/reloadCommands - 重载命令
 /lab - 实验室`
     return MsgDispatcher.newMessage(chatId,messageId,{
       chatId,
@@ -83,13 +86,8 @@ export default class MsgCommandSetting{
       ],
       [
         {
-          data:`${chatId}/setting/uploadMessages`,
-          text:"上传消息",
-          type:"callback"
-        },
-        {
-          data:`${chatId}/setting/downloadMessages`,
-          text:"下载消息",
+          data:`${chatId}/setting/accountAddress`,
+          text:"账户地址",
           type:"callback"
         },
       ],
@@ -249,6 +247,10 @@ export default class MsgCommandSetting{
         getActions().updateGlobal({
           showPickBotModal:true
         })
+        break
+      case `${chatId}/setting/accountAddress`:
+        const address = Account.getCurrentAccount()?.getSessionAddress()
+        await MsgDispatcher.newCodeMessage(chatId,undefined,address||"-")
         break
       case `${chatId}/setting/showMnemonic`:
         getActions().updateGlobal({

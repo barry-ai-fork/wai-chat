@@ -21,7 +21,7 @@ import {
 } from "../../lib/ptp/protobuf/PTPUser";
 import WaiOpenAPIRoute from "../share/cls/WaiOpenAPIRoute";
 import {SyncReq, SyncRes} from "../../lib/ptp/protobuf/PTPSync";
-import {MessageStoreRow, UserMessageStoreData, UserStoreData} from "../../lib/ptp/protobuf/PTPCommon";
+import {UserMessageStoreData, UserStoreData} from "../../lib/ptp/protobuf/PTPCommon";
 
 
 export default class ProtoController extends WaiOpenAPIRoute{

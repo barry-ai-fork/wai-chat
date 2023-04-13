@@ -1,24 +1,17 @@
 import MsgDispatcher from "./MsgDispatcher";
-import {selectChat, selectChatMessage, selectUser} from "../../global/selectors";
-import {updateChat, updateUser} from "../../global/reducers";
+import {selectChat, selectUser} from "../../global/selectors";
+import {updateUser} from "../../global/reducers";
 import {getActions, getGlobal, setGlobal} from "../../global";
 import {ApiBotCommand} from "../../api/types";
-import {callApiWithPdu} from "./utils";
 import {currentTs} from "../share/utils/utils";
-
-import {MessageStoreRow_Type, PbMsg_Type, UserStoreRow_Type} from "../../lib/ptp/protobuf/PTPCommon/types";
-import {UploadMsgReq} from "../../lib/ptp/protobuf/PTPMsg";
-import {DownloadUserReq, UploadUserReq} from "../../lib/ptp/protobuf/PTPUser";
-import Mnemonic from "../../lib/ptp/wallet/Mnemonic";
-import Account from "../share/Account";
-import {AuthNativeReq} from "../../lib/ptp/protobuf/PTPAuth";
 import {GlobalState} from "../../global/types";
-import {getPasswordFromEvent} from "../share/utils/password";
-import {hashSha256} from "../share/utils/helpers";
 import MsgCommandSetting from "./MsgCommandSetting";
 import {ControllerPool} from "../../lib/ptp/functions/requests";
 import MsgCommandChatGpt from "./MsgCommandChatGpt";
 import MsgCommandChatLab from "./MsgCommandChatLab";
+import {UserStoreRow_Type} from "../../lib/ptp/protobuf/PTPCommon/types";
+import {callApiWithPdu} from "./utils";
+import {DownloadUserReq, DownloadUserRes, UploadUserReq} from "../../lib/ptp/protobuf/PTPUser";
 
 export default class MsgCommand {
   private msgDispatcher: MsgDispatcher;
@@ -66,71 +59,7 @@ export default class MsgCommand {
       showMnemonicModal:true
     })
   }
-  async setAuth(){
-    await this.msgDispatcher.sendOutgoingMsg();
-    const m = "control combine high meat erode catalog public tumble rebel benefit upon public"
-    const account = Account.getInstance(Account.genAccountId());
-    const entropy = new Mnemonic(m).toEntropy();
-    await account.setEntropy(entropy)
-    const accountId = account.getAccountId();
-    Account.setCurrentAccountId(accountId)
-    const session = account?.getSession();
-    if(!session){
-      const {password} = await getPasswordFromEvent();
-      if(password){
-        const pwd = hashSha256(password)
-        const ts = +(new Date());
-        const {address, sign} = await account.signMessage(ts.toString(), pwd);
-        const session = Account.formatSession({address,sign,ts});
-        account.saveSession(session)
-        const entropy = await account.getEntropy()
-        const accountId = account.getAccountId();
-        await callApiWithPdu(new AuthNativeReq({
-          accountId,entropy,session
-        }).pack())
-        await this.msgDispatcher.replyText("账户设置成功")
-        await this.msgDispatcher.replyCode(session)
-        await this.msgDispatcher.replyCode(entropy)
-        await this.msgDispatcher.replyCode(accountId.toString())
-      }
-    }else {
-      await this.msgDispatcher.replyCode(session)
-    }
-  }
-  async genMnemonic(){
-    await this.msgDispatcher.sendOutgoingMsg();
-    const m = new Mnemonic()
-    return await this.msgDispatcher.replyNewTextMessage({text:m.getWords()})
-  }
 
-  async uploadMessages(chatId:string,messageIds?:number[]){
-    let global = getGlobal();
-    const chatMessages = global.messages.byChatId[chatId];
-    const ids = Object.keys(chatMessages.byId).map(Number);
-    await this.msgDispatcher.sendOutgoingMsg();
-    const messages:MessageStoreRow_Type[] = [];
-    for (let i = 0; i < ids.length; i++) {
-      if(i > 0){
-        break
-      }
-      const id = ids[i]
-      //@ts-ignore
-      const message:PbMsg_Type = selectChatMessage(global,chatId,id);
-      messages.push({
-        time:currentTs(),
-        messageId:id,
-        message
-      })
-    }
-    const res = await callApiWithPdu(new UploadMsgReq({
-      messages,
-      chatId,
-      time:currentTs()
-    }).pack())
-
-    await this.msgDispatcher.replyNewTextMessage({text:`正在上传.. ${ids.length}`})
-    return true;
-  }
   static async reloadCommands(chatId:string,cmds:ApiBotCommand[]){
     let global = getGlobal();
     let user = selectUser(global,chatId)
@@ -156,9 +85,43 @@ export default class MsgCommand {
       setGlobal(global)
       global = getGlobal()
       user = selectUser(global,chatId)
-      // await MsgDispatcher.newTextMessage(chatId,await MsgDispatcher.genMsgId(),"重载成功")
+      await MsgDispatcher.newTextMessage(chatId,await MsgDispatcher.genMsgId(),"重载成功")
       return true;
     }
+  }
+  static async uploadUser(global:GlobalState,chatId:string){
+    const users:UserStoreRow_Type[] = [];
+    const ids = [chatId]
+    for (let i = 0; i < ids.length; i++) {
+      if(i > 0){
+        break
+      }
+      const id = ids[i];
+      users.push({
+        time:currentTs(),
+        userId:id!,
+        user:selectUser(global,chatId)
+      })
+    }
+    await callApiWithPdu(new UploadUserReq({
+      users,
+      time:currentTs()
+    }).pack())
+    MsgDispatcher.showNotification("上传成功")
+  }
+  static async downloadUser(global:GlobalState,chatId:string){
+    const DownloadUserReqRes = await callApiWithPdu(new DownloadUserReq({
+      userIds:[chatId],
+    }).pack())
+    const downloadUserRes = DownloadUserRes.parseMsg(DownloadUserReqRes?.pdu!)
+    if(downloadUserRes.users){
+      const {user} = downloadUserRes.users[0]
+      global = getGlobal();
+      // @ts-ignore
+      global = updateUser(global,user!.id, user)
+      setGlobal(global)
+    }
+    MsgDispatcher.showNotification("更新成功")
   }
   async setting(){
     const chatId = this.msgDispatcher.getChatId()

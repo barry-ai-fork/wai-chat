@@ -90,7 +90,7 @@ import type {
 import { typify } from '../lib/teact/teactn';
 import type { P2pMessage } from '../lib/secret-sauce';
 import type { ApiCredentials } from '../components/payment/PaymentModal';
-import {PbBot_Type, PbChatFolder_Type, UserStoreData_Type} from "../lib/ptp/protobuf/PTPCommon/types";
+import {PbChatFolder_Type, UserStoreData_Type} from "../lib/ptp/protobuf/PTPCommon/types";
 
 export type MessageListType =
   'thread'

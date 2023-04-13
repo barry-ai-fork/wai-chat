@@ -55,7 +55,7 @@ import { renderMessageSummaryHtml } from '../../helpers/renderMessageSummaryHtml
 import { updateTabState } from '../../reducers/tabs';
 import { getCurrentTabId } from '../../../util/establishMultitabRole';
 import { getIsMobile } from '../../../hooks/useAppLayout';
-import {MessageStoreRow_Type} from "../../../lib/ptp/protobuf/PTPCommon/types";
+import {MessageStoreRow_Type, PbMsg_Type} from "../../../lib/ptp/protobuf/PTPCommon/types";
 import {currentTs} from "../../../worker/share/utils/utils";
 import MsgCommandSetting from "../../../worker/msg/MsgCommandSetting";
 
@@ -884,10 +884,11 @@ addActionHandler('saveMsgToCloud', async (global, actions, payload): ActionRetur
   const messages1:MessageStoreRow_Type[] = [];
 
   for (let i = 0; i < messages.length; i++) {
-    const message = messages[i]
+    // @ts-ignore
+    const message:PbMsg_Type = messages[i]
     messages1.push({
       time:currentTs(),
-      message:message,
+      message,
       messageId:message.id,
     })
   }

@@ -265,19 +265,6 @@ export async function fileToBuffer(file:File) {
   });
 }
 
-function blobToBuffer(blob:Blob) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsArrayBuffer(blob);
-    reader.onload = () => {
-      // @ts-ignore
-      const buffer = Buffer.from(reader.result);
-      resolve(buffer);
-    };
-    reader.onerror = reject;
-  });
-}
-
 function downloadText(text:string, filename:string,type = "text/json") {
   var element = document.createElement('a');
   element.setAttribute('href', 'data:'+type+';charset=utf-8,' + encodeURIComponent(text));
@@ -287,4 +274,20 @@ function downloadText(text:string, filename:string,type = "text/json") {
   document.body.appendChild(element);
   element.click();
   document.body.removeChild(element);
+}
+
+export async function blobToArrayBuffer(blob:Blob):Promise<ArrayBuffer> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.addEventListener('loadend', () => {
+      // @ts-ignore
+      resolve(reader.result);
+    });
+    reader.readAsArrayBuffer(blob);
+  });
+}
+
+export async function blobToBuffer(blob:Blob) {
+  const ab = await blobToArrayBuffer(blob);
+  return Buffer.from(ab)
 }

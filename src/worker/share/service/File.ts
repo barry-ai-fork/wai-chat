@@ -7,11 +7,10 @@ import {getCorsHeader} from '../utils/utils';
 
 export async function Upload(pdu: Pdu) {
 	const req = UploadReq.parseMsg(pdu);
-	const { id, part, part_total, size, type } = req.file;
-	console.log('[UPLOAD]', { id, part, part_total, size, type });
+	const { id, part, part_total, size, type,buf } = req.file;
+	console.log('[UPLOAD]', id, part, part_total, size,buf.length);
   const buff = new FileInfo(req.file).encode();
-	await storage.put(`media/${id}_${part + 1}`, buff);
-
+	await storage.put(`media/${id}_${part}`, buff);
   return new Response('', {
 		status: 200,
 		headers: {
@@ -22,35 +21,14 @@ export async function Upload(pdu: Pdu) {
 
 export async function Download(pdu: Pdu) {
 	const req = DownloadReq.parseMsg(pdu);
-	console.log('[Download]', req);
+	console.log('[Download]', req.id,req.part || 1);
 	let body;
 	try {
-		let i = 1;
-		let fileInfo;
-		while (true) {
-			const res = await storage.get(`media/${req.id}_${i}`);
-			if (!res) {
-				throw new Error('Not Found media');
-			}
-
-      const fileInfo1 = new FileInfo().decode(Uint8Array.from(res));
-			if (!fileInfo) {
-				fileInfo = fileInfo1;
-			} else {
-				fileInfo.buf = Buffer.concat([
-					Buffer.from(fileInfo.buf),
-					Buffer.from(fileInfo1.buf),
-				]);
-			}
-			if (fileInfo1.part_total && fileInfo1.part_total > 1) {
-				if (fileInfo1.part_total === i) {
-					break;
-				}
-				i++;
-			} else {
-				break;
-			}
-		}
+    const res = await storage.get(`media/${req.id}_${(req.part || 1 )}`);
+    if (!res) {
+      throw new Error('Not Found media');
+    }
+    const fileInfo = new FileInfo().decode(Uint8Array.from(res));
 
 		body = Buffer.from(
 			new DownloadRes({
