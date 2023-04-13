@@ -55,26 +55,25 @@ export async function uploadFileV1(
 
     const partSize = getUploadPartSize(size) * KB_TO_BYTES;
     const partCount = Math.floor((size + partSize - 1) / partSize);
-    const activeCounts = foremans.map(({ activeWorkers }) => activeWorkers);
 
     let progress = 0;
     if (onProgress) {
         onProgress(progress);
     }
     const buf = await fileToBuffer(file)
+    const cipher = Account.localEncrypt(Buffer.from(buf));
     const body = new DownloadRes({
         file:{
             id:fileIdStr,
             part:0,
             part_total:1,
-            buf,
+            buf:cipher,
             size,
             type:file.type
         },
         err:ERR.NO_ERROR
     }).pack().getPbData()
-    const cipher = Account.localEncrypt(Buffer.from(body));
-    const blob = new Blob([cipher]);
+    const blob = new Blob([Buffer.from(body)]);
     await cacheApi.save(MEDIA_CACHE_NAME_WAI, fileIdStr, blob);
 
     return isLarge
@@ -104,8 +103,6 @@ export async function uploadFileCache(
     const partCount = Math.floor((size + partSize - 1) / partSize);
     const activeCounts = foremans.map(({ activeWorkers }) => activeWorkers);
     let currentForemanIndex = activeCounts.indexOf(Math.min(...activeCounts));
-
-    let progress = 0;
 
     const promises: Promise<any>[] = [];
 

@@ -4,15 +4,15 @@ import {ApiBotInfo, ApiKeyboardButtons, ApiMessage} from "../../api/types";
 import {GlobalState} from "../../global/types";
 import {getGlobal, setGlobal} from "../../global";
 import {selectUser} from "../../global/selectors";
-import {updateUser} from "../../global/reducers";
-import {DEFAULT_AI_CONFIG_COMMANDS, DEFAULT_PROMPT} from "../setting";
+import {addChats, addUsers, updateUser} from "../../global/reducers";
+import {DEFAULT_AI_CONFIG_COMMANDS} from "../setting";
 import {callApiWithPdu} from "./utils";
 import {StopChatStreamReq} from "../../lib/ptp/protobuf/PTPOther";
 import Account from "../share/Account";
 import MsgCommand from "./MsgCommand";
 import {showModalFromEvent} from "../share/utils/modal";
-import {PbChatGptConfig} from "../../lib/ptp/protobuf/PTPCommon";
-import {PbChatGpBotConfig_Type, PbChatGptConfig_Type} from "../../lib/ptp/protobuf/PTPCommon/types";
+import {PbChatGpBotConfig_Type, UserStoreRow_Type} from "../../lib/ptp/protobuf/PTPCommon/types";
+import {DownloadUserReq, DownloadUserRes, UploadUserReq} from "../../lib/ptp/protobuf/PTPUser";
 
 export default class MsgCommandChatGpt{
   private chatId: string;
@@ -23,18 +23,18 @@ export default class MsgCommandChatGpt{
   }
   static getInlineButtons(chatId:string,isEnableSync:boolean):ApiKeyboardButtons{
     return isEnableSync ? [
-      // [
-      //   {
-      //     data:`${chatId}/setting/uploadMessages`,
-      //     text:"上传消息",
-      //     type:"callback"
-      //   },
-      //   {
-      //     data:`${chatId}/setting/downloadMessages`,
-      //     text:"下载消息",
-      //     type:"callback"
-      //   },
-      // ],
+      [
+        {
+          data:`${chatId}/setting/uploadUser`,
+          text:"上传机器人",
+          type:"callback"
+        },
+        {
+          data:`${chatId}/setting/downloadUser`,
+          text:"更新机器人",
+          type:"callback"
+        },
+      ],
       [
         {
           data:`${chatId}/setting/reloadCommands`,
@@ -87,6 +87,12 @@ export default class MsgCommandChatGpt{
           text:`你可以通过发送以下命令来控制我：
 
 /setting - 设置面板
+/aiModel - 当前模型
+/apiKey - 设置ApiKey
+/initPrompt - 设置初始化上下文Prompt, 每次请求都会带入
+/enableAi - 开启或者关闭AI
+/clearHistory - 清除历史记录
+
 `
         }
       },
@@ -220,6 +226,39 @@ export default class MsgCommandChatGpt{
   }
   static async answerCallbackButton(global:GlobalState,chatId:string,messageId:number,data:string){
     switch (data){
+      case `${chatId}/setting/uploadUser`:
+        const users:UserStoreRow_Type[] = [];
+        const ids = [chatId]
+        for (let i = 0; i < ids.length; i++) {
+          if(i > 0){
+            break
+          }
+          const id = ids[i];
+          users.push({
+            time:currentTs(),
+            userId:id!,
+            user:selectUser(global,chatId)
+          })
+        }
+        await callApiWithPdu(new UploadUserReq({
+          users,
+          time:currentTs()
+        }).pack())
+        MsgDispatcher.showNotification("更新成功")
+        break
+      case `${chatId}/setting/downloadUser`:
+        const DownloadUserReqRes = await callApiWithPdu(new DownloadUserReq({
+          userIds:[chatId],
+        }).pack())
+        const downloadUserRes = DownloadUserRes.parseMsg(DownloadUserReqRes?.pdu!)
+        if(downloadUserRes.users){
+          const {user} = downloadUserRes.users[0]
+          global = getGlobal();
+          // @ts-ignore
+          global = updateUser(global,user!.id, user)
+          setGlobal(global)
+        }
+        break
       case `${chatId}/setting/reloadCommands`:
         await MsgCommand.reloadCommands(chatId, DEFAULT_AI_CONFIG_COMMANDS)
         break

@@ -192,7 +192,6 @@ export default class MsgDispatcher {
   }
 
   async replyNewTextMessage({text,options}:{text?:string,options?:OptionsType}){
-    this.focusLastMessage(200)
     return await this.sendNewTextMessage({text,options:{
       ...options,
         senderId:this.getChatId()
@@ -200,7 +199,6 @@ export default class MsgDispatcher {
 
   }
   async sendOutgoingMsg(){
-    this.focusLastMessage(100)
     return await this.sendNewTextMessage({
       text:this.getMsgText(),
     })
@@ -296,5 +294,9 @@ export default class MsgDispatcher {
       res = this.processCmd();
     }
     return res
+  }
+
+  static showNotification(message:string){
+    getActions().showNotification({message})
   }
 }

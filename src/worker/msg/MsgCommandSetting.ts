@@ -404,6 +404,7 @@ export default class MsgCommandSetting{
     }
     getActions().showNotification({message:"更新成功"})
   }
+
   static async enableSync(global:GlobalState,chatId:string,messageId:number,password:string){
     const account = Account.getCurrentAccount();
     const pwd = hashSha256(password)

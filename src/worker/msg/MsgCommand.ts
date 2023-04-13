@@ -19,7 +19,6 @@ import MsgCommandSetting from "./MsgCommandSetting";
 import {ControllerPool} from "../../lib/ptp/functions/requests";
 import MsgCommandChatGpt from "./MsgCommandChatGpt";
 import MsgCommandChatLab from "./MsgCommandChatLab";
-import {PbMsg} from "../../lib/ptp/protobuf/PTPCommon";
 
 export default class MsgCommand {
   private msgDispatcher: MsgDispatcher;
@@ -103,46 +102,7 @@ export default class MsgCommand {
     const m = new Mnemonic()
     return await this.msgDispatcher.replyNewTextMessage({text:m.getWords()})
   }
-  async downloadBots(botId:string){
-    let global = getGlobal();
-    const user = selectUser(global,botId);
 
-    await this.msgDispatcher.sendOutgoingMsg();
-    const res = await callApiWithPdu(new DownloadUserReq({
-      userIds:[user!.id!],
-    }).pack())
-
-    await this.msgDispatcher.replyNewTextMessage({text:`正在下载`})
-    return true;
-
-  }
-  async uploadBots(botId:string){
-    let global = getGlobal();
-    const user = selectUser(global,botId);
-
-    await this.msgDispatcher.sendOutgoingMsg();
-    const users:UserStoreRow_Type[] = [];
-    const ids = [user?.id]
-    for (let i = 0; i < ids.length; i++) {
-      if(i > 0){
-        break
-      }
-      const id = ids[i];
-      users.push({
-        time:currentTs(),
-        userId:id!,
-        user:selectUser(global,botId)
-      })
-    }
-    const res = await callApiWithPdu(new UploadUserReq({
-      users,
-      time:currentTs()
-    }).pack())
-    const text = await Account.getCurrentAccount()?.getEntropy();
-    await this.msgDispatcher.replyNewTextMessage({text})
-    return true;
-
-  }
   async uploadMessages(chatId:string,messageIds?:number[]){
     let global = getGlobal();
     const chatMessages = global.messages.byChatId[chatId];

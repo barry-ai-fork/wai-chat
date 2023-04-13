@@ -103,6 +103,7 @@ export default async function downloadMedia(
     try {
       console.log("[DOWNLOAD media]",{url,id})
       let arrayBuffer:ArrayBuffer = await cacheApi.fetch(MEDIA_CACHE_NAME_WAI, id, Type.ArrayBuffer);
+      let downloadRes;
       if(!arrayBuffer){
         const res = await fetch(`${CLOUD_MESSAGE_API}/proto`,{
           method: 'POST',
@@ -110,17 +111,20 @@ export default async function downloadMedia(
         })
         const arrayBuffer = await res.arrayBuffer();
         await cacheApi.save(MEDIA_CACHE_NAME_WAI, id, arrayBuffer);
+        downloadRes = DownloadRes.parseMsg(new Pdu(Buffer.from(arrayBuffer)));
+        if(!downloadRes || downloadRes.err !== ERR.NO_ERROR){
+          return undefined
+        }
       }else{
+        downloadRes = DownloadRes.parseMsg(new Pdu(Buffer.from(arrayBuffer)));
+        if(!downloadRes || downloadRes.err !== ERR.NO_ERROR){
+          return undefined
+        }
         try {
-          arrayBuffer = Account.localDecrypt(Buffer.from(arrayBuffer))
+          downloadRes.file!.buf = Account.localDecrypt(Buffer.from(arrayBuffer))
         }catch (e){
 
         }
-      }
-
-      const downloadRes = DownloadRes.parseMsg(new Pdu(Buffer.from(arrayBuffer)));
-      if(downloadRes.err !== ERR.NO_ERROR){
-        return undefined
       }
       data = Buffer.from(downloadRes.file!.buf);
       mimeType= downloadRes.file!.type

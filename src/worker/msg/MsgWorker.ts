@@ -72,8 +72,11 @@ export default class MsgWorker {
               let arrayBuffer = await cacheApi.fetch(MEDIA_CACHE_NAME_WAI, id, Type.ArrayBuffer);
               if(arrayBuffer){
                 // @ts-ignore
-                const {file} = DownloadRes.parseMsg(new Pdu(Buffer.from(arrayBuffer)));
-                await uploadFileCache(file!)
+                const res = DownloadRes.parseMsg(new Pdu(Buffer.from(arrayBuffer)));
+                if(!res || !res.file){
+                  break
+                }
+                await uploadFileCache(res.file!)
               }
             }
           }
