@@ -92,7 +92,6 @@ export default class MsgCommandChatGpt{
 /initPrompt - 设置初始化上下文Prompt, 每次请求都会带入
 /enableAi - 开启或者关闭AI
 /clearHistory - 清除历史记录
-
 `
         }
       },
@@ -260,28 +259,31 @@ export default class MsgCommandChatGpt{
           placeholder:"每次请求都会带入 上下文记忆",
           initVal:init_system_content
         });
-        init_system_content = value
-        MsgCommandChatGpt.changeChatGptConfig(chatId,{
-          init_system_content:value
-        })
-        const message1 = {
-          content:{
-            text:{
-              text:`${init_system_content?init_system_content:"未设置"}`
-            }
-          },
-          inlineButtons:[
-            [
-              {
-                text:"点击修改",
-                type:"callback",
-                data:`${chatId}/init_system_content`
+        if(value){
+          init_system_content = value
+          MsgCommandChatGpt.changeChatGptConfig(chatId,{
+            init_system_content:value
+          })
+          const message1 = {
+            content:{
+              text:{
+                text:`${init_system_content?init_system_content:"未设置"}`
               }
+            },
+            inlineButtons:[
+              [
+                {
+                  text:"点击修改",
+                  type:"callback",
+                  data:`${chatId}/init_system_content`
+                }
+              ]
             ]
-          ]
+          }
+          // @ts-ignore
+          MsgDispatcher.newMessage(chatId,messageId,message1)
         }
-        // @ts-ignore
-        MsgDispatcher.newMessage(chatId,messageId,message1)
+
         break;
       case `${chatId}/apiKey`:
         const res = await showModalFromEvent({

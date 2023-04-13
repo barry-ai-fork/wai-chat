@@ -1340,6 +1340,8 @@ export interface ActionPayloads {
   } & WithTabId;
   createChat: {
     title: string;
+    id?: string;
+    promptInit?: string;
     about?: string;
   } & WithTabId;
   createGroupChat: {

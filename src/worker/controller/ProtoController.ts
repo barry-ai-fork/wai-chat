@@ -134,6 +134,9 @@ export default class ProtoController extends WaiOpenAPIRoute{
           }
         })
       }
+      if(userStoreData?.chatFolders){
+        userStoreDataRes.chatFolders = userStoreData?.chatFolders
+      }
     }else{
       userStoreDataRes = userStoreData!
     }

@@ -34,11 +34,13 @@ export default class MsgCommandSetting{
     const messageId = await MsgDispatcher.genMsgId();
     const text = `你可以通过发送以下命令来控制我：
 
-
 /setting - 设置面板
 /clearHistory - 清除历史记录
 /reloadCommands - 重载命令
-/lab - 实验室`
+/lab - 实验室
+  * 创建中文Prompt大全
+  * 创建英文Prompt大全
+`
     return MsgDispatcher.newMessage(chatId,messageId,{
       chatId,
       id:messageId,
@@ -328,6 +330,7 @@ export default class MsgCommandSetting{
       userStoreData
     }).pack())
     const syncRes = SyncRes.parseMsg(res!.pdu)
+    console.log("[syncRes]",syncRes)
     let users:UserStoreRow_Type[] = [];
     if(isUpload){
       for (let index = 0; index < chatIds.length; index++) {

@@ -526,10 +526,12 @@ addActionHandler('deleteChannel', (global, actions, payload): ActionReturnType =
   }
 });
 
-addActionHandler('createChat', async (global, actions, payload): Promise<void> => {
+addActionHandler('createChat', (global, actions, payload)=> {
   const {
-    title, about, tabId = getCurrentTabId(),
+    title, id,promptInit,about, tabId = getCurrentTabId(),
   } = payload;
+
+  const userIds = Object.keys(global.users.byId)
 
   global = updateTabState(global, {
     chatCreation: {
@@ -538,14 +540,24 @@ addActionHandler('createChat', async (global, actions, payload): Promise<void> =
   }, tabId);
   setGlobal(global);
   try{
-    const userIds = Object.keys(global.users.byId)
-    let userId: string | number = parseInt(UserIdFirstBot) + 1
-    if(userIds.length > 0){
-      userIds.sort((a,b)=>parseInt(b) - parseInt(a))
-      userId = parseInt(userIds[0]) + 1
+    let userId: string;
+    let userIdInt = parseInt(UserIdFirstBot)
+    if(!id){
+      if(userIds.length > 0){
+        userIds.sort((a,b)=>parseInt(b) - parseInt(a))
+        userIdInt = parseInt(userIds[0]) + 1
+      }
+      if(userIdInt < 100000){
+        userIdInt = 100000
+      }
+      userId = userIdInt.toString()
+    }else{
+      userId = id
     }
-    userId = userId.toString()
+
     const chatGptApiKey = localStorage.getItem("cg-key") ? localStorage.getItem("cg-key") : ""
+    const init_system_content = promptInit || DEFAULT_PROMPT
+
     const user = {
       "canBeInvitedToGroup": false,
       "hasVideoAvatar": false,
@@ -575,7 +587,7 @@ addActionHandler('createChat', async (global, actions, payload): Promise<void> =
           aiBot:{
             enableAi:true,
             chatGptConfig:{
-              init_system_content:DEFAULT_PROMPT,
+              init_system_content,
               api_key:chatGptApiKey,
               max_history_length:10,
               config:ChatModelConfig
@@ -652,11 +664,15 @@ addActionHandler('createChat', async (global, actions, payload): Promise<void> =
     if(activeChatFolderRow){
       actions.editChatFolder({ id: activeChatFolderRow.id, folderUpdate: activeChatFolderRow });
     }
+    if(promptInit){
+      actions.sendBotCommand({chatId:userId,command:"/start",tabId})
+      actions.sendBotCommand({chatId:userId,command:"/initPrompt",tabId})
+    }
     // @ts-ignore
     actions.openChat({id: userId,shouldReplaceHistory: true,});
 
-  }catch (e){
 
+  }catch (e){
     console.error(e)
     global = getGlobal();
     global = updateTabState(global, {

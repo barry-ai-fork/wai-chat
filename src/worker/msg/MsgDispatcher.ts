@@ -118,7 +118,7 @@ export default class MsgDispatcher {
     return await MsgDispatcher.newTextMessage(chatId,messageId,text,[])
   }
 
-  static async newTextMessage(chatId:string,messageId?:number,text?:string,inlineButtons?:ApiKeyboardButtons){
+  static async newTextMessage(chatId:string,messageId?:number,text?:string,inlineButtons?:ApiKeyboardButtons,options?:{isOutgoing?:boolean}){
     if(!messageId){
       messageId = await MsgDispatcher.genMsgId();
     }
@@ -135,7 +135,8 @@ export default class MsgDispatcher {
         text:{
           text:text||""
         }
-      }
+      },
+      ...options
     }
     message = MsgWorker.handleMessageTextCode(message)
     if(user && user.fullInfo?.botInfo){
@@ -235,9 +236,9 @@ export default class MsgDispatcher {
     }
   }
   async processCmd(){
-    let res;
     const sendMsgText = this.getMsgText();
     const commands = this.getBotCommands();
+    console.log("processCmd",this.params.chat.id,sendMsgText,commands)
     if(sendMsgText && commands.includes(sendMsgText)){
       if(this.params.botInfo?.botId === UserIdFirstBot){
         return await this.processFirstBotCmd();
@@ -255,11 +256,10 @@ export default class MsgDispatcher {
     const msgCommandChatGpt = new MsgCommandChatGpt(this.getChatId(),this.params.botInfo!);
     await this.sendOutgoingMsg();
     switch(sendMsgText){
+      case "/start":
+        return await msgCommandChatGpt.start();
       case "/setting":
         return msgCommandChatGpt.setting()
-      case "/start":
-        await MsgCommand.reloadCommands(this.getChatId(),DEFAULT_AI_CONFIG_COMMANDS);
-        return await msgCommandChatGpt.start();
       case "/clearHistory":
         return await MsgCommand.clearHistory(this.getChatId());
       case "/enableAi":
@@ -293,9 +293,9 @@ export default class MsgDispatcher {
         return await this.sendOutgoingMsg();
     }
   }
-  focusLastMessage(delay:number = 500){}
   async process(){
     let res;
+    console.log("process",this.getChatId(),this.getMsgText())
     if(this.getMsgText()?.startsWith("/")){
       res = this.processCmd();
     }
