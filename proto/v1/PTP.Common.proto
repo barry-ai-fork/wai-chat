@@ -149,6 +149,11 @@ message PbText {
   repeated PbMessageEntity entities = 2;
 }
 
+message PbDimensions{
+  required uint32 width = 1;
+  required uint32 height = 2;
+}
+
 message PbSizes {
   required uint32 width = 1;
   required uint32 height = 2;
@@ -173,11 +178,38 @@ message PbAction {
   required string type = 2;
 }
 
+message PbAudio {
+  required string id = 1;
+  repeated uint32 size = 2;
+  repeated uint32 duration = 3;
+  required string mimeType = 5;
+  required string fileName = 6;
+  optional string performer = 7;
+  optional string title = 8;
+  repeated PbSizes thumbnailSizes = 9;
+}
+
+message PbDocument {
+  optional string id = 1;
+  required string fileName = 2;
+  repeated uint32 size = 3;
+  optional uint32 timestamp = 4;
+  repeated uint32 duration = 5;
+  required string mimeType = 6;
+  optional string performer = 7;
+  optional string previewBlobUrl = 8;
+  optional string mediaType = 9;
+  optional PbSizes mediaSize = 10;
+  optional PbThumbnail thumbnail = 11;
+}
+
 message PbContent {
   optional PbText text = 1;
   optional PbPhoto photo = 2;
   optional PbVoice voice = 3;
   optional PbAction action = 4;
+  optional PbDocument document = 5;
+  optional PbAudio audio = 6;
 }
 
 message PbMsg {

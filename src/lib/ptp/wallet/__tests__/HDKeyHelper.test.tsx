@@ -29,7 +29,6 @@ export default {}
 // var BITCOIN_VERSIONS = {private: 0x0488ADE4, public: 0x0488B21E};
 //
 // function HDKey(versions) {
-//   debugger
 //   this.versions = versions || BITCOIN_VERSIONS;
 //   this.depth = 0;
 //   this.index = 0;
@@ -61,7 +60,6 @@ export default {}
 //     return this._privateKey
 //   },
 //   set: function (value) {
-//     debugger
 //     expect(value.length).toEqual(32);
 //     assert(value.length === 32, 'Invalid private key');
 //     assert(secp256k1.privateKeyVerify(value) === true, 'Invalid private key');
@@ -222,7 +220,6 @@ export default {}
 // };
 //
 // HDKey.fromMasterSeed = function (seedBuffer, versions) {
-//   debugger
 //   var I = createHmac('sha512', MASTER_SECRET).update(seedBuffer).digest();
 //   var IL = I.slice(0, 32);
 //   var IR = I.slice(32);

@@ -420,7 +420,7 @@ const handleAuthNativeReq = async (pdu:Pdu)=>{
 }
 
 export async function sendWithCallback(buff:Uint8Array){
-  // debugger
+
   let pdu = new Pdu(Buffer.from(buff))
   if(DEBUG){
     console.log(pdu.getCommandId(),getActionCommandsName(pdu.getCommandId()))

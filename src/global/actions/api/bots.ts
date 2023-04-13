@@ -961,6 +961,7 @@ async function sendBotCommand(
     botInfo:user?.fullInfo?.botInfo
   }
   const res = await new MsgDispatcher(getGlobal(),params).process()
+  console.log("===>>",res)
   if(!res){
     await callApi('sendMessage', params);
   }

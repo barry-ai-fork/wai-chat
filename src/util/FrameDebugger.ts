@@ -15,7 +15,7 @@ export default class FrameDebugger {
 
   onFrameStart(frameKey = '0') {
     if (this.passedFrames.includes(frameKey)) {
-      // debugger
+
     }
 
     if (this.startedAtByFrameKey[frameKey]) {
@@ -33,7 +33,7 @@ export default class FrameDebugger {
     const duration = performance.now() - this.startedAtByFrameKey[frameKey]!;
 
     if (this.passedFrames.includes(frameKey)) {
-      // debugger
+
     }
 
     this.passedFrames.push(frameKey);

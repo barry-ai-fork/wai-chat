@@ -543,6 +543,7 @@ function getLinkUrl(entityContent: string, entity: ApiMessageEntity) {
 }
 
 function handleBotCommandClick(e: React.MouseEvent<HTMLAnchorElement>) {
+  e.stopPropagation()
   getActions().sendBotCommand({ command: e.currentTarget.innerText });
 }
 

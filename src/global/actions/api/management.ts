@@ -426,7 +426,7 @@ addActionHandler('uploadContactProfilePhoto', async (global, actions, payload): 
   const {
     userId, file, isSuggest, tabId = getCurrentTabId(),
   } = payload;
-  // debugger
+
   const user = selectUser(global, userId);
   if (!user) return;
 

@@ -330,7 +330,7 @@ const MessageContextMenu: FC<OwnProps> = ({
         {/*{true && (*/}
         {/*  <MenuItem icon="web" onClick={onSelectLanguage}>{lang('lng_settings_change_lang')}</MenuItem>*/}
         {/*)}*/}
-        <MenuItem icon="up" onClick={handleSaveMsgToCloud}>{lang('保存到云端')}</MenuItem>
+        <MenuItem icon="download" icon_rotate_180 onClick={handleSaveMsgToCloud}>{lang('保存到云端')}</MenuItem>
         <MenuItem icon="allow-speak" onClick={onSpeak}>{lang('朗读')}</MenuItem>
 
         {/* {canSendNow && <MenuItem icon="send-outline" onClick={onSend}>{lang('MessageScheduleSend')}</MenuItem>} */}

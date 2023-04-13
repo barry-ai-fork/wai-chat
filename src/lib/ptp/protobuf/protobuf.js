@@ -681,6 +681,9 @@ var $conv_message = $createConverter([
                 PbAiBot: {
                     '$': {"1":["chatGptConfig","default.PTP.Common.PbChatGpBotConfig",null],"3":["enableAi","bool",false]}
                 },
+                PbAudio: {
+                    '$': {"1":["id","string",""],"2":["size","[uint32",null],"3":["duration","[uint32",null],"5":["mimeType","string",""],"6":["fileName","string",""],"7":["performer","string",""],"8":["title","string",""],"9":["thumbnailSizes","<default.PTP.Common.PbSizes",null]}
+                },
                 PbBotInfo: {
                     '$': {"1":["botId","string",""],"2":["description","string",""],"4":["menuButton","default.PTP.Common.PbMenuButton",null],"5":["commands","<default.PTP.Common.PbCommands",null],"6":["photo","default.PTP.Common.PbPhoto",null],"7":["aiBot","default.PTP.Common.PbAiBot",null]}
                 },
@@ -700,7 +703,13 @@ var $conv_message = $createConverter([
                     '$': {"1":["botId","string",""],"2":["command","string",""],"3":["description","string",""]}
                 },
                 PbContent: {
-                    '$': {"1":["text","default.PTP.Common.PbText",null],"2":["photo","default.PTP.Common.PbPhoto",null],"3":["voice","default.PTP.Common.PbVoice",null],"4":["action","default.PTP.Common.PbAction",null]}
+                    '$': {"1":["text","default.PTP.Common.PbText",null],"2":["photo","default.PTP.Common.PbPhoto",null],"3":["voice","default.PTP.Common.PbVoice",null],"4":["action","default.PTP.Common.PbAction",null],"5":["document","default.PTP.Common.PbDocument",null],"6":["audio","default.PTP.Common.PbAudio",null]}
+                },
+                PbDimensions: {
+                    '$': {"1":["width","uint32",0],"2":["height","uint32",0]}
+                },
+                PbDocument: {
+                    '$': {"1":["id","string",""],"2":["fileName","string",""],"3":["size","[uint32",null],"4":["timestamp","uint32",0],"5":["duration","[uint32",null],"6":["mimeType","string",""],"7":["performer","string",""],"8":["previewBlobUrl","string",""],"9":["mediaType","string",""],"10":["mediaSize","default.PTP.Common.PbSizes",null],"11":["thumbnail","default.PTP.Common.PbThumbnail",null]}
                 },
                 PbFullInfo: {
                     '$': {"1":["bio","string",""],"2":["commonChatsCount","uint32",0],"3":["isBlocked","bool",false],"4":["noVoiceMessages","bool",false],"5":["botInfo","default.PTP.Common.PbBotInfo",null],"6":["pinnedMessageId","uint32",0]}

@@ -119,7 +119,7 @@ const MessageSelectToolbar: FC<OwnProps & StateProps> = ({
   );
 
   const renderButton = (
-    icon: string, label: string, onClick: AnyToVoidFunction, destructive?: boolean,
+    icon: string, label: string, onClick: AnyToVoidFunction, destructive?: boolean,icon_rotate_180?:boolean
   ) => {
     return (
       <div
@@ -132,7 +132,7 @@ const MessageSelectToolbar: FC<OwnProps & StateProps> = ({
         onClick={onClick}
         title={label}
       >
-        <i className={`icon-${icon}`} />
+        <i className={`icon-${icon_rotate_180 ? icon + " rotate_180" : icon}`} />
       </div>
     );
   };
@@ -173,7 +173,7 @@ const MessageSelectToolbar: FC<OwnProps & StateProps> = ({
             {/*)}*/}
 
             {(
-              renderButton('up', lang('保存到云端'), handleSaveMsgToCloud)
+              renderButton('download', lang('保存到云端'), handleSaveMsgToCloud,false,true)
             )}
 
             {renderButton('delete', lang('EditAdminGroupDeleteMessages'), openDeleteModal, true)}

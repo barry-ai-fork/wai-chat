@@ -10,6 +10,7 @@ import './MenuItem.scss';
 
 export type MenuItemProps = {
   icon?: string;
+  icon_rotate_180?: boolean;
   customIcon?: React.ReactNode;
   className?: string;
   children: React.ReactNode;
@@ -27,6 +28,7 @@ export type MenuItemProps = {
 const MenuItem: FC<MenuItemProps> = (props) => {
   const {
     icon,
+    icon_rotate_180,
     customIcon,
     className,
     children,
@@ -80,7 +82,7 @@ const MenuItem: FC<MenuItemProps> = (props) => {
   const content = (
     <>
       {!customIcon && icon && (
-        <i className={`icon-${icon}`} data-char={icon.startsWith('char-') ? icon.replace('char-', '') : undefined} />
+        <i className={`icon-${icon_rotate_180 ? icon + " rotate_180":icon}`} data-char={icon.startsWith('char-') ? icon.replace('char-', '') : undefined} />
       )}
       {customIcon}
       {children}

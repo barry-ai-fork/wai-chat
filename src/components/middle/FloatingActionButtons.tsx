@@ -65,7 +65,7 @@ const FloatingActionButtons: FC<OwnProps & StateProps> = ({
   }, [chatId, fetchUnreadMentions, hasUnreadMentions]);
 
   const handleClick = useCallback(() => {
-    // debugger
+
     if (!isShown) {
       return;
     }

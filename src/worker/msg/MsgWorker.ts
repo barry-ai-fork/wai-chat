@@ -156,7 +156,6 @@ export default class MsgWorker {
         }else if(document && document.id){
           id = document.id;
         }
-        debugger
         if(id){
           let arrayBuffer = await cacheApi.fetch(MEDIA_CACHE_NAME_WAI, id, Type.ArrayBuffer);
 

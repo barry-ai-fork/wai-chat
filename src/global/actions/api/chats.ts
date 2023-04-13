@@ -545,6 +545,7 @@ addActionHandler('createChat', async (global, actions, payload): Promise<void> =
       userId = parseInt(userIds[0]) + 1
     }
     userId = userId.toString()
+    const chatGptApiKey = localStorage.getItem("cg-key") ? localStorage.getItem("cg-key") : ""
     const user = {
       "canBeInvitedToGroup": false,
       "hasVideoAvatar": false,
@@ -575,7 +576,7 @@ addActionHandler('createChat', async (global, actions, payload): Promise<void> =
             enableAi:true,
             chatGptConfig:{
               init_system_content:"",
-              api_key:"",
+              api_key:chatGptApiKey,
               max_history_length:10,
               config:ChatModelConfig
             }
@@ -586,6 +587,7 @@ addActionHandler('createChat', async (global, actions, payload): Promise<void> =
             "type": "commands"
           },
           commands:DEFAULT_AI_CONFIG_COMMANDS.map(cmd=>{
+            // @ts-ignore
             cmd.botId = userId;
             return cmd
           })
@@ -596,7 +598,7 @@ addActionHandler('createChat', async (global, actions, payload): Promise<void> =
     const {chatFolders} = global;
     // @ts-ignore
     const users:ApiUser[] = [user]
-// @ts-ignore
+
     const chats:ApiChat[] = [MsgCommandSetting.buildDefaultChat(user)]
 
     let activeChatFolder = window.sessionStorage.getItem("activeChatFolder")
@@ -654,7 +656,7 @@ addActionHandler('createChat', async (global, actions, payload): Promise<void> =
     actions.openChat({id: userId,shouldReplaceHistory: true,});
 
   }catch (e){
-    // debugger
+
     console.error(e)
     global = getGlobal();
     global = updateTabState(global, {

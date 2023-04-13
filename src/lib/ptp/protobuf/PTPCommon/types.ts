@@ -48,6 +48,17 @@ export interface PbAiBot_Type {
   enableAi?: boolean;
 }
 
+export interface PbAudio_Type {
+  id: string;
+  size?: number[];
+  duration?: number[];
+  mimeType: string;
+  fileName: string;
+  performer?: string;
+  title?: string;
+  thumbnailSizes?: PbSizes_Type[];
+}
+
 export interface PbBotInfo_Type {
   botId: string;
   description?: string;
@@ -110,6 +121,27 @@ export interface PbContent_Type {
   photo?: PbPhoto_Type;
   voice?: PbVoice_Type;
   action?: PbAction_Type;
+  document?: PbDocument_Type;
+  audio?: PbAudio_Type;
+}
+
+export interface PbDimensions_Type {
+  width: number;
+  height: number;
+}
+
+export interface PbDocument_Type {
+  id?: string;
+  fileName: string;
+  size?: number[];
+  timestamp?: number;
+  duration?: number[];
+  mimeType: string;
+  performer?: string;
+  previewBlobUrl?: string;
+  mediaType?: string;
+  mediaSize?: PbSizes_Type;
+  thumbnail?: PbThumbnail_Type;
 }
 
 export interface PbFullInfo_Type {
