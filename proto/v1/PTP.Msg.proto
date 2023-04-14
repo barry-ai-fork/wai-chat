@@ -12,8 +12,11 @@ message SendReq{
 }
 
 message SendRes{
-  required string action = 1;
-  optional string payload = 2;
+  required string chatId = 1;
+  required string action = 2;
+  optional Common.PbMsg msg = 3;
+  optional string text = 4;
+  optional uint32 localId = 5;
   optional Common.ERR err = 100;
 }
 

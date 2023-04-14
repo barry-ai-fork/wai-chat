@@ -68,8 +68,11 @@ export interface SendReq_Type {
   msg?: PTPCommon.PbMsg_Type;
 }
 export interface SendRes_Type {
+  chatId: string;
   action: string;
-  payload?: string;
+  msg?: PTPCommon.PbMsg_Type;
+  text?: string;
+  localId?: number;
   err?: PTPCommon.ERR;
 }
 export interface UploadMsgReq_Type {

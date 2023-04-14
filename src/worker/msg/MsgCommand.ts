@@ -2,7 +2,7 @@ import MsgDispatcher from "./MsgDispatcher";
 import {selectUser} from "../../global/selectors";
 import {updateUser} from "../../global/reducers";
 import {getActions, getGlobal, setGlobal} from "../../global";
-import {ApiBotCommand} from "../../api/types";
+import {ApiBotCommand, ApiMessage} from "../../api/types";
 import {currentTs} from "../share/utils/utils";
 import {GlobalState} from "../../global/types";
 import MsgCommandSetting from "./MsgCommandSetting";
@@ -201,13 +201,41 @@ export default class MsgCommand {
       await botWs.waitForMsgServerState(BotWebSocketState.connected)
     }
   }
+  static async handleNewMessage(pdu:Pdu){
+    const {msg,text,chatId} = SendRes.parseMsg(pdu)
+    if(text){
+      return MsgDispatcher.newTextMessage(
+        chatId,undefined,
+        text
+      )
+    }else{
+      // @ts-ignore
+      const message:ApiMessage = msg
+      return MsgDispatcher.newMessage(
+        chatId,message.id,
+        message
+      )
+    }
+  }
+  static async handleUpdateMessage(pdu:Pdu){
+    const {msg,chatId} = SendRes.parseMsg(pdu)
+    // @ts-ignore
+    const message:Partial<ApiMessage> = msg
+    return MsgDispatcher.updateMessage(
+      chatId,message.id!,
+      message
+    )
+  }
   static async handleWsBotOnData(chatId:string,pdu:Pdu){
     switch (pdu.getCommandId()){
       case ActionCommands.CID_SendRes:
-        const {action,payload} = SendRes.parseMsg(pdu)
-        await MsgDispatcher.newTextMessage(
-          chatId,undefined,
-          `${payload}`)
+        const {action} = SendRes.parseMsg(pdu)
+        switch (action){
+          case "newMessage":
+            return await MsgCommand.handleNewMessage(pdu)
+          case "updateMessage":
+            return await MsgCommand.handleUpdateMessage(pdu)
+        }
         break
     }
   }

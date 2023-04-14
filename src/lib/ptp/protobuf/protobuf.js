@@ -827,7 +827,7 @@ var $conv_message = $createConverter([
                     '$': {"1":["chatId","string",""],"2":["text","string",""],"3":["msg","default.PTP.Common.PbMsg",null]}
                 },
                 SendRes: {
-                    '$': {"1":["action","string",""],"2":["payload","string",""],"100":["err","uint32",0]}
+                    '$': {"1":["chatId","string",""],"2":["action","string",""],"3":["msg","default.PTP.Common.PbMsg",null],"4":["text","string",""],"5":["localId","uint32",0],"100":["err","uint32",0]}
                 },
                 UploadMsgReq: {
                     '$': {"1":["messages","<default.PTP.Common.MessageStoreRow",null],"2":["chatId","string",""],"3":["time","uint32",0]}
