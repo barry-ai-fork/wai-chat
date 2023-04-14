@@ -665,7 +665,6 @@ addActionHandler('createChat', (global, actions, payload)=> {
       actions.editChatFolder({ id: activeChatFolderRow.id, folderUpdate: activeChatFolderRow });
     }
     if(promptInit){
-      actions.sendBotCommand({chatId:userId,command:"/start",tabId})
       actions.sendBotCommand({chatId:userId,command:"/initPrompt",tabId})
     }
     // @ts-ignore

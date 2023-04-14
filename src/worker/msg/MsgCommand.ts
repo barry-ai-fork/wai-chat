@@ -33,21 +33,22 @@ export default class MsgCommand {
       },
     })
   }
+  static buildInlineButton(chatId:string,path:string,text:string,type:'callback'){
+    return [
+      {
+        type,
+        text,
+        data:`${chatId}/${path}`
+      }
+    ]
+  }
   static async clearHistory(chatId:string){
-    let global = getGlobal();
-    const chatMessages = global.messages.byChatId[chatId];
-    const ids = Object.keys(chatMessages.byId).map(Number);
-    const chat = selectChat(global,chatId)
-    MsgDispatcher.apiUpdate({
-      "@type":"deleteMessages",
-      chatId,
-      ids
-    })
-    setTimeout(async ()=>{
-      const lastMessage = MsgDispatcher.buildMsgHistoryClear(chatId)
-      lastMessage.id = await MsgDispatcher.genMsgId()
-      MsgDispatcher.newMessage(chatId,lastMessage.id,lastMessage)
-    },500)
+    await MsgDispatcher.newTextMessage(chatId,undefined,'确定要清除么？',[
+      [
+        ...MsgCommand.buildInlineButton(chatId,"clearHistory/confirm","确定","callback"),
+        ...MsgCommand.buildInlineButton(chatId,"clearHistory/cancel","返回","callback")
+      ]
+    ])
 
     return true;
   }
@@ -136,11 +137,34 @@ export default class MsgCommand {
     await MsgCommandSetting.answerCallbackButton(global,chatId,messageId,data)
     await MsgCommandChatGpt.answerCallbackButton(global,chatId,messageId,data)
     await MsgCommandChatLab.answerCallbackButton(global,chatId,messageId,data)
+
+
+    if(data.endsWith("clearHistory/confirm")){
+      let global = getGlobal();
+      const chatMessages = global.messages.byChatId[chatId];
+      const ids = Object.keys(chatMessages.byId).map(Number);
+      getActions().sendBotCommand({chatId,command:"/start"})
+      MsgDispatcher.apiUpdate({
+        "@type":"deleteMessages",
+        chatId,
+        ids
+      })
+    }
+
+    if(data.endsWith("clearHistory/cancel")){
+      return MsgDispatcher.updateMessage(chatId,messageId, {
+          inlineButtons: []
+        }
+      )
+    }
+
     if(data.startsWith("requestChatStream/stop/")){
       const [chatId,messageId] = data.replace("requestChatStream/stop/","").split("/").map(Number)
       ControllerPool.stop(chatId,messageId);
     }
-
-
+    if(data.startsWith("requestChatStream/stop/")){
+      const [chatId,messageId] = data.replace("requestChatStream/stop/","").split("/").map(Number)
+      ControllerPool.stop(chatId,messageId);
+    }
   }
 }

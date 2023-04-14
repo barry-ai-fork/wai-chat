@@ -254,7 +254,10 @@ export default class MsgDispatcher {
   async processAiBotCmd(){
     const sendMsgText = this.getMsgText();
     const msgCommandChatGpt = new MsgCommandChatGpt(this.getChatId(),this.params.botInfo!);
-    await this.sendOutgoingMsg();
+    if(sendMsgText !== "/apiKey"){
+      await this.sendOutgoingMsg();
+    }
+
     switch(sendMsgText){
       case "/start":
         return await msgCommandChatGpt.start();

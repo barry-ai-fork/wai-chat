@@ -167,7 +167,8 @@ export default class MsgCommandChatGpt{
     const {chatId} = this
     const api_key = MsgCommandChatGpt.getChatGptConfig(getGlobal(),chatId,"api_key")
     const {value} = await showModalFromEvent({
-      initVal:api_key
+      initVal:api_key,
+      title:"请输入apiKey"
     })
     if(value && value!== api_key){
       localStorage.setItem("cg-key",value)

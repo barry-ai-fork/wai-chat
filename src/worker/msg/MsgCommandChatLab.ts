@@ -3,10 +3,11 @@ import {ApiBotInfo, ApiKeyboardButtons, ApiMessage} from "../../api/types";
 import {DEFAULT_BOT_COMMANDS, UserIdCnPrompt, UserIdEnPrompt, UserIdFirstBot} from "../setting";
 import {GlobalState} from "../../global/types";
 import {showModalFromEvent} from "../share/utils/modal";
-import {getActions, getGlobal} from "../../global";
+import {getActions, getGlobal, setGlobal} from "../../global";
 import {currentTs} from "../share/utils/utils";
 import {DEBUG} from "../../config";
 import {selectChatMessage} from "../../global/selectors";
+import {updateChat} from "../../global/reducers";
 
 export default class MsgCommandChatLab{
   private chatId: string;
@@ -103,12 +104,66 @@ export default class MsgCommandChatLab{
       const prompt = message.content.text!.text
       getActions().createChat({title,promptInit:prompt})
     }
+  }
+  static async createPromptChat(chatId:string,id:string){
+    let name: string;
+    const prompts = require('./prompts.json')
+    let tag: string;
+    if(id === UserIdEnPrompt){
+      name = "英文Prompt大全"
+      tag = 'en'
+    }else{
+      name = "中文Prompt大全"
+      tag = 'cn'
+    }
+    let needCreate = true;
+    let global = getGlobal();
+    if(global.chats.byId[id]){
+      const chat = global.chats.byId[id];
+      if(chat.isNotJoined){
+        delete global.chats.byId[id]
+        delete global.users.byId[id]
+        setGlobal(global)
+      }else{
+        needCreate = false
+      }
+    }
+    if(!needCreate){
+      getActions().openChat({id,shouldReplaceHistory:true})
+      return MsgDispatcher.showNotification(`${name} 已创建`)
+    }
+    const promptRows = prompts[tag]
+    getActions().createChat({id,title:name})
+    const msg0 = await MsgDispatcher.newTextMessage(chatId,undefined,"正在创建 "+name+"...")
+    setTimeout(async ()=>{
+      promptRows.reverse();
+      for (let i = 0; i < promptRows.length; i++) {
+        const desc = promptRows[i][1]
+        const title = promptRows[i][0]
+        if(desc){
+          await MsgDispatcher.newTextMessage(id,undefined,desc,[
+            [
+              {
+                text:"创建Gpt聊天",
+                type:"callback",
+                data:`${id}/createChat/${tag}/${title}`
+              }
+            ]
+          ])
+          await MsgDispatcher.updateMessage(chatId,msg0.id,{
+            ...msg0,
+            content:{
+              text:{
+                text:`正在创建 ${name}... ${i+1}/${promptRows.length}`
+              }
+            }
+          })
+        }
 
-
+      }
+    },500)
   }
   static async answerCallbackButton(global:GlobalState,chatId:string,messageId:number,data:string){
-    const {cn,en} = require('./prompts.json')
-    const userIds = Object.keys(global.users.byId)
 
     if(data.startsWith(`${chatId}/createChat/cn`)){
       await MsgCommandChatLab.createChat(UserIdCnPrompt,data,messageId)
@@ -120,74 +175,10 @@ export default class MsgCommandChatLab{
     }
     switch (data){
       case `${chatId}/lab/createEnPrompt`:
-        if(UserIdEnPrompt && userIds.includes(UserIdEnPrompt)){
-          getActions().showNotification({message:`${UserIdEnPrompt} 已存在`})
-          return
-        }
-        getActions().createChat({id:UserIdEnPrompt,title:"英文Prompt大全"})
-        const msg0 = await MsgDispatcher.newTextMessage(chatId,undefined,"正在创建 英文Prompt大全...")
-        setTimeout(async ()=>{
-          en.reverse();
-          for (let i = 0; i < en.length; i++) {
-            const desc = en[i][1]
-            const title = en[i][0]
-            if(desc){
-              await MsgDispatcher.newTextMessage(UserIdEnPrompt,undefined,desc,[
-                [
-                  {
-                    text:"创建Gpt聊天",
-                    type:"callback",
-                    data:`${UserIdEnPrompt}/createChat/en/${title}`
-                  }
-                ]
-              ])
-              await MsgDispatcher.updateMessage(chatId,msg0.id,{
-                ...msg0,
-                content:{
-                  text:{
-                    text:`正在创建 英文Prompt大全... ${i+1}/${en.length}`
-                  }
-                }
-              })
-            }
-
-          }
-        },500)
+        await MsgCommandChatLab.createPromptChat(chatId,UserIdEnPrompt)
         break
       case `${chatId}/lab/createCnPrompt`:
-        if(UserIdCnPrompt && userIds.includes(UserIdCnPrompt)){
-          getActions().showNotification({message:`${UserIdCnPrompt} 已存在`})
-          return
-        }
-        getActions().createChat({id:UserIdCnPrompt,title:"中文Prompt大全"})
-        const msg1 = await MsgDispatcher.newTextMessage(chatId,undefined,"正在创建 中文Prompt大全...")
-        setTimeout(async ()=>{
-          cn.reverse();
-          for (let i = 0; i < cn.length; i++) {
-            const desc = cn[i][1]
-            const title = cn[i][0]
-            if(desc){
-              await MsgDispatcher.newTextMessage(UserIdCnPrompt,undefined,desc,[
-                [
-                  {
-                    text:"创建Gpt聊天",
-                    type:"callback",
-                    data:`${UserIdCnPrompt}/createChat/cn/${title}`
-                  }
-                ]
-              ])
-              await MsgDispatcher.updateMessage(chatId,msg1.id,{
-                ...msg1,
-                content:{
-                  text:{
-                    text:`正在创建 中文Prompt大全... ${i+1}/${cn.length}`
-                  }
-                }
-              })
-            }
-
-          }
-        },500)
+        await MsgCommandChatLab.createPromptChat(chatId,UserIdCnPrompt)
         break
       case `${chatId}/lab/InlineButs`:
         await MsgDispatcher.newTextMessage(chatId,undefined,"",MsgCommandChatLab.getInlineButtonsDemo())
@@ -196,26 +187,6 @@ export default class MsgCommandChatLab{
       case `${chatId}/lab/dumpUsers`:
         if(DEBUG){
           await MsgDispatcher.newCodeMessage(chatId,undefined,JSON.stringify(global.messages.byChatId[chatId],null,2))
-          // await MsgDispatcher.newCodeMessage(chatId,undefined,JSON.stringify(global.messages.byChatId["1111"],null,2))
-          // global = getGlobal()
-          // getActions().updateGlobal({
-          //   ...global,
-          //   messages:{
-          //     ...global.messages,
-          //     byChatId:{
-          //       ...global.messages.byChatId,
-          //       ["1111"]:{
-          //         ...global.messages.byChatId["1111"],
-          //         threadsById:{
-          //           "-1":{
-          //             ...global.messages.byChatId["1111"].threadsById["-1"],
-          //             lastScrollOffset:0
-          //           }
-          //         }
-          //       }
-          //     }
-          //   }
-          // })
         }
         break
       case `${chatId}/lab/testMsg`:
@@ -252,6 +223,8 @@ export default class MsgCommandChatLab{
           text:"中文Prompt大全",
           type:"callback"
         },
+      ],
+      [
         {
           data:`${this.chatId}/lab/createEnPrompt`,
           text:"英文Prompt大全",
