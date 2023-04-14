@@ -1,13 +1,13 @@
 import MsgDispatcher from "./MsgDispatcher";
 import {selectChatMessage, selectChatMessages, selectUser} from "../../global/selectors";
 import {addChats, addUsers, updateChatListIds, updateUser} from "../../global/reducers";
-import {UserIdFirstBot} from "../setting";
 import {getActions, getGlobal, setGlobal} from "../../global";
-import {ApiKeyboardButtons, ApiMessage, ApiUser} from "../../api/types";
+import {ApiKeyboardButtons, ApiUser} from "../../api/types";
 import {callApiWithPdu} from "./utils";
 import {currentTs} from "../share/utils/utils";
 import {
-  MessageStoreRow_Type, PbMsg_Type,
+  MessageStoreRow_Type,
+  PbMsg_Type,
   QrCodeType,
   UserStoreData_Type,
   UserStoreRow_Type
@@ -26,6 +26,7 @@ import {Decoder} from "@nuintun/qrcode";
 import {PbQrCode} from "../../lib/ptp/protobuf/PTPCommon";
 import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
 import {aesDecrypt} from "../../util/passcode";
+import {DEBUG} from "../../config";
 
 let currentSyncBotContext:string|undefined;
 
@@ -73,7 +74,7 @@ export default class MsgCommandSetting{
     })
   }
   static getInlineButtons(chatId:string,isEnableSync:boolean):ApiKeyboardButtons{
-    return isEnableSync ? [
+    const res:ApiKeyboardButtons = isEnableSync ? [
       [
         {
           data:`${chatId}/setting/uploadFolder`,
@@ -138,6 +139,10 @@ export default class MsgCommandSetting{
         },
       ],
     ]
+    if(DEBUG){
+      res.push(MsgCommand.buildInlineButton(chatId,"setting/debug","Debug",'callback'))
+    }
+    return res;
   }
   static async requestUploadImage(global:GlobalState,chatId:string,messageId:number,files:FileList | null){
     if(files && files.length > 0){
@@ -209,12 +214,25 @@ export default class MsgCommandSetting{
   }
   static async answerCallbackButton(global:GlobalState,chatId:string,messageId:number,data:string){
     switch (data){
+      case `${chatId}/setting/debug`:
+        if(DEBUG){
+          console.log("=========>>>【start】",{
+            users:global.users,
+            chats:global.chats,
+            chatIdsDeleted:global.chatIdsDeleted,
+            messages:global.messages,
+            chatFolders:global.chatFolders,
+          })
+        }
+        // await MsgDispatcher.newJsonMessage(chatId,undefined,{chatFolders:global.chatFolders})
+        // await MsgDispatcher.newJsonMessage(chatId,undefined,{chatIdsDeleted:global.chatIdsDeleted})
+        await MsgCommand.createWsBot(chatId)
+        break
       case `${chatId}/setting/getSession`:
         const account = Account.getCurrentAccount();
         const entropy = await account?.getEntropy();
         const mnemonic = Mnemonic.fromEntropy(entropy!)
         const accountId = account?.getAccountId()
-        Account.getEntropyList();
 
         await MsgCommand.sendText(chatId,accountId!.toString())
         await MsgCommand.sendText(chatId,entropy!)
@@ -319,7 +337,7 @@ export default class MsgCommandSetting{
     const chats = global.chats.byId
     const chatIds = Object.keys(chats).filter(id=>id !== "1");
     const chatIdsDeleted:string[] = global.chatIdsDeleted;
-    console.log("local",{chatIds,chatIdsDeleted})
+    console.log("【local】",{chatIds,chatIdsDeleted})
     const userStoreData:UserStoreData_Type|undefined = isUpload ?{
       time:currentTs(),
       chatFolders:JSON.stringify(global.chatFolders),
@@ -331,7 +349,7 @@ export default class MsgCommandSetting{
       userStoreData
     }).pack())
     const syncRes = SyncRes.parseMsg(res!.pdu)
-    console.log("[syncRes]",syncRes)
+
     let users:UserStoreRow_Type[] = [];
     if(isUpload){
       for (let index = 0; index < chatIds.length; index++) {
@@ -350,6 +368,7 @@ export default class MsgCommandSetting{
 
     if(syncRes.userStoreData){
       let {chatFolders,...res} = syncRes.userStoreData
+      console.log("【remote userStoreData】",res,"chatFolders:",chatFolders ? JSON.parse(chatFolders):[])
       if(!chatFolders){
         // @ts-ignore
         chatFolders = global.chatFolders
@@ -361,14 +380,13 @@ export default class MsgCommandSetting{
           chatIdsDeleted.push(id)
         }
       })
-      console.log("remote",res)
       if(res.chatIds){
         const DownloadUserReqRes = await callApiWithPdu(new DownloadUserReq({
           userIds:res.chatIds,
         }).pack())
         if(DownloadUserReqRes){
           const downloadUserRes = DownloadUserRes.parseMsg(DownloadUserReqRes?.pdu!)
-          console.log("downloadUserRes",downloadUserRes)
+          console.log("【DownloadUserRes】",downloadUserRes.users)
           global = getGlobal();
           if(downloadUserRes.users){
             const addUsersObj = {}
@@ -410,7 +428,6 @@ export default class MsgCommandSetting{
     }
     getActions().showNotification({message:"更新成功"})
   }
-
   static async enableSync(global:GlobalState,chatId:string,messageId:number,password:string){
     const account = Account.getCurrentAccount();
     const pwd = hashSha256(password)

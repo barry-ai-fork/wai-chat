@@ -92,3 +92,11 @@ echo copy to $DIR_DIR_TS
 #echo copy to $DIR_DIR_TS2
 #rm -rf $DIR_DIR_TS2
 #cp -a $DIR_DIR_TS $DIR_DIR_TS2
+
+DIR_DIR_TS3=$PROJECT_DIR/../wai-chat-bot/src/lib/ptp/protobuf/
+mkdir -p $DIR_DIR_TS3
+echo copy to $DIR_DIR_TS3
+rm -rf $DIR_DIR_TS3
+cp -a $DIR_DIR_TS $DIR_DIR_TS3
+
+

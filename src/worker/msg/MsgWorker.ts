@@ -1,4 +1,4 @@
-import {ApiAttachment, ApiBotInfo, ApiChat, ApiMediaFormat, ApiMessage, ApiUpdate, OnApiUpdate} from "../../api/types";
+import {ApiAttachment, ApiBotInfo, ApiChat, ApiMessage, ApiUpdate, OnApiUpdate} from "../../api/types";
 import {LOCAL_MESSAGE_MIN_ID, MEDIA_CACHE_NAME_WAI} from "../../config";
 import {DownloadMsgRes, GenMsgIdReq, GenMsgIdRes, UploadMsgReq} from "../../lib/ptp/protobuf/PTPMsg";
 import {getNextLocalMessageId} from "../../api/gramjs/apiBuilders/messages";
@@ -15,17 +15,16 @@ import {
   writeInt32
 } from "../../lib/ptp/protobuf/BaseMsg";
 import {PbMsg, PbUser} from "../../lib/ptp/protobuf/PTPCommon";
-import {account, sendWithCallback} from "../../api/gramjs/methods/client";
+import {account} from "../../api/gramjs/methods/client";
 import {DownloadUserRes, UploadUserReq} from "../../lib/ptp/protobuf/PTPUser";
 import {sleep} from "../../lib/gramjs/Helpers";
 import {Api as GramJs} from "../../lib/gramjs";
 import {blobToDataUri, fetchBlob} from "../../util/files";
 import {parseCodeBlock, parseEntities} from "../share/utils/stringParse";
 import MsgChatGptWorker from "./MsgChatGpWorker";
+import * as cacheApi from "../../util/cacheApi";
 import {Type} from "../../util/cacheApi";
-import * as cacheApi from '../../util/cacheApi';
 import {DownloadRes} from "../../lib/ptp/protobuf/PTPFile";
-import {ERR} from "../../lib/ptp/protobuf/PTPCommon/types";
 import {uploadFileCache} from "../../lib/gramjs/client/uploadFile";
 
 let messageIds:number[] = [];
@@ -62,7 +61,9 @@ export default class MsgWorker {
     if(users){
       for (let i = 0; i < users?.length; i++) {
         if (users) {
-          if(users.length === 1 && users[0].user!.photos && users[0].user!.photos.length > 0){
+          if(
+            (users.length === 1 && users[0].user!.photos && users[0].user!.photos.length > 0 )
+          ){
             const photo = users[0].user!.photos[0];
             let id;
             if(photo && photo.id){

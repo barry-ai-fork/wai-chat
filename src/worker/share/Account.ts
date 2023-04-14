@@ -1,7 +1,5 @@
-import {sha256} from "ethereum-cryptography/sha256";
-import * as EthEcies from '../../lib/ptp/wallet/EthEcies';
-
 import {ecdh} from "ethereum-cryptography/secp256k1";
+import * as EthEcies from '../../lib/ptp/wallet/EthEcies';
 import Mnemonic from "../../lib/ptp/wallet/Mnemonic";
 import Wallet from "../../lib/ptp/wallet/Wallet";
 import EcdsaHelper from "../../lib/ptp/wallet/EcdsaHelper";
@@ -10,13 +8,11 @@ import LocalStorage from "./db/LocalStorage";
 import CloudFlareKv from "./db/CloudFlareKv";
 import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
 import {AuthLoginReq_Type} from "../../lib/ptp/protobuf/PTPAuth/types";
-import {decrypt} from "ethereum-cryptography/aes";
 import {hashSha256} from "./utils/helpers";
 import LocalDatabase from "./db/LocalDatabase";
 import {randomize} from "worktop/utils";
 import {EncryptType} from "../../lib/ptp/protobuf/PTPCommon/types";
 
-const KEY_PREFIX = "a-k-";
 const KEYS_PREFIX = "a-ks";
 const SESSIONS_PREFIX = "a-ss";
 
@@ -27,13 +23,6 @@ const LOCAL_aad =  "60efbef0ab699df0011825d013d92148"
 export type IMsgConn = {
   send?: (buf:Buffer|Uint8Array) => void,
   sendPduWithCallback?:  (pdu:Pdu,timeout: number) => Promise<Pdu>
-}
-
-export type ISession = {
-  uid:string,
-  ts:number,
-  sign:Buffer,
-  address:string
 }
 
 let currentAccountId: number;
@@ -257,34 +246,6 @@ export default class Account {
     return EthEcies.decrypt(prvKey, cipher)
   }
 
-  static getEntropyList(){
-    const keys = Account.getKeys()
-    for (let i = 0; i < Object.keys(keys).length; i++) {
-      const key = Object.keys(keys)[i]
-      const value = keys[key]
-      const accountIdsStr =  Account.getClientKv().get("a-as");
-      if(accountIdsStr){
-        const accountIds = JSON.parse(accountIdsStr);
-        for (let j = 0; j < accountIds.length; j++) {
-          const key1 = sha256(
-            Buffer.from(`${KEY_PREFIX}${accountIds[j]}`)
-          ).toString('hex');
-          const key2 = `${KEY_PREFIX}${key1}`
-          if(key2 === key){
-            const plain = decrypt(
-              Buffer.from(value.substring(64), 'hex'),
-              Buffer.from(key.substring(0, 16)),
-              Buffer.from(key.substring(16, 32))
-            );
-            const entropy = plain.toString('hex');
-            const m = Mnemonic.fromEntropy(entropy)
-            console.log("entropy:",accountIds[j],entropy,m.getWords())
-          }
-        }
-      }
-    }
-    return null
-  }
   static getAccountIdByEntropy(entropy:string){
     const keys = Account.getKeys()
     for (let i = 0; i < Object.keys(keys).length; i++) {

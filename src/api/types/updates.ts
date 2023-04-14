@@ -33,7 +33,6 @@ import type {
 } from './calls';
 import type { ApiBotMenuButton } from './bots';
 import type { ApiPrivacyKey, PrivacyVisibility } from '../../types';
-import {ISession} from "../../worker/share/Account";
 
 export type ApiUpdateReady = {
   '@type': 'updateApiReady';
@@ -107,7 +106,6 @@ export type ApiUpdateCurrentUser = {
   '@type': 'updateCurrentUser';
   currentUser: ApiUser;
   accountId?:number,
-  sessionData?:ISession,
 };
 
 export type ApiUpdateChat = {

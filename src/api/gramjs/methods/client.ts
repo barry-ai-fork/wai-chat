@@ -22,7 +22,7 @@ import localDb, {clearLocalDb} from '../localDb';
 import {buildApiPeerId} from '../apiBuilders/peers';
 import {addMessageToLocalDb, log} from '../helpers';
 import {Pdu} from "../../../lib/ptp/protobuf/BaseMsg";
-import Account, {ISession} from "../../../worker/share/Account";
+import Account from "../../../worker/share/Account";
 import LocalDatabase from "../../../worker/share/db/LocalDatabase";
 import {ActionCommands, getActionCommandsName} from "../../../lib/ptp/protobuf/ActionCommands";
 import {CurrentUserInfo} from "../../../worker/setting";
@@ -467,13 +467,3 @@ export async function sendWithCallback(buff:Uint8Array){
   return buf;
 }
 
-export async function msgClientLogin(payload:ISession){
-  return  await client.login(payload);
-}
-
-export async function setSession(payload:AccountSession){
-  // accountSession = {
-  //   ...accountSession,
-  //   ...payload
-  // };
-}

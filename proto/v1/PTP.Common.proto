@@ -256,6 +256,7 @@ message PbChatGptConfig {
 message PbAiBot {
   optional PbChatGpBotConfig chatGptConfig = 1;
   optional bool enableAi = 3;
+  optional string botApi = 4;
 }
 
 message PbQrCode {

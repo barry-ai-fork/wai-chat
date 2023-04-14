@@ -1,5 +1,6 @@
 import {
-  ApiAttachment, ApiBotInfo,
+  ApiAttachment,
+  ApiBotInfo,
   ApiChat,
   ApiFormattedText,
   ApiKeyboardButtons,
@@ -14,15 +15,16 @@ import {GlobalState} from "../../global/types";
 import {getActions, getGlobal} from "../../global";
 import {callApiWithPdu} from "./utils";
 import {currentTs} from "../share/utils/utils";
-import {GenMsgIdReq, GenMsgIdRes} from "../../lib/ptp/protobuf/PTPMsg";
+import {GenMsgIdReq, GenMsgIdRes, SendReq} from "../../lib/ptp/protobuf/PTPMsg";
 import MsgCommand from "./MsgCommand";
 import {parseCodeBlock} from "../share/utils/stringParse";
 import MsgWorker from "./MsgWorker";
-import {DEFAULT_AI_CONFIG_COMMANDS, DEFAULT_BOT_COMMANDS, UserIdFirstBot} from "../setting";
+import {DEFAULT_BOT_COMMANDS, UserIdFirstBot} from "../setting";
 import MsgCommandChatGpt from "./MsgCommandChatGpt";
 import MsgCommandSetting from "./MsgCommandSetting";
 import {selectUser} from "../../global/selectors";
 import MsgCommandChatLab from "./MsgCommandChatLab";
+import BotWebSocket, {BotWebSocketState} from "./bot/BotWebSocket";
 
 export type ParamsType = {
   chat: ApiChat;
@@ -115,6 +117,11 @@ export default class MsgDispatcher {
   }
   static async newCodeMessage(chatId:string,messageId?:number,text?:string){
     text = "```\n"+text!+"```"
+    return await MsgDispatcher.newTextMessage(chatId,messageId,text,[])
+  }
+
+  static async newJsonMessage(chatId:string,messageId?:number,json?:object){
+    const text = "```json\n"+JSON.stringify(json,null,2)!+"```"
     return await MsgDispatcher.newTextMessage(chatId,messageId,text,[])
   }
 
@@ -235,6 +242,16 @@ export default class MsgDispatcher {
       return []
     }
   }
+  getBot(){
+    const {botInfo} = this.params;
+    return botInfo
+  }
+
+  getBotConfig(){
+    const {botInfo} = this.params;
+    return botInfo ? botInfo.aiBot : undefined
+  }
+
   async processCmd(){
     const sendMsgText = this.getMsgText();
     const commands = this.getBotCommands();
@@ -260,6 +277,7 @@ export default class MsgDispatcher {
 
     switch(sendMsgText){
       case "/start":
+        // await MsgCommand.reloadCommands(this.getChatId(),DEFAULT_AI_CONFIG_COMMANDS)
         return await msgCommandChatGpt.start();
       case "/setting":
         return msgCommandChatGpt.setting()
@@ -302,9 +320,29 @@ export default class MsgDispatcher {
     if(this.getMsgText()?.startsWith("/")){
       res = this.processCmd();
     }
+    if(!res && this.getBot()){
+      res = await this.handleWsBot();
+    }
     return res
   }
-
+  async handleWsBot(){
+    const config = this.getBotConfig();
+    if(config && config.botApi){
+      const wsBot = BotWebSocket.getInstance(this.getChatId())
+      if(wsBot){
+        if(!wsBot.isConnect()){
+          await MsgCommand.createWsBot(this.getChatId())
+        }
+        if(wsBot.isConnect()){
+          wsBot.send(new SendReq({
+            chatId:this.getChatId(),
+            text:this.getMsgText()
+          }).pack().getPbData())
+        }
+        return await this.sendOutgoingMsg();
+      }
+    }
+  }
   static showNotification(message:string){
     getActions().showNotification({message})
   }

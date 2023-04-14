@@ -105,7 +105,7 @@ export interface Header {
   length: number;
   version: number;
   flag: number;
-  command_id: ActionCommands;
+  command_id: number;
   seq_num: number;
   reversed: number;
 }

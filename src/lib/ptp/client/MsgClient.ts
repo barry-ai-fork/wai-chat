@@ -1,9 +1,5 @@
 import {CLOUD_WS_URL, DEBUG} from '../../../config';
-import Account, {ISession} from "../../../worker/share/Account";
 import {Pdu} from "../protobuf/BaseMsg";
-import {ERR} from "../protobuf/PTPCommon/types";
-import {AuthLoginReq, AuthLoginRes, AuthStep1Req, AuthStep1Res, AuthStep2Req} from "../protobuf/PTPAuth";
-import {randomize} from "worktop/utils";
 import {ActionCommands, getActionCommandsName} from "../protobuf/ActionCommands";
 
 export enum MsgConnNotifyAction{
@@ -154,7 +150,7 @@ export default class MsgClient {
     this.notifyState(MsgClientState.connected);
     this.authStep1().catch(console.error)
   }
-  async login(sessionData?:ISession){
+  async login(sessionData?:any){
     // const account = Account.getInstance(this.accountId)
     // let pdu:Pdu | undefined = undefined;
     // let session:ISession|undefined

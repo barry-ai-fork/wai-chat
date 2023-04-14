@@ -4,15 +4,14 @@ import {ApiBotInfo, ApiKeyboardButtons, ApiMessage} from "../../api/types";
 import {GlobalState} from "../../global/types";
 import {getGlobal, setGlobal} from "../../global";
 import {selectUser} from "../../global/selectors";
-import {addChats, addUsers, updateUser} from "../../global/reducers";
+import {updateUser} from "../../global/reducers";
 import {DEFAULT_AI_CONFIG_COMMANDS} from "../setting";
 import {callApiWithPdu} from "./utils";
 import {StopChatStreamReq} from "../../lib/ptp/protobuf/PTPOther";
 import Account from "../share/Account";
 import MsgCommand from "./MsgCommand";
 import {showModalFromEvent} from "../share/utils/modal";
-import {PbChatGpBotConfig_Type, UserStoreRow_Type} from "../../lib/ptp/protobuf/PTPCommon/types";
-import {DownloadUserReq, DownloadUserRes, UploadUserReq} from "../../lib/ptp/protobuf/PTPUser";
+import {PbAiBot_Type, PbChatGpBotConfig_Type} from "../../lib/ptp/protobuf/PTPCommon/types";
 
 export default class MsgCommandChatGpt{
   private chatId: string;
@@ -22,6 +21,7 @@ export default class MsgCommandChatGpt{
     this.botInfo = botInfo;
   }
   static getInlineButtons(chatId:string,isEnableSync:boolean):ApiKeyboardButtons{
+
     return isEnableSync ? [
       [
         {
@@ -32,6 +32,13 @@ export default class MsgCommandChatGpt{
         {
           data:`${chatId}/setting/downloadUser`,
           text:"更新机器人",
+          type:"callback"
+        },
+      ],
+      [
+        {
+          data:`${chatId}/setting/createBotWs`,
+          text:"使用BotApi",
           type:"callback"
         },
       ],
@@ -128,22 +135,31 @@ export default class MsgCommandChatGpt{
     MsgDispatcher.newMessage(chatId,messageId,message)
     return message
   }
-  static getChatGptConfig(global:GlobalState,chatId:string,key:'api_key'|'init_system_content'){
+
+  static getAiBotConfig(global:GlobalState,chatId:string,key:'enableAi'|'botApi'|'chatGptConfig'){
     const user = selectUser(global,chatId);
     if(
       user?.fullInfo &&
       user?.fullInfo.botInfo &&
-      user?.fullInfo.botInfo.aiBot &&
-      user?.fullInfo.botInfo.aiBot.chatGptConfig &&
-      user?.fullInfo.botInfo.aiBot.chatGptConfig[key]
+      user?.fullInfo.botInfo.aiBot
     ){
-      return user?.fullInfo.botInfo.aiBot.chatGptConfig[key]
+      return user?.fullInfo.botInfo.aiBot[key]
+    }else{
+      return undefined
+    }
+  }
+  static getChatGptConfig(global:GlobalState,chatId:string,key:'api_key'|'init_system_content'){
+    const user = selectUser(global,chatId);
+    // @ts-ignore
+    const aiBotConfig:PbChatGpBotConfig_Type = MsgCommandChatGpt.getAiBotConfig(global,chatId,"chatGptConfig")
+    if(aiBotConfig && aiBotConfig[key]){
+      return aiBotConfig[key]
     }else{
       return ""
     }
   }
-  static changeChatGptConfig(botId:string,chatGptConfig:Partial<PbChatGpBotConfig_Type>){
-    let global = getGlobal();
+  static changeAiBotConfig(global:GlobalState,botId:string,aiConfig:Partial<PbAiBot_Type>){
+    global = getGlobal();
     const user = selectUser(global,botId);
     global = updateUser(global,botId,{
       ...user,
@@ -153,15 +169,24 @@ export default class MsgCommandChatGpt{
           ...user?.fullInfo?.botInfo!,
           aiBot:{
             ...user?.fullInfo?.botInfo?.aiBot,
-            chatGptConfig:{
-              ...user?.fullInfo?.botInfo?.aiBot?.chatGptConfig,
-              ...chatGptConfig
-            }
+            ...aiConfig
           }
         }
       }
     })
     setGlobal(global)
+  }
+  static changeChatGptConfig(botId:string,chatGptConfig:Partial<PbChatGpBotConfig_Type>){
+    let global = getGlobal();
+    const user = selectUser(global,botId);
+
+    MsgCommandChatGpt.changeAiBotConfig(global,botId,{
+      ...user?.fullInfo?.botInfo?.aiBot,
+      chatGptConfig:{
+        ...user?.fullInfo?.botInfo?.aiBot?.chatGptConfig,
+        ...chatGptConfig
+      }
+    })
   }
   async apiKey(){
     const {chatId} = this
@@ -224,8 +249,35 @@ export default class MsgCommandChatGpt{
     MsgDispatcher.newMessage(chatId,messageId,message)
     return message
   }
+  static async createBotWs(chatId:string){
+    let global = getGlobal();
+    // @ts-ignore
+    let botApi:string | undefined = MsgCommandChatGpt.getAiBotConfig(global,chatId,"botApi")
+    if(!botApi){
+      const res = await showModalFromEvent({
+        type:"singleInput",
+        title:"请输入 网址",
+        placeholder:"",
+        initVal:botApi
+      });
+      let {value} = res
+      if(botApi !== value){
+        botApi = value
+        MsgCommandChatGpt.changeAiBotConfig(global,chatId,{
+          botApi:value || ""
+        })
+      }
+    }
+
+    if(botApi){
+      await MsgCommand.createWsBot(chatId)
+    }
+  }
   static async answerCallbackButton(global:GlobalState,chatId:string,messageId:number,data:string){
     switch (data){
+      case `${chatId}/setting/createBotWs`:
+        await MsgCommandChatGpt.createBotWs(chatId)
+        return
       case `${chatId}/setting/uploadUser`:
         await MsgCommand.uploadUser(global,chatId)
         break

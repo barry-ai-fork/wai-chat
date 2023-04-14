@@ -1,5 +1,5 @@
 import MsgDispatcher from "./MsgDispatcher";
-import {selectChat, selectUser} from "../../global/selectors";
+import {selectUser} from "../../global/selectors";
 import {updateUser} from "../../global/reducers";
 import {getActions, getGlobal, setGlobal} from "../../global";
 import {ApiBotCommand} from "../../api/types";
@@ -12,6 +12,11 @@ import MsgCommandChatLab from "./MsgCommandChatLab";
 import {UserStoreRow_Type} from "../../lib/ptp/protobuf/PTPCommon/types";
 import {callApiWithPdu} from "./utils";
 import {DownloadUserReq, DownloadUserRes, UploadUserReq} from "../../lib/ptp/protobuf/PTPUser";
+import BotWebSocket, {BotWebSocketNotifyAction, BotWebSocketState} from "./bot/BotWebSocket";
+import Account from "../share/Account";
+import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
+import {ActionCommands} from "../../lib/ptp/protobuf/ActionCommands";
+import {SendRes} from "../../lib/ptp/protobuf/PTPMsg";
 
 export default class MsgCommand {
   private msgDispatcher: MsgDispatcher;
@@ -133,11 +138,9 @@ export default class MsgCommand {
     await MsgCommandSetting.requestUploadImage(global,chatId,messageId,files)
   }
   static async answerCallbackButton(global:GlobalState,chatId:string,messageId:number,data:string){
-    console.log("answerCallbackButton",data)
     await MsgCommandSetting.answerCallbackButton(global,chatId,messageId,data)
     await MsgCommandChatGpt.answerCallbackButton(global,chatId,messageId,data)
     await MsgCommandChatLab.answerCallbackButton(global,chatId,messageId,data)
-
 
     if(data.endsWith("clearHistory/confirm")){
       let global = getGlobal();
@@ -165,6 +168,47 @@ export default class MsgCommand {
     if(data.startsWith("requestChatStream/stop/")){
       const [chatId,messageId] = data.replace("requestChatStream/stop/","").split("/").map(Number)
       ControllerPool.stop(chatId,messageId);
+    }
+  }
+  static async createWsBot(chatId:string){
+    const global = getGlobal();
+    const user = selectUser(global,chatId)
+    const botWs = BotWebSocket.getInstance(chatId)
+    if(!botWs.isConnect() && user?.fullInfo?.botInfo?.aiBot && user?.fullInfo?.botInfo?.aiBot!.botApi){
+      botWs.setMsgHandler(async (chatId, notifies)=>{
+        for (let i = 0; i < notifies.length; i++) {
+          const {action,payload} = notifies[i]
+          switch (action){
+            case BotWebSocketNotifyAction.onConnectionStateChanged:
+              switch (payload.BotWebSocketState){
+                case BotWebSocketState.connected:
+                  await MsgDispatcher.newTextMessage(chatId,undefined,"已连接")
+                  break;
+                case BotWebSocketState.closed:
+                  // await MsgDispatcher.newTextMessage(chatId,undefined,"已断开")
+                  break;
+              }
+              break
+            case BotWebSocketNotifyAction.onData:
+              await MsgCommand.handleWsBotOnData(chatId,payload)
+              break
+          }
+        }
+      })
+      botWs.setWsUrl(user?.fullInfo?.botInfo?.aiBot.botApi)
+      botWs.setSession(Account.getCurrentAccount()?.getSession()!)
+      botWs.connect();
+      await botWs.waitForMsgServerState(BotWebSocketState.connected)
+    }
+  }
+  static async handleWsBotOnData(chatId:string,pdu:Pdu){
+    switch (pdu.getCommandId()){
+      case ActionCommands.CID_SendRes:
+        const {action,payload} = SendRes.parseMsg(pdu)
+        await MsgDispatcher.newTextMessage(
+          chatId,undefined,
+          `${payload}`)
+        break
     }
   }
 }
