@@ -40,7 +40,7 @@ module.exports = (_env, { mode = 'production' }) => {
       port: 1234,
       host: '0.0.0.0',
       allowedHosts: 'all',
-      hot: false,
+      hot: true,
       static: [
         {
           directory: path.resolve(__dirname, 'public'),
