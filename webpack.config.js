@@ -23,7 +23,7 @@ const {
 
 dotenv.config();
 
-const DEFAULT_APP_TITLE = `WAI${APP_ENV !== 'production' ? ' Beta' : ''}`;
+const DEFAULT_APP_TITLE = `Wai${APP_ENV !== 'production' ? ' Beta' : ''}`;
 
 const {
   BASE_URL = 'https://wai.chat/',
@@ -177,8 +177,8 @@ module.exports = (_env, { mode = 'production' }) => {
         CLOUD_MESSAGE_API:undefined,
         CLOUD_WS_URL: "",
         NODE_DEBUG:false,
-        TEST_USERNAME:APP_ENV === 'production'? "" : "tom",
-        TEST_PWD: APP_ENV === 'production' ? "" :"Tom@56781234",
+        TEST_USERNAME:APP_ENV === 'production'? "" : "",
+        TEST_PWD: APP_ENV === 'production' ? "" :"",
         // eslint-disable-next-line no-null/no-null
         TEST_SESSION: null,
         // TELEGRAM_T_API_ID: undefined,

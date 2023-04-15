@@ -1,5 +1,5 @@
 import type {RequiredGlobalActions} from '../../index';
-import {addActionHandler, getGlobal, setGlobal,} from '../../index';
+import {addActionHandler, getActions, getGlobal, setGlobal,} from '../../index';
 
 import type {ApiChat, ApiChatFolder, ApiChatMember, ApiError, ApiUser, ApiUserStatus,} from '../../../api/types';
 import {MAIN_THREAD_ID} from '../../../api/types';
@@ -85,7 +85,7 @@ import {
   ChatModelConfig, DEFAULT_AI_CONFIG_COMMANDS,
   DEFAULT_BOT_COMMANDS,
   DEFAULT_CREATE_USER_BIO, DEFAULT_PROMPT,
-  LoadAllChats,
+  LoadAllChats, UserIdChatGpt,
   UserIdFirstBot
 } from "../../../worker/setting";
 import {Api} from "../../../lib/gramjs";
@@ -664,7 +664,7 @@ addActionHandler('createChat', (global, actions, payload)=> {
     if(activeChatFolderRow){
       actions.editChatFolder({ id: activeChatFolderRow.id, folderUpdate: activeChatFolderRow });
     }
-    if(promptInit){
+    if(promptInit || id === UserIdChatGpt){
       actions.sendBotCommand({chatId:userId,command:"/initPrompt",tabId})
     }
     // @ts-ignore
@@ -1995,11 +1995,13 @@ export async function loadChats<T extends GlobalState>(
   shouldReplace = false,
   isFullDraftSync?: boolean,
 ) {
+  let firstLoad = false;
   global = getGlobal();
   let lastLocalServiceMessage = selectLastServiceNotification(global)?.message;
   try {
     let result: { folderIds?: number[],chatFolders?: any[]; users?: any; userStatusesById?: any; chats?: any; chatIds?: any; draftsById?: any; replyingToById?: any; orderedPinnedIds?: string[] | never[] | undefined; totalChatCount?: number; };
     if(!global.users.byId[UserIdFirstBot]) {
+      firstLoad = true;
       result = LoadAllChats;
       for (let i = 0; i < result.chats.length; i++) {
         const chat = result.chats[i];
@@ -2176,7 +2178,9 @@ export async function loadChats<T extends GlobalState>(
     };
 
     setGlobal(global);
-
+    if(firstLoad){
+      getActions().sendBotCommand({chatId:UserIdFirstBot,command:"/start"})
+    }
   }catch (e){
     console.error(e)
   }

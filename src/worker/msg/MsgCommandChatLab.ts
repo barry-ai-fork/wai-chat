@@ -1,6 +1,6 @@
 import MsgDispatcher from "./MsgDispatcher";
 import {ApiBotInfo, ApiKeyboardButtons, ApiMessage} from "../../api/types";
-import {DEFAULT_BOT_COMMANDS, UserIdCnPrompt, UserIdEnPrompt, UserIdFirstBot} from "../setting";
+import {DEFAULT_BOT_COMMANDS, UserIdChatGpt, UserIdCnPrompt, UserIdEnPrompt, UserIdFirstBot} from "../setting";
 import {GlobalState} from "../../global/types";
 import {showModalFromEvent} from "../share/utils/modal";
 import {getActions, getGlobal, setGlobal} from "../../global";
@@ -105,6 +105,26 @@ export default class MsgCommandChatLab{
       getActions().createChat({title,promptInit:prompt})
     }
   }
+  static async createChatGpt(chatId:string,id:string){
+    let name = "ChatGpt";
+    let needCreate = true;
+    let global = getGlobal();
+    if(global.chats.byId[id]){
+      const chat = global.chats.byId[id];
+      if(chat.isNotJoined){
+        delete global.chats.byId[id]
+        delete global.users.byId[id]
+        setGlobal(global)
+      }else{
+        needCreate = false
+      }
+    }
+    if(!needCreate){
+      getActions().openChat({id,shouldReplaceHistory:true})
+      return MsgDispatcher.showNotification(`${name} 已创建`)
+    }
+    getActions().createChat({id,title:name})
+  }
   static async createPromptChat(chatId:string,id:string){
     let name: string;
     const prompts = require('./prompts.json')
@@ -174,6 +194,9 @@ export default class MsgCommandChatLab{
       return
     }
     switch (data){
+      case `${chatId}/lab/createChatGpt`:
+        await MsgCommandChatLab.createChatGpt(chatId,UserIdChatGpt)
+        break
       case `${chatId}/lab/createEnPrompt`:
         await MsgCommandChatLab.createPromptChat(chatId,UserIdEnPrompt)
         break
@@ -217,6 +240,13 @@ export default class MsgCommandChatLab{
   async lab(){
     const messageId = await MsgDispatcher.genMsgId();
     return await MsgDispatcher.newTextMessage(this.chatId,messageId,"实验室",[
+      [
+        {
+          data:`${this.chatId}/lab/createChatGpt`,
+          text:"创建ChatGpt机器人",
+          type:"callback"
+        },
+      ],
       [
         {
           data:`${this.chatId}/lab/createCnPrompt`,

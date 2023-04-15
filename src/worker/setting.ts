@@ -3,6 +3,7 @@ import {PbChatGptConfig_Type} from "../lib/ptp/protobuf/PTPCommon/types";
 export const UserIdFirstBot = "1000";
 export const UserIdCnPrompt = "1010";
 export const UserIdEnPrompt = "1011";
+export const UserIdChatGpt = "1012";
 
 export const NameFirstBot = "Wai";
 export const DEFAULT_CREATE_USER_BIO = '我是一个AI机器人'
@@ -241,7 +242,8 @@ export const DEFAULT_START_TIPS =    `你可以通过发送以下命令来控制
 
 /lab - 实验室
 
-  * 创建中文Prompt大全
-  * 创建英文Prompt大全
+  * 创建 ChatGpt机器人
+  * 创建 中文Prompt大全
+  * 创建 英文Prompt大全
 
 `

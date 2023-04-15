@@ -277,12 +277,9 @@ export default class MsgDispatcher {
 
     switch(sendMsgText){
       case "/start":
-        await MsgCommand.reloadCommands(this.getChatId(),DEFAULT_AI_CONFIG_COMMANDS)
         return await msgCommandChatGpt.start();
       case "/setting":
         return msgCommandChatGpt.setting()
-      case "/clearHistory":
-        return await MsgCommand.clearHistory(this.getChatId());
       case "/enableAi":
         return await msgCommandChatGpt.enableAi();
       case "/aiModel":
@@ -301,11 +298,6 @@ export default class MsgDispatcher {
       case "/start":
         await this.sendOutgoingMsg();
         return MsgCommandSetting.start(this.getChatId())
-      case "/reloadCommands":
-        await this.sendOutgoingMsg();
-        return await MsgCommand.reloadCommands(this.getChatId(),DEFAULT_BOT_COMMANDS);
-      case "/clearHistory":
-        return await MsgCommand.clearHistory(this.getChatId());
       case "/lab":
         return await new MsgCommandChatLab(this.getChatId(),this.params.botInfo!).lab();
       case "/setting":
