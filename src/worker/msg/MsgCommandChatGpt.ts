@@ -5,7 +5,7 @@ import {GlobalState} from "../../global/types";
 import {getGlobal, setGlobal} from "../../global";
 import {selectUser} from "../../global/selectors";
 import {updateUser} from "../../global/reducers";
-import {DEFAULT_AI_CONFIG_COMMANDS} from "../setting";
+import {AI_START_TIPS, DEFAULT_AI_CONFIG_COMMANDS} from "../setting";
 import {callApiWithPdu} from "./utils";
 import {StopChatStreamReq} from "../../lib/ptp/protobuf/PTPOther";
 import Account from "../share/Account";
@@ -21,7 +21,8 @@ export default class MsgCommandChatGpt{
     this.botInfo = botInfo;
   }
   static getInlineButtons(chatId:string,isEnableSync:boolean):ApiKeyboardButtons{
-
+    const global = getGlobal();
+    const disableClearHistory = MsgCommandChatGpt.getAiBotConfig(global,chatId,'disableClearHistory')
     return isEnableSync ? [
       [
         {
@@ -35,31 +36,39 @@ export default class MsgCommandChatGpt{
           type:"callback"
         },
       ],
+      // [
+      //   {
+      //     data:`${chatId}/setting/createBotWs`,
+      //     text:"使用BotApi",
+      //     type:"callback"
+      //   },
+      // ],
       [
-        {
-          data:`${chatId}/setting/createBotWs`,
-          text:"使用BotApi",
-          type:"callback"
-        },
-      ],
-      [
-        {
-          data:`${chatId}/setting/reloadCommands`,
-          text:"重载命令",
-          type:"callback"
-        },
+        ...MsgCommand.buildInlineCallbackButton(chatId,'setting/ai/reloadCommands',"重载命令"),
+        ...MsgCommand.buildInlineCallbackButton(chatId,'setting/ai/toggleClearHistory',disableClearHistory ? "允许清除历史记录":"关闭清除历史记录"),
+        ...(disableClearHistory ? [] : MsgCommand.buildInlineCallbackButton(chatId,'setting/ai/clearHistory',"清除历史记录")),
       ],
     ]:[
       [
-        {
-          data:`${chatId}/setting/reloadCommands`,
-          text:"重载命令",
-          type:"callback"
-        },
+        ...MsgCommand.buildInlineCallbackButton(chatId,'setting/ai/reloadCommands',"重载命令"),
+        ...MsgCommand.buildInlineCallbackButton(chatId,'setting/ai/toggleClearHistory',disableClearHistory ? "允许清除历史记录":"关闭清除历史记录"),
+        ...(disableClearHistory ? [] : MsgCommand.buildInlineCallbackButton(chatId,'setting/ai/clearHistory',"清除历史记录")),
+
       ],
     ]
   }
 
+  static async toggleClearHistory(chatId:string,messageId:number){
+    const global = getGlobal();
+    const disableClearHistory = MsgCommandChatGpt.getAiBotConfig(global,chatId,'disableClearHistory')
+    await MsgCommandChatGpt.changeAiBotConfig(global,chatId,{
+      "disableClearHistory":!disableClearHistory
+    })
+    const isEnableSync = Account.getCurrentAccount()?.getSession();
+    await MsgDispatcher.updateMessage(chatId,messageId,{
+      inlineButtons:MsgCommandChatGpt.getInlineButtons(chatId,!!isEnableSync)
+    })
+  }
   async setting(){
     const {chatId} = this;
     const account = Account.getCurrentAccount();
@@ -91,15 +100,7 @@ export default class MsgCommandChatGpt{
       date:currentTs(),
       content:{
         text:{
-          text:`你可以通过发送以下命令来控制我：
-
-/setting - 设置面板
-/aiModel - 当前模型
-/apiKey - 设置ApiKey
-/initPrompt - 设置初始化上下文Prompt, 每次请求都会带入
-/enableAi - 开启或者关闭AI
-/clearHistory - 清除历史记录
-`
+          text:AI_START_TIPS
         }
       },
     }
@@ -136,7 +137,7 @@ export default class MsgCommandChatGpt{
     return message
   }
 
-  static getAiBotConfig(global:GlobalState,chatId:string,key:'enableAi'|'botApi'|'chatGptConfig'){
+  static getAiBotConfig(global:GlobalState,chatId:string,key:'enableAi'|'botApi'|'chatGptConfig'|'disableClearHistory'){
     const user = selectUser(global,chatId);
     if(
       user?.fullInfo &&
@@ -233,7 +234,7 @@ export default class MsgCommandChatGpt{
       date:currentTs(),
       content:{
         text:{
-          text:`当前状态:【${isEnable ? "开启" : "关闭"}】，修改请点击下面按钮:`
+          text:`当前AI状态:【${isEnable ? "开启" : "关闭"}】，修改请点击下面按钮:`
         }
       },
       inlineButtons:[
@@ -253,28 +254,28 @@ export default class MsgCommandChatGpt{
     let global = getGlobal();
     // @ts-ignore
     let botApi:string | undefined = MsgCommandChatGpt.getAiBotConfig(global,chatId,"botApi")
-    if(!botApi){
-      const res = await showModalFromEvent({
-        type:"singleInput",
-        title:"请输入 网址",
-        placeholder:"",
-        initVal:botApi
-      });
-      let {value} = res
-      if(botApi !== value){
-        botApi = value
-        MsgCommandChatGpt.changeAiBotConfig(global,chatId,{
-          botApi:value || ""
-        })
-      }
+    const res = await showModalFromEvent({
+      type:"singleInput",
+      title:"请输入 网址",
+      placeholder:"",
+      initVal:botApi
+    });
+    let {value} = res
+    if(botApi !== value){
+      botApi = value
+      MsgCommandChatGpt.changeAiBotConfig(global,chatId,{
+        botApi:value || ""
+      })
     }
-
     if(botApi){
       await MsgCommand.createWsBot(chatId)
     }
   }
   static async answerCallbackButton(global:GlobalState,chatId:string,messageId:number,data:string){
     switch (data){
+      case `${chatId}/setting/ai/toggleClearHistory`:
+        await MsgCommandChatGpt.toggleClearHistory(chatId,messageId)
+        return
       case `${chatId}/setting/createBotWs`:
         await MsgCommandChatGpt.createBotWs(chatId)
         return
@@ -284,7 +285,10 @@ export default class MsgCommandChatGpt{
       case `${chatId}/setting/downloadUser`:
         await MsgCommand.downloadUser(global,chatId)
         break
-      case `${chatId}/setting/reloadCommands`:
+      case `${chatId}/setting/ai/clearHistory`:
+        await MsgCommand.clearHistory(chatId)
+        break
+      case `${chatId}/setting/ai/reloadCommands`:
         await MsgCommand.reloadCommands(chatId, DEFAULT_AI_CONFIG_COMMANDS)
         break
       case `${chatId}/requestChatStream/stop`:

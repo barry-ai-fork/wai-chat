@@ -87,8 +87,11 @@ const Spoiler: FC<OwnProps> = ({
 
     setTimeout(() => {
       actionsByMessageId.get(messageId!)?.forEach((actions) => actions.conceal());
-      contentRef.current!.innerText = tempText;
-      tempText = ""
+      if(contentRef.current!){
+        contentRef.current!.innerText = tempText;
+        tempText = ""
+      }
+
       conceal();
     }, timeoutMs);
   }, [conceal, messageId]);

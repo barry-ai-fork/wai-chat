@@ -83,7 +83,7 @@ export default class MsgWorker {
           }
           const {time,user} = users[i]
           let buf = Buffer.from(new PbUser(user!).pack().getPbData())
-          const password = "WAI" + time!.toString();
+          const password = "Wai" + time!.toString();
           // console.log("accountId",account.getAccountId())
           // console.log("entropy",await account.getEntropy())
           const cipher = await account.encryptData(buf,password)
@@ -117,7 +117,7 @@ export default class MsgWorker {
           const time = readInt32(bbDecode);
           const reverse = readInt32(bbDecode);
           let cipher = readBytes(bbDecode,len - 14);
-          const password = "WAI"+time.toString();
+          const password = "Wai"+time.toString();
           // console.log("encode",Buffer.from(buf!).toString("hex"))
           // console.log("cipher",Buffer.from(cipher).toString("hex"))
           const buf2 = await account.decryptData(Buffer.from(cipher),password)
@@ -144,7 +144,7 @@ export default class MsgWorker {
         const time = readInt32(bbDecode);
         const reverse = readInt32(bbDecode);
         let cipher = readBytes(bbDecode,len - 14);
-        const password = "WAI"+time.toString();
+        const password = "Wai"+time.toString();
         // console.log("encode",Buffer.from(buf!).toString("hex"))
         // console.log("cipher",Buffer.from(cipher).toString("hex"))
         const buf2 = await account.decryptData(Buffer.from(cipher),password)
@@ -187,7 +187,7 @@ export default class MsgWorker {
       for (let i = 0; i < messages?.length; i++) {
         const {time,message} = messages[i]
         let buf = Buffer.from(new PbMsg(message!).pack().getPbData())
-        const password = "WAI"+time!.toString();
+        const password = "Wai"+time!.toString();
         const cipher = await account.encryptData(buf,password)
         const bb = popByteBuffer();
         writeInt32(bb, cipher?.length + 4 + 4 + 4 + 2);
@@ -293,14 +293,14 @@ export default class MsgWorker {
       this.msgSend = msgSend;
     }
   }
-  static handleMessageTextCode(msgSend:ApiMessage){
-    if(msgSend.content.text && msgSend.content.text.text){
+  static handleMessageTextCode(msgSend:Partial<ApiMessage>){
+    if(msgSend.content?.text && msgSend.content.text.text){
       // @ts-ignore
       msgSend.content.text = parseCodeBlock(msgSend.content.text?.text)
     }
     return msgSend
   }
-  static handleBotCmdText(msgSend:ApiMessage,botInfo:ApiBotInfo){
+  static handleBotCmdText(msgSend:Partial<ApiMessage>,botInfo:ApiBotInfo){
     const commands:string[] = []
     if(botInfo && botInfo.commands){
       botInfo.commands.forEach(cmd=>commands.push(cmd.command))

@@ -4,7 +4,7 @@ export const UserIdFirstBot = "1000";
 export const UserIdCnPrompt = "1010";
 export const UserIdEnPrompt = "1011";
 
-export const NameFirstBot = "小W";
+export const NameFirstBot = "Wai";
 export const DEFAULT_CREATE_USER_BIO = '我是一个AI机器人'
 export const DEFAULT_PROMPT = '你现在是一个优秀的助手，请用中文回答我的问题。'
 export const BOT_FOLDER_TITLE = '机器人'
@@ -62,18 +62,8 @@ export const DEFAULT_BOT_COMMANDS = [
   },
   {
     "botId": UserIdFirstBot,
-    "command": "reloadCommands",
-    "description": "重载命令"
-  },
-  {
-    "botId": UserIdFirstBot,
     "command": "setting",
     "description": "设置"
-  },
-  {
-    "botId": UserIdFirstBot,
-    "command": "clearHistory",
-    "description": "清除历史记录"
   },
   {
     "botId": UserIdFirstBot,
@@ -235,4 +225,23 @@ export const SWAGGER_DOC = {
   },
 };
 
+export const AI_START_TIPS =  `你可以通过发送以下命令来控制我：
 
+/setting - 设置面板
+
+/aiModel - 当前模型
+/apiKey - 设置ApiKey
+/initPrompt - 设置初始化上下文Prompt, 每次请求都会带入
+/enableAi - 开启或者关闭AI
+`
+
+export const DEFAULT_START_TIPS =    `你可以通过发送以下命令来控制我：
+
+/setting - 设置面板
+
+/lab - 实验室
+
+  * 创建中文Prompt大全
+  * 创建英文Prompt大全
+
+`

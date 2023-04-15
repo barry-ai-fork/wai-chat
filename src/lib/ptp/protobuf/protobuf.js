@@ -679,7 +679,7 @@ var $conv_message = $createConverter([
                     '$': {"1":["text","string",""],"2":["type","string",""]}
                 },
                 PbAiBot: {
-                    '$': {"1":["chatGptConfig","default.PTP.Common.PbChatGpBotConfig",null],"3":["enableAi","bool",false],"4":["botApi","string",""]}
+                    '$': {"1":["chatGptConfig","default.PTP.Common.PbChatGpBotConfig",null],"3":["enableAi","bool",false],"4":["botApi","string",""],"5":["disableClearHistory","bool",false]}
                 },
                 PbAudio: {
                     '$': {"1":["id","string",""],"2":["size","[uint32",null],"3":["duration","[uint32",null],"5":["mimeType","string",""],"6":["fileName","string",""],"7":["performer","string",""],"8":["title","string",""],"9":["thumbnailSizes","<default.PTP.Common.PbSizes",null]}

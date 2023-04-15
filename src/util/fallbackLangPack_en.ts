@@ -5,11 +5,11 @@ import type { ApiLangPack } from '../api/types';
 export default {
   "AppName": {
     "key": "AppName",
-    "value": "WAI"
+    "value": "Wai"
   },
   "AppNameBeta": {
     "key": "AppName Beta",
-    "value": "WAI"
+    "value": "Wai"
   },
   "LanguageName": {
     "key": "LanguageName",
@@ -109,7 +109,7 @@ export default {
   },
   "DidNotGetTheCodeInfo": {
     "key": "DidNotGetTheCodeInfo",
-    "value": "If you didn\\'t get the code by SMS or call, please check your **cellular data settings** and phone number:\\n\\n**%1$s**\\n\\nYour remaining options are to try another number or to contact WAI Support. Tap **Help** to send us the technical details so that we can identify the problem."
+    "value": "If you didn\\'t get the code by SMS or call, please check your **cellular data settings** and phone number:\\n\\n**%1$s**\\n\\nYour remaining options are to try another number or to contact Wai Support. Tap **Help** to send us the technical details so that we can identify the problem."
   },
   "DidNotGetTheCodeHelpButton": {
     "key": "DidNotGetTheCodeHelpButton",
@@ -129,15 +129,15 @@ export default {
   },
   "SentAppCode": {
     "key": "SentAppCode",
-    "value": "We\\'ve sent the code to the **WAI** app on your other device."
+    "value": "We\\'ve sent the code to the **Wai** app on your other device."
   },
   "SentAppCodeWithPhone": {
     "key": "SentAppCodeWithPhone",
-    "value": "We\\'ve sent the code to the **WAI** app for %1$s on your other device."
+    "value": "We\\'ve sent the code to the **Wai** app for %1$s on your other device."
   },
   "SentAppCodeTitle": {
     "key": "SentAppCodeTitle",
-    "value": "Check your WAI messages"
+    "value": "Check your Wai messages"
   },
   "SentSmsCodeTitle": {
     "key": "SentSmsCodeTitle",
@@ -145,7 +145,7 @@ export default {
   },
   "SentCallCode": {
     "key": "SentCallCode",
-    "value": "We\\'re calling your phone **%1$s**.\\n\\nDon\\'t accept the call, WAI will process everything automatically."
+    "value": "We\\'re calling your phone **%1$s**.\\n\\nDon\\'t accept the call, Wai will process everything automatically."
   },
   "SentCallOnly": {
     "key": "SentCallOnly",
@@ -153,7 +153,7 @@ export default {
   },
   "CallText": {
     "key": "CallText",
-    "value": "WAI will call you in %1$d:%2$02d"
+    "value": "Wai will call you in %1$d:%2$02d"
   },
   "SmsText": {
     "key": "SmsText",
@@ -193,7 +193,7 @@ export default {
   },
   "CancelAccountResetInfo2": {
     "key": "CancelAccountResetInfo2",
-    "value": "Somebody with access to **%1$s** has requested to delete your WAI account and reset your 2-Step Verification password.\\n\\nIf this wasn\\'t you, please enter the code we\\'ve just sent you via SMS. You can also cancel this by *changing your phone number*."
+    "value": "Somebody with access to **%1$s** has requested to delete your Wai account and reset your 2-Step Verification password.\\n\\nIf this wasn\\'t you, please enter the code we\\'ve just sent you via SMS. You can also cancel this by *changing your phone number*."
   },
   "ResetAccount": {
     "key": "ResetAccount",
@@ -229,7 +229,7 @@ export default {
   },
   "OtherLoginCode": {
     "key": "OtherLoginCode",
-    "value": "Your login code is **%1$s**. Enter it in the WAI app where you are trying to log in.\\n\\nDo not give this code to anyone."
+    "value": "Your login code is **%1$s**. Enter it in the Wai app where you are trying to log in.\\n\\nDo not give this code to anyone."
   },
   "SmsAvailableIn": {
     "key": "SmsAvailableIn",
@@ -505,7 +505,7 @@ export default {
   },
   "PaymentWarningText": {
     "key": "PaymentWarningText",
-    "value": "Neither WAI, nor %1$s will have access to your credit card information. Credit card details will be handled only by the payment system, %2$s.\\n\\nPayments will go directly to the developer of %1$s. WAI cannot provide any guarantees, so proceed at your own risk. In case of problems, please contact the developer of %1$s or your bank."
+    "value": "Neither Wai, nor %1$s will have access to your credit card information. Credit card details will be handled only by the payment system, %2$s.\\n\\nPayments will go directly to the developer of %1$s. Wai cannot provide any guarantees, so proceed at your own risk. In case of problems, please contact the developer of %1$s or your bank."
   },
   "PaymentPassword": {
     "key": "PaymentPassword",
@@ -589,7 +589,7 @@ export default {
   },
   "NoChats": {
     "key": "NoChats",
-    "value": "Welcome to WAI"
+    "value": "Welcome to Wai"
   },
   "RecentlyViewed": {
     "key": "RecentlyViewed",
@@ -913,7 +913,7 @@ export default {
   },
   "CompatibilityChat": {
     "key": "CompatibilityChat",
-    "value": "%1$s is using an older version of WAI, so secret photos will be shown in compatibility mode.\\n\\nOnce %2$s updates WAI, photos with timers for 1 minute or less will start working in \\'Tap and hold to view\\' mode, and you will be notified whenever the other party takes a screenshot."
+    "value": "%1$s is using an older version of Wai, so secret photos will be shown in compatibility mode.\\n\\nOnce %2$s updates Wai, photos with timers for 1 minute or less will start working in \\'Tap and hold to view\\' mode, and you will be notified whenever the other party takes a screenshot."
   },
   "SearchMessages": {
     "key": "SearchMessages",
@@ -1073,7 +1073,7 @@ export default {
   },
   "ContactsPermissionAlert": {
     "key": "ContactsPermissionAlert",
-    "value": "**WAI** needs access to your contacts so that you can connect with your friends across all your devices. Your contacts will be continuously synced with WAI\\'s heavily encrypted cloud servers."
+    "value": "**Wai** needs access to your contacts so that you can connect with your friends across all your devices. Your contacts will be continuously synced with Wai\\'s heavily encrypted cloud servers."
   },
   "ContactsPermissionAlertNotNow": {
     "key": "ContactsPermissionAlertNotNow",
@@ -1085,7 +1085,7 @@ export default {
   },
   "YourContacts": {
     "key": "YourContacts",
-    "value": "Your contacts on WAI"
+    "value": "Your contacts on Wai"
   },
   "ConnectingYourContacts": {
     "key": "ConnectingYourContacts",
@@ -1317,7 +1317,7 @@ export default {
   },
   "ImportImportingInfo": {
     "key": "ImportImportingInfo",
-    "value": "Please keep WAI open\\nuntil the import is completed."
+    "value": "Please keep Wai open\\nuntil the import is completed."
   },
   "ImportCount": {
     "key": "ImportCount",
@@ -1333,7 +1333,7 @@ export default {
   },
   "ImportDoneInfo": {
     "key": "ImportDoneInfo",
-    "value": "Save space on your device by importing more chats to WAI."
+    "value": "Save space on your device by importing more chats to Wai."
   },
   "ImporImportingService": {
     "key": "ImporImportingService",
@@ -1477,7 +1477,7 @@ export default {
   },
   "GroupUserLeftError": {
     "key": "GroupUserLeftError",
-    "value": "Sorry, if a person is no longer part of a group, you need to be in their WAI contacts in order to add them back.\\n\\nNote that they can still join via the group\\'s invite link as long as they are not in the Removed Users list."
+    "value": "Sorry, if a person is no longer part of a group, you need to be in their Wai contacts in order to add them back.\\n\\nNote that they can still join via the group\\'s invite link as long as they are not in the Removed Users list."
   },
   "GroupUserCantAdmin": {
     "key": "GroupUserCantAdmin",
@@ -1957,7 +1957,7 @@ export default {
   },
   "ChannelLinkInfo": {
     "key": "ChannelLinkInfo",
-    "value": "Anyone on WAI will be able to join your channel by following this link."
+    "value": "Anyone on Wai will be able to join your channel by following this link."
   },
   "ChannelAdminsInfo": {
     "key": "ChannelAdminsInfo",
@@ -1993,7 +1993,7 @@ export default {
   },
   "ChannelUserLeftError": {
     "key": "ChannelUserLeftError",
-    "value": "Sorry, if a person is no longer part of a channel, you need to be in their WAI contacts in order to add them back.\\n\\nNote that they could still join via the channel\\'s invite link as long as they are not in the Removed users list."
+    "value": "Sorry, if a person is no longer part of a channel, you need to be in their Wai contacts in order to add them back.\\n\\nNote that they could still join via the channel\\'s invite link as long as they are not in the Removed users list."
   },
   "ChannelUserCantAdd": {
     "key": "ChannelUserCantAdd",
@@ -3761,15 +3761,15 @@ export default {
   },
   "SponsoredMessageInfoDescription1": {
     "key": "SponsoredMessageInfoDescription1",
-    "value": "Unlike other apps, WAI never uses your private data to target ads. You are seeing this message only because someone chose this public one-to-many channel as a space to promote their messages. This means that no user data is mined or analyzed to display ads, and every user viewing a channel on WAI sees the same sponsored message."
+    "value": "Unlike other apps, Wai never uses your private data to target ads. You are seeing this message only because someone chose this public one-to-many channel as a space to promote their messages. This means that no user data is mined or analyzed to display ads, and every user viewing a channel on Wai sees the same sponsored message."
   },
   "SponsoredMessageInfoDescription2": {
     "key": "SponsoredMessageInfoDescription2",
-    "value": "Unlike other apps, WAI doesn\\'t track whether you tapped on a sponsored message and doesn\\'t profile you based on your activity. We also prevent external links in sponsored messages to ensure that third parties can’t spy on our users. We believe that everyone has the right to privacy, and technological platforms should respect that."
+    "value": "Unlike other apps, Wai doesn\\'t track whether you tapped on a sponsored message and doesn\\'t profile you based on your activity. We also prevent external links in sponsored messages to ensure that third parties can’t spy on our users. We believe that everyone has the right to privacy, and technological platforms should respect that."
   },
   "SponsoredMessageInfoDescription3": {
     "key": "SponsoredMessageInfoDescription3",
-    "value": "WAI offers free and unlimited service to hundreds of millions of users, which involves significant server and traffic costs. In order to remain independent and stay true to its values, WAI developed a paid tool to promote messages with user privacy in mind. We welcome responsible advertisers at:"
+    "value": "Wai offers free and unlimited service to hundreds of millions of users, which involves significant server and traffic costs. In order to remain independent and stay true to its values, Wai developed a paid tool to promote messages with user privacy in mind. We welcome responsible advertisers at:"
   },
   "SponsoredMessageInfoDescription4": {
     "key": "SponsoredMessageInfoDescription4",
@@ -3865,7 +3865,7 @@ export default {
   },
   "GotAQuestion": {
     "key": "GotAQuestion",
-    "value": "Got a question\\nabout WAI?"
+    "value": "Got a question\\nabout Wai?"
   },
   "ChatGallery": {
     "key": "ChatGallery",
@@ -4085,7 +4085,7 @@ export default {
   },
   "BotPermissionGameAlert": {
     "key": "BotPermissionGameAlert",
-    "value": "Allow %1$s to pass your WAI name and id (not your phone number) to pages you open with this bot?"
+    "value": "Allow %1$s to pass your Wai name and id (not your phone number) to pages you open with this bot?"
   },
   "ReportSpamLocation": {
     "key": "ReportSpamLocation",
@@ -4137,7 +4137,7 @@ export default {
   },
   "BlockUserAlert": {
     "key": "BlockUserAlert",
-    "value": "Do you want to block **%1$s** from messaging and calling you on WAI?"
+    "value": "Do you want to block **%1$s** from messaging and calling you on Wai?"
   },
   "BlockUserReplyAlert": {
     "key": "BlockUserReplyAlert",
@@ -4349,7 +4349,7 @@ export default {
   },
   "ReportSentInfo": {
     "key": "ReportSentInfo",
-    "value": "WAI moderators will study your report.\\nThank you for your cooperation!"
+    "value": "Wai moderators will study your report.\\nThank you for your cooperation!"
   },
   "ReportChatSpam": {
     "key": "ReportChatSpam",
@@ -4685,7 +4685,7 @@ export default {
   },
   "MapPreviewProviderTelegram": {
     "key": "MapPreviewProviderTelegram",
-    "value": "WAI"
+    "value": "Wai"
   },
   "MapPreviewProviderGoogle": {
     "key": "MapPreviewProviderGoogle",
@@ -5405,11 +5405,11 @@ export default {
   },
   "NotificationContactJoined": {
     "key": "NotificationContactJoined",
-    "value": "%1$s joined WAI!"
+    "value": "%1$s joined Wai!"
   },
   "NotificationUnrecognizedDevice": {
     "key": "NotificationUnrecognizedDevice",
-    "value": "%1$s,\\nWe detected a login into your account from a new device on %2$s\\n\\nDevice: %3$s\\nLocation: %4$s\\n\\nIf this wasn\\'t you, you can go to Settings - Privacy and Security - Sessions and terminate that session.\\n\\nIf you think that somebody logged in to your account against your will, you can enable two-step verification in Privacy and Security settings.\\n\\nSincerely,\\nThe WAI Team"
+    "value": "%1$s,\\nWe detected a login into your account from a new device on %2$s\\n\\nDevice: %3$s\\nLocation: %4$s\\n\\nIf this wasn\\'t you, you can go to Settings - Privacy and Security - Sessions and terminate that session.\\n\\nIf you think that somebody logged in to your account against your will, you can enable two-step verification in Privacy and Security settings.\\n\\nSincerely,\\nThe Wai Team"
   },
   "NotificationContactNewPhoto": {
     "key": "NotificationContactNewPhoto",
@@ -5433,11 +5433,11 @@ export default {
   },
   "NotificationHiddenName": {
     "key": "NotificationHiddenName",
-    "value": "WAI"
+    "value": "Wai"
   },
   "NotificationHiddenChatName": {
     "key": "NotificationHiddenChatName",
-    "value": "WAI"
+    "value": "Wai"
   },
   "NotificationHiddenChatUserName": {
     "key": "NotificationHiddenChatUserName",
@@ -5697,7 +5697,7 @@ export default {
   },
   "SecretChatName": {
     "key": "SecretChatName",
-    "value": "WAI"
+    "value": "Wai"
   },
   "SelectContact": {
     "key": "SelectContact",
@@ -5725,7 +5725,7 @@ export default {
   },
   "InviteText2": {
     "key": "InviteText2",
-    "value": "Hey, I\\'m using WAI to chat. Join me! Download it here: %1$s"
+    "value": "Hey, I\\'m using Wai to chat. Join me! Download it here: %1$s"
   },
   "TodayAt": {
     "key": "TodayAt",
@@ -5809,7 +5809,7 @@ export default {
   },
   "InviteFriendsHelp": {
     "key": "InviteFriendsHelp",
-    "value": "Select contacts to invite them to WAI"
+    "value": "Select contacts to invite them to Wai"
   },
   "InviteToTelegram": {
     "key": "InviteToTelegram",
@@ -5817,7 +5817,7 @@ export default {
   },
   "ShareTelegram": {
     "key": "ShareTelegram",
-    "value": "Share WAI..."
+    "value": "Share Wai..."
   },
   "UpdateContactsTitle": {
     "key": "UpdateContactsTitle",
@@ -5825,7 +5825,7 @@ export default {
   },
   "UpdateContactsMessage": {
     "key": "UpdateContactsMessage",
-    "value": "WAI has detected many unsynced contacts, would you like to sync them now? Choose \\'OK\\' if you\\'re using your own device, SIM card and Google account."
+    "value": "Wai has detected many unsynced contacts, would you like to sync them now? Choose \\'OK\\' if you\\'re using your own device, SIM card and Google account."
   },
   "SortedByName": {
     "key": "SortedByName",
@@ -5845,11 +5845,11 @@ export default {
   },
   "NoContactsYet": {
     "key": "NoContactsYet",
-    "value": "You have no contacts on WAI yet"
+    "value": "You have no contacts on Wai yet"
   },
   "NoContactsYetLine1": {
     "key": "NoContactsYetLine1",
-    "value": "Invite friends to try WAI"
+    "value": "Invite friends to try Wai"
   },
   "NoContactsYetLine2": {
     "key": "NoContactsYetLine2",
@@ -6021,7 +6021,7 @@ export default {
   },
   "LinkInfo": {
     "key": "LinkInfo",
-    "value": "Anyone who has WAI installed will be able to join your group by following this link."
+    "value": "Anyone who has Wai installed will be able to join your group by following this link."
   },
   "SearchForPeople": {
     "key": "SearchForPeople",
@@ -6165,11 +6165,11 @@ export default {
   },
   "ContactNotRegisteredTitle": {
     "key": "ContactNotRegisteredTitle",
-    "value": "Invite to WAI"
+    "value": "Invite to Wai"
   },
   "ContactNotRegistered": {
     "key": "ContactNotRegistered",
-    "value": "%1$s is not on WAI yet, would you like to invite them to join?"
+    "value": "%1$s is not on Wai yet, would you like to invite them to join?"
   },
   "Invite": {
     "key": "Invite",
@@ -6197,11 +6197,11 @@ export default {
   },
   "BlockUserMessage": {
     "key": "BlockUserMessage",
-    "value": "Do you want to block **%1$s** from messaging and calling you on WAI?"
+    "value": "Do you want to block **%1$s** from messaging and calling you on Wai?"
   },
   "BlockUsersMessage": {
     "key": "BlockUsersMessage",
-    "value": "Do you want to block **%1$s** from messaging and calling you on WAI?"
+    "value": "Do you want to block **%1$s** from messaging and calling you on Wai?"
   },
   "UserBlocked": {
     "key": "UserBlocked",
@@ -6457,7 +6457,7 @@ export default {
   },
   "UsernameHelp": {
     "key": "UsernameHelp",
-    "value": "You can choose a username on **WAI**. If you do, other people will be able to find you by this username and contact you without knowing your phone number.\\n\\nYou can use **a–z**, **0–9** and underscores. Minimum length is **5** characters."
+    "value": "You can choose a username on **Wai**. If you do, other people will be able to find you by this username and contact you without knowing your phone number.\\n\\nYou can use **a–z**, **0–9** and underscores. Minimum length is **5** characters."
   },
   "UsernameHelpLink": {
     "key": "UsernameHelpLink",
@@ -6665,7 +6665,7 @@ export default {
   },
   "EmojiSuggestionsInfo": {
     "key": "EmojiSuggestionsInfo",
-    "value": "**WAI** lets you find emoji by thousands of keywords, but there is always something missing. If you want to suggest a new emoji replacement, you can help us by visiting:"
+    "value": "**Wai** lets you find emoji by thousands of keywords, but there is always something missing. If you want to suggest a new emoji replacement, you can help us by visiting:"
   },
   "EmojiSuggestionsUrl": {
     "key": "EmojiSuggestionsUrl",
@@ -6709,7 +6709,7 @@ export default {
   },
   "FeaturedStickersInfo": {
     "key": "FeaturedStickersInfo",
-    "value": "These stickers are currently trending on WAI. You can add custom stickers via the @stickers bot."
+    "value": "These stickers are currently trending on Wai. You can add custom stickers via the @stickers bot."
   },
   "StickersBotInfo": {
     "key": "StickersBotInfo",
@@ -6837,7 +6837,7 @@ export default {
   },
   "ImportStickersDoneInfo": {
     "key": "ImportStickersDoneInfo",
-    "value": "Import more stickers to WAI and share them with your friends."
+    "value": "Import more stickers to Wai and share them with your friends."
   },
   "Theme": {
     "key": "Theme",
@@ -7053,7 +7053,7 @@ export default {
   },
   "CreateNewThemeAlert": {
     "key": "CreateNewThemeAlert",
-    "value": "You can create your own theme by changing colors within the app.\\n\\nYou can always switch back to the default WAI theme here."
+    "value": "You can create your own theme by changing colors within the app.\\n\\nYou can always switch back to the default Wai theme here."
   },
   "ThemeSetUrlHelp": {
     "key": "ThemeSetUrlHelp",
@@ -7453,7 +7453,7 @@ export default {
   },
   "ProfilePopupNotificationInfo": {
     "key": "ProfilePopupNotificationInfo",
-    "value": "New messages from this contact will appear on your screen when you are not using WAI."
+    "value": "New messages from this contact will appear on your screen when you are not using Wai."
   },
   "NotificationsLed": {
     "key": "NotificationsLed",
@@ -7813,7 +7813,7 @@ export default {
   },
   "ContactJoined": {
     "key": "ContactJoined",
-    "value": "Contact joined WAI"
+    "value": "Contact joined Wai"
   },
   "PinnedMessages": {
     "key": "PinnedMessages",
@@ -7905,11 +7905,11 @@ export default {
   },
   "LanguageUnknownCustomAlert": {
     "key": "LanguageUnknownCustomAlert",
-    "value": "Unfortunately, this custom language pack (**%1$s**) doesn\\'t contain data for WAI Android."
+    "value": "Unfortunately, this custom language pack (**%1$s**) doesn\\'t contain data for Wai Android."
   },
   "AskAQuestionInfo": {
     "key": "AskAQuestionInfo",
-    "value": "Please note that WAI Support is done by volunteers. We try to respond as quickly as possible, but it may take a while.\\n\\nPlease take a look at the "
+    "value": "Please note that Wai Support is done by volunteers. We try to respond as quickly as possible, but it may take a while.\\n\\nPlease take a look at the "
   },
   "AskButton": {
     "key": "AskButton",
@@ -7917,15 +7917,15 @@ export default {
   },
   "TelegramFAQ": {
     "key": "TelegramFAQ",
-    "value": "WAI FAQ"
+    "value": "Wai FAQ"
   },
   "TelegramFaq": {
     "key": "TelegramFaq",
-    "value": "WAI FAQ"
+    "value": "Wai FAQ"
   },
   "TelegramFeatures": {
     "key": "TelegramFeatures",
-    "value": "WAI Features"
+    "value": "Wai Features"
   },
   "TelegramFeaturesUrl": {
     "key": "TelegramFeaturesUrl",
@@ -7985,7 +7985,7 @@ export default {
   },
   "NotificationsServiceConnectionInfo": {
     "key": "NotificationsServiceConnectionInfo",
-    "value": "Keep a low impact background connection to WAI for reliable notifications."
+    "value": "Keep a low impact background connection to Wai for reliable notifications."
   },
   "SortBy": {
     "key": "SortBy",
@@ -8321,7 +8321,7 @@ export default {
   },
   "PhoneNumberHelp": {
     "key": "PhoneNumberHelp",
-    "value": "You can change your WAI number here. Your account and all your cloud data — messages, media, contacts, etc. will be moved to the new number."
+    "value": "You can change your Wai number here. Your account and all your cloud data — messages, media, contacts, etc. will be moved to the new number."
   },
   "PhoneNumberAlert": {
     "key": "PhoneNumberAlert",
@@ -8349,7 +8349,7 @@ export default {
   },
   "ChangePhoneNumberOccupied": {
     "key": "ChangePhoneNumberOccupied",
-    "value": "The number %1$s is already connected to a WAI account. Please delete that account before migrating to the new number."
+    "value": "The number %1$s is already connected to a Wai account. Please delete that account before migrating to the new number."
   },
   "NotificationsOther": {
     "key": "NotificationsOther",
@@ -8461,7 +8461,7 @@ export default {
   },
   "SecretWebPageInfo": {
     "key": "SecretWebPageInfo",
-    "value": "Link previews will be generated on WAI servers. We do not store data about the links you send."
+    "value": "Link previews will be generated on Wai servers. We do not store data about the links you send."
   },
   "SecretChat": {
     "key": "SecretChat",
@@ -8497,7 +8497,7 @@ export default {
   },
   "TelegramVersion": {
     "key": "TelegramVersion",
-    "value": "WAI for Android %1$s"
+    "value": "Wai for Android %1$s"
   },
   "DebugMenu": {
     "key": "DebugMenu",
@@ -8689,7 +8689,7 @@ export default {
   },
   "UseProxySponsorInfo": {
     "key": "UseProxySponsorInfo",
-    "value": "This channel is shown by your proxy server. To remove this channel from your chat list, disable the proxy in WAI Settings."
+    "value": "This channel is shown by your proxy server. To remove this channel from your chat list, disable the proxy in Wai Settings."
   },
   "UseProxyInfo": {
     "key": "UseProxyInfo",
@@ -8701,7 +8701,7 @@ export default {
   },
   "UseProxyTelegramInfo2": {
     "key": "UseProxyTelegramInfo2",
-    "value": "This proxy may display a sponsored channel in your chat list. This doesn\\'t reveal any of your WAI traffic."
+    "value": "This proxy may display a sponsored channel in your chat list. This doesn\\'t reveal any of your Wai traffic."
   },
   "UseProxyForCalls": {
     "key": "UseProxyForCalls",
@@ -8721,7 +8721,7 @@ export default {
   },
   "LowDiskSpaceMessage": {
     "key": "LowDiskSpaceMessage",
-    "value": "Your device is almost out of disk space. To free some space, you can set up WAI to cache only recent media."
+    "value": "Your device is almost out of disk space. To free some space, you can set up Wai to cache only recent media."
   },
   "LowDiskSpaceTitle2": {
     "key": "LowDiskSpaceTitle2",
@@ -8765,7 +8765,7 @@ export default {
   },
   "EnableAllStreamingInfo": {
     "key": "EnableAllStreamingInfo",
-    "value": "Some videos can\\'t be streamed – e.g., all videos that were sent from Android using WAI 4.7 and earlier versions.\\n"
+    "value": "Some videos can\\'t be streamed – e.g., all videos that were sent from Android using Wai 4.7 and earlier versions.\\n"
   },
   "TapToChangePhone": {
     "key": "TapToChangePhone",
@@ -8849,7 +8849,7 @@ export default {
   },
   "AddAnotherAccountInfo": {
     "key": "AddAnotherAccountInfo",
-    "value": "Connect other WAI accounts and easily switch between them."
+    "value": "Connect other Wai accounts and easily switch between them."
   },
   "SetPasscode": {
     "key": "SetPasscode",
@@ -8969,11 +8969,11 @@ export default {
   },
   "AuthAnotherClientInfo1": {
     "key": "AuthAnotherClientInfo1",
-    "value": "Download WAI on your computer from *getdesktop.telegram.org*."
+    "value": "Download Wai on your computer from *getdesktop.telegram.org*."
   },
   "AuthAnotherClientInfo2": {
     "key": "AuthAnotherClientInfo2",
-    "value": "Run WAI Desktop to get the QR code."
+    "value": "Run Wai Desktop to get the QR code."
   },
   "AuthAnotherClientInfo3": {
     "key": "AuthAnotherClientInfo3",
@@ -8981,11 +8981,11 @@ export default {
   },
   "AuthAnotherClientUrl": {
     "key": "AuthAnotherClientUrl",
-    "value": "This code can be used to allow someone to log in to your WAI account.\\n\\nTo confirm WAI login, please go to Settings > Devices > Scan QR and scan the code."
+    "value": "This code can be used to allow someone to log in to your Wai account.\\n\\nTo confirm Wai login, please go to Settings > Devices > Scan QR and scan the code."
   },
   "QRCodePermissionNoCameraWithHint": {
     "key": "QRCodePermissionNoCameraWithHint",
-    "value": "**WAI** needs camera access so that you can scan QR codes. Tap Settings -> Permissions, and turn **Camera** on."
+    "value": "**Wai** needs camera access so that you can scan QR codes. Tap Settings -> Permissions, and turn **Camera** on."
   },
   "SetProfilePhoto": {
     "key": "SetProfilePhoto",
@@ -8993,7 +8993,7 @@ export default {
   },
   "AppUpdate": {
     "key": "AppUpdate",
-    "value": "Update WAI"
+    "value": "Update Wai"
   },
   "AppUpdateVersionAndSize": {
     "key": "AppUpdateVersionAndSize",
@@ -9137,7 +9137,7 @@ export default {
   },
   "CheckPhoneNumberInfo": {
     "key": "CheckPhoneNumberInfo",
-    "value": "Keep your number up to date to ensure you can always log into WAI. **Learn more**"
+    "value": "Keep your number up to date to ensure you can always log into Wai. **Learn more**"
   },
   "CheckPhoneNumberLearnMoreUrl": {
     "key": "CheckPhoneNumberLearnMoreUrl",
@@ -9165,7 +9165,7 @@ export default {
   },
   "LocalDatabaseInfo": {
     "key": "LocalDatabaseInfo",
-    "value": "Clearing the local database will delete the texts of cached messages and compress the database to save internal disk space. WAI needs some data to work, so database size will not reach zero.\\n\\nThis operation can take a few minutes to complete."
+    "value": "Clearing the local database will delete the texts of cached messages and compress the database to save internal disk space. Wai needs some data to work, so database size will not reach zero.\\n\\nThis operation can take a few minutes to complete."
   },
   "ClearMediaCache": {
     "key": "ClearMediaCache",
@@ -9217,7 +9217,7 @@ export default {
   },
   "KeepMediaInfo": {
     "key": "KeepMediaInfo",
-    "value": "Photos, videos and other files from cloud chats that you have **not accessed** during this period will be removed from this device to save disk space.\\n\\nAll media will stay in the WAI cloud and can be re-downloaded if you need it again."
+    "value": "Photos, videos and other files from cloud chats that you have **not accessed** during this period will be removed from this device to save disk space.\\n\\nAll media will stay in the Wai cloud and can be re-downloaded if you need it again."
   },
   "KeepMediaForever": {
     "key": "KeepMediaForever",
@@ -9233,7 +9233,7 @@ export default {
   },
   "TelegramPassport": {
     "key": "TelegramPassport",
-    "value": "WAI Passport"
+    "value": "Wai Passport"
   },
   "PassportRequestedInformation": {
     "key": "PassportRequestedInformation",
@@ -9245,11 +9245,11 @@ export default {
   },
   "PassportInfoTitle": {
     "key": "PassportInfoTitle",
-    "value": "What is WAI Passport?"
+    "value": "What is Wai Passport?"
   },
   "PassportInfo2": {
     "key": "PassportInfo2",
-    "value": "With WAI Passport you can easily sign up for websites and services that require identity verification.\\n\\nYour information, personal data, and documents are protected by end-to-end encryption. Nobody, including WAI, can access them without your permission.\\n\\nYou can visit our *FAQ* to learn more."
+    "value": "With Wai Passport you can easily sign up for websites and services that require identity verification.\\n\\nYour information, personal data, and documents are protected by end-to-end encryption. Nobody, including Wai, can access them without your permission.\\n\\nYou can visit our *FAQ* to learn more."
   },
   "PassportInfoUrl": {
     "key": "PassportInfoUrl",
@@ -9257,7 +9257,7 @@ export default {
   },
   "TelegramPassportCreatePasswordInfo": {
     "key": "TelegramPassportCreatePasswordInfo",
-    "value": "Please create a password to secure your personal data with end-to-end encryption.\\n\\nThis password will also be required whenever you log in to WAI on a new device."
+    "value": "Please create a password to secure your personal data with end-to-end encryption.\\n\\nThis password will also be required whenever you log in to Wai on a new device."
   },
   "TelegramPassportCreatePassword": {
     "key": "TelegramPassportCreatePassword",
@@ -9265,15 +9265,15 @@ export default {
   },
   "TelegramPassportDelete": {
     "key": "TelegramPassportDelete",
-    "value": "Delete WAI Passport"
+    "value": "Delete Wai Passport"
   },
   "TelegramPassportDeleteTitle": {
     "key": "TelegramPassportDeleteTitle",
-    "value": "Delete WAI passport"
+    "value": "Delete Wai passport"
   },
   "TelegramPassportDeleteAlert": {
     "key": "TelegramPassportDeleteAlert",
-    "value": "Are you sure you want to delete your WAI Passport?"
+    "value": "Are you sure you want to delete your Wai Passport?"
   },
   "PassportUseLatinOnly": {
     "key": "PassportUseLatinOnly",
@@ -9417,11 +9417,11 @@ export default {
   },
   "PassportPhoneUseSameInfo": {
     "key": "PassportPhoneUseSameInfo",
-    "value": "Use the same phone number as on WAI."
+    "value": "Use the same phone number as on Wai."
   },
   "PassportPhoneUseSameEmailInfo": {
     "key": "PassportPhoneUseSameEmailInfo",
-    "value": "Use the same email as on WAI."
+    "value": "Use the same email as on Wai."
   },
   "PassportPhoneUseOther": {
     "key": "PassportPhoneUseOther",
@@ -9465,7 +9465,7 @@ export default {
   },
   "PassportRequestPasswordInfo": {
     "key": "PassportRequestPasswordInfo",
-    "value": "Please enter your WAI Password to decrypt your data."
+    "value": "Please enter your Wai Password to decrypt your data."
   },
   "PassportPolicy": {
     "key": "PassportPolicy",
@@ -9989,7 +9989,7 @@ export default {
   },
   "NoOtherSessionsInfo": {
     "key": "NoOtherSessionsInfo",
-    "value": "You can log in to WAI from other mobile, tablet and desktop devices, using the same phone number. All your data will be instantly synchronized."
+    "value": "You can log in to Wai from other mobile, tablet and desktop devices, using the same phone number. All your data will be instantly synchronized."
   },
   "OtherSessions": {
     "key": "OtherSessions",
@@ -10041,7 +10041,7 @@ export default {
   },
   "NoOtherWebSessionsInfo": {
     "key": "NoOtherWebSessionsInfo",
-    "value": "You can log in on websites that support signing in with WAI."
+    "value": "You can log in on websites that support signing in with Wai."
   },
   "OtherWebSessions": {
     "key": "OtherWebSessions",
@@ -10049,11 +10049,11 @@ export default {
   },
   "WebSessionsTitle": {
     "key": "WebSessionsTitle",
-    "value": "Logged in with WAI"
+    "value": "Logged in with Wai"
   },
   "TerminateWebSessionInfo": {
     "key": "TerminateWebSessionInfo",
-    "value": "Tap to disconnect from your WAI account."
+    "value": "Tap to disconnect from your Wai account."
   },
   "TerminateWebSessionText": {
     "key": "TerminateWebSessionText",
@@ -10081,11 +10081,11 @@ export default {
   },
   "AreYouSureWebSessions": {
     "key": "AreYouSureWebSessions",
-    "value": "Are you sure you want to disconnect all websites where you used WAI to log in?"
+    "value": "Are you sure you want to disconnect all websites where you used Wai to log in?"
   },
   "ClearOtherWebSessionsHelp": {
     "key": "ClearOtherWebSessionsHelp",
-    "value": "You can log in on websites that support signing in with WAI."
+    "value": "You can log in on websites that support signing in with Wai."
   },
   "LoginAttempts": {
     "key": "LoginAttempts",
@@ -10433,7 +10433,7 @@ export default {
   },
   "ChangePasscodeInfo": {
     "key": "ChangePasscodeInfo",
-    "value": "When you set up an additional passcode, a lock icon will appear on the chats page. Tap it to lock and unlock your WAI app.\\n\\nNote: if you forget the passcode, you\\'ll need to delete and reinstall the app. All secret chats will be lost."
+    "value": "When you set up an additional passcode, a lock icon will appear on the chats page. Tap it to lock and unlock your Wai app.\\n\\nNote: if you forget the passcode, you\\'ll need to delete and reinstall the app. All secret chats will be lost."
   },
   "ChangePasscodeInfoShort": {
     "key": "ChangePasscodeInfoShort",
@@ -10469,7 +10469,7 @@ export default {
   },
   "EnterYourPasscodeInfo": {
     "key": "EnterYourPasscodeInfo",
-    "value": "Please enter your current WAI passcode to manage this option."
+    "value": "Please enter your current Wai passcode to manage this option."
   },
   "ForgotPasscode": {
     "key": "ForgotPasscode",
@@ -10517,7 +10517,7 @@ export default {
   },
   "EnterYourTelegramPasscode": {
     "key": "EnterYourTelegramPasscode",
-    "value": "Enter your WAI passcode"
+    "value": "Enter your Wai passcode"
   },
   "ReEnterYourPasscode": {
     "key": "ReEnterYourPasscode",
@@ -10577,7 +10577,7 @@ export default {
   },
   "ScreenCaptureAlert": {
     "key": "ScreenCaptureAlert",
-    "value": "This will hide the contents of your chats or chat list from the task switcher, but you will not be able to take screenshots on WAI.\\n\\nYou may need to restart the app for this to take effect."
+    "value": "This will hide the contents of your chats or chat list from the task switcher, but you will not be able to take screenshots on Wai.\\n\\nYou may need to restart the app for this to take effect."
   },
   "TooManyTries": {
     "key": "TooManyTries",
@@ -11869,7 +11869,7 @@ export default {
   },
   "YourEmailSkipWarningText": {
     "key": "YourEmailSkipWarningText",
-    "value": "No, seriously.\\n\\nIf you forget your password, you will lose access to your WAI account. There will be no way to restore it."
+    "value": "No, seriously.\\n\\nIf you forget your password, you will lose access to your Wai account. There will be no way to restore it."
   },
   "YourEmailAlmostThere": {
     "key": "YourEmailAlmostThere",
@@ -11953,7 +11953,7 @@ export default {
   },
   "TurnPasswordOffPassport": {
     "key": "TurnPasswordOffPassport",
-    "value": "Warning! All data saved in your WAI Passport will be lost!"
+    "value": "Warning! All data saved in your Wai Passport will be lost!"
   },
   "PasswordHint": {
     "key": "PasswordHint",
@@ -12157,7 +12157,7 @@ export default {
   },
   "EnabledPasswordText": {
     "key": "EnabledPasswordText",
-    "value": "You have enabled Two-Step verification.\\nYou\\'ll need the password you set up here to log in to your WAI account."
+    "value": "You have enabled Two-Step verification.\\nYou\\'ll need the password you set up here to log in to your Wai account."
   },
   "DataSettings": {
     "key": "DataSettings",
@@ -12293,11 +12293,11 @@ export default {
   },
   "PrivacyPhoneInfo": {
     "key": "PrivacyPhoneInfo",
-    "value": "Users who have your number saved in their contacts will also see it on WAI."
+    "value": "Users who have your number saved in their contacts will also see it on Wai."
   },
   "PrivacyPhoneInfo3": {
     "key": "PrivacyPhoneInfo3",
-    "value": "Users who add your number to their contacts will see it on WAI only if they are your contacts."
+    "value": "Users who add your number to their contacts will see it on Wai only if they are your contacts."
   },
   "PrivacyPhoneInfo2": {
     "key": "PrivacyPhoneInfo2",
@@ -12365,7 +12365,7 @@ export default {
   },
   "PrivacyPaymentsClearAlert": {
     "key": "PrivacyPaymentsClearAlert",
-    "value": "Delete your shipping info and instruct all payment providers to remove your saved credit cards? Note that WAI never stores your credit card data."
+    "value": "Delete your shipping info and instruct all payment providers to remove your saved credit cards? Note that Wai never stores your credit card data."
   },
   "PrivacyPaymentsPaymentInfoCleared": {
     "key": "PrivacyPaymentsPaymentInfoCleared",
@@ -12381,7 +12381,7 @@ export default {
   },
   "PrivacyBotsInfo": {
     "key": "PrivacyBotsInfo",
-    "value": "Websites where you used WAI to log in."
+    "value": "Websites where you used Wai to log in."
   },
   "PrivacyClearShipping": {
     "key": "PrivacyClearShipping",
@@ -12617,7 +12617,7 @@ export default {
   },
   "PrivacyCallsP2PHelp": {
     "key": "PrivacyCallsP2PHelp",
-    "value": "Disabling peer-to-peer will relay all calls through WAI servers to avoid revealing your IP address, but may slightly decrease audio quality."
+    "value": "Disabling peer-to-peer will relay all calls through Wai servers to avoid revealing your IP address, but may slightly decrease audio quality."
   },
   "SyncContactsDelete": {
     "key": "SyncContactsDelete",
@@ -12657,7 +12657,7 @@ export default {
   },
   "SyncContactsDeleteText": {
     "key": "SyncContactsDeleteText",
-    "value": "This will remove your contacts from the WAI servers.\\n\\nIf \\'**Sync Contacts**\\' is enabled, contacts will be re-synced."
+    "value": "This will remove your contacts from the Wai servers.\\n\\nIf \\'**Sync Contacts**\\' is enabled, contacts will be re-synced."
   },
   "SendingVideo": {
     "key": "SendingVideo",
@@ -13225,7 +13225,7 @@ export default {
   },
   "UnsupportedMedia": {
     "key": "UnsupportedMedia",
-    "value": "This message is not supported on your version of WAI. Update the app to view: https://telegram.org/update"
+    "value": "This message is not supported on your version of Wai. Update the app to view: https://telegram.org/update"
   },
   "AttachPhoto": {
     "key": "AttachPhoto",
@@ -13361,11 +13361,11 @@ export default {
   },
   "UpdateTelegram": {
     "key": "UpdateTelegram",
-    "value": "Update WAI"
+    "value": "Update Wai"
   },
   "UpdateAppAlert": {
     "key": "UpdateAppAlert",
-    "value": "Sorry, your WAI app is out of date and can\\'t handle this request. Please update WAI."
+    "value": "Sorry, your Wai app is out of date and can\\'t handle this request. Please update Wai."
   },
   "InvalidPhoneNumber": {
     "key": "InvalidPhoneNumber",
@@ -13373,7 +13373,7 @@ export default {
   },
   "PleaseLoginPassport": {
     "key": "PleaseLoginPassport",
-    "value": "Please log in to your WAI account to use WAI Passport."
+    "value": "Please log in to your Wai account to use Wai Passport."
   },
   "BannedPhoneNumber": {
     "key": "BannedPhoneNumber",
@@ -13433,7 +13433,7 @@ export default {
   },
   "InviteUser": {
     "key": "InviteUser",
-    "value": "This user does not have WAI yet, send an invitation?"
+    "value": "This user does not have Wai yet, send an invitation?"
   },
   "AreYouSure": {
     "key": "AreYouSure",
@@ -13493,7 +13493,7 @@ export default {
   },
   "AreYouSureLogout": {
     "key": "AreYouSureLogout",
-    "value": "Are you sure you want to log out?\\n\\nNote that you can seamlessly use WAI on all your devices at once.\\n\\nRemember, logging out kills all your Secret Chats."
+    "value": "Are you sure you want to log out?\\n\\nNote that you can seamlessly use Wai on all your devices at once.\\n\\nRemember, logging out kills all your Secret Chats."
   },
   "DeleteFewChatsTitle": {
     "key": "DeleteFewChatsTitle",
@@ -13725,11 +13725,11 @@ export default {
   },
   "NoUsernameFound": {
     "key": "NoUsernameFound",
-    "value": "There is no WAI account with this username."
+    "value": "There is no Wai account with this username."
   },
   "NoPhoneFound": {
     "key": "NoPhoneFound",
-    "value": "There is no WAI account with this phone number."
+    "value": "There is no Wai account with this phone number."
   },
   "BotCantJoinGroups": {
     "key": "BotCantJoinGroups",
@@ -13737,7 +13737,7 @@ export default {
   },
   "SecretLinkPreviewAlert": {
     "key": "SecretLinkPreviewAlert",
-    "value": "Would you like to enable extended link previews in Secret Chats? Note that link previews are generated on WAI servers."
+    "value": "Would you like to enable extended link previews in Secret Chats? Note that link previews are generated on Wai servers."
   },
   "SecretChatContextBotAlert": {
     "key": "SecretChatContextBotAlert",
@@ -13749,19 +13749,19 @@ export default {
   },
   "AllowReadCall": {
     "key": "AllowReadCall",
-    "value": "Please allow WAI to receive calls so that we can automatically enter your code for you."
+    "value": "Please allow Wai to receive calls so that we can automatically enter your code for you."
   },
   "AllowReadCallAndLog": {
     "key": "AllowReadCallAndLog",
-    "value": "Please allow WAI to receive calls and read the call log so that we can automatically enter your code for you."
+    "value": "Please allow Wai to receive calls and read the call log so that we can automatically enter your code for you."
   },
   "AllowReadCallLog": {
     "key": "AllowReadCallLog",
-    "value": "Please allow WAI to read the call log so that we can automatically enter your code for you."
+    "value": "Please allow Wai to read the call log so that we can automatically enter your code for you."
   },
   "AllowFillNumber": {
     "key": "AllowFillNumber",
-    "value": "Please allow WAI to receive calls so that we can automatically confirm your phone number."
+    "value": "Please allow Wai to receive calls so that we can automatically confirm your phone number."
   },
   "UserRestricted": {
     "key": "UserRestricted",
@@ -13817,7 +13817,7 @@ export default {
   },
   "TosDecline": {
     "key": "TosDecline",
-    "value": "We\\'re very sorry, but this means you can\\'t sign up for WAI.\\n\\nUnlike others, we don\\'t use your data for ad targeting or other commercial purposes. WAI only stores the information it needs to function as a feature-rich cloud service. You can adjust how we use your data (e.g., delete synced contacts) in Privacy & Security settings.\\n\\nBut if you\\'re generally not OK with WAI\\'s modest requirements, it won\\'t be possible for us to provide you with this service."
+    "value": "We\\'re very sorry, but this means you can\\'t sign up for Wai.\\n\\nUnlike others, we don\\'t use your data for ad targeting or other commercial purposes. Wai only stores the information it needs to function as a feature-rich cloud service. You can adjust how we use your data (e.g., delete synced contacts) in Privacy & Security settings.\\n\\nBut if you\\'re generally not OK with Wai\\'s modest requirements, it won\\'t be possible for us to provide you with this service."
   },
   "TosAgeTitle": {
     "key": "TosAgeTitle",
@@ -13833,71 +13833,71 @@ export default {
   },
   "TosUpdateDecline": {
     "key": "TosUpdateDecline",
-    "value": "We\\'re very sorry, but this means we must part ways here. Unlike others, we don\\'t use your data for ad targeting or other commercial purposes. WAI only stores the information it needs to function as a feature-rich cloud service. You can adjust how we use your data (e.g., delete synced contacts) in Privacy & Security settings.\\n\\nBut if you\\'re generally not OK with WAI\\'s modest needs, it won\\'t be possible for us to provide this service. You can deactivate your account now — or look around some more and deactivate it later if you feel you\\'re not happy with the way we use your data."
+    "value": "We\\'re very sorry, but this means we must part ways here. Unlike others, we don\\'t use your data for ad targeting or other commercial purposes. Wai only stores the information it needs to function as a feature-rich cloud service. You can adjust how we use your data (e.g., delete synced contacts) in Privacy & Security settings.\\n\\nBut if you\\'re generally not OK with Wai\\'s modest needs, it won\\'t be possible for us to provide this service. You can deactivate your account now — or look around some more and deactivate it later if you feel you\\'re not happy with the way we use your data."
   },
   "TosDeclineDeleteAccount": {
     "key": "TosDeclineDeleteAccount",
-    "value": "Warning, this will irreversibly delete your WAI account along with all the data you store in the WAI cloud.\\n\\nImportant: You can Cancel now and export your data before deleting your account instead of losing it all. (To do this, open the latest version of WAI Desktop and go to Settings > Export WAI Data.)"
+    "value": "Warning, this will irreversibly delete your Wai account along with all the data you store in the Wai cloud.\\n\\nImportant: You can Cancel now and export your data before deleting your account instead of losing it all. (To do this, open the latest version of Wai Desktop and go to Settings > Export Wai Data.)"
   },
   "PermissionContacts": {
     "key": "PermissionContacts",
-    "value": "To let you connect with friends across all your devices, your contacts will be continuously synced with WAI\\'s heavily encrypted cloud servers."
+    "value": "To let you connect with friends across all your devices, your contacts will be continuously synced with Wai\\'s heavily encrypted cloud servers."
   },
   "PermissionStorageWithHint": {
     "key": "PermissionStorageWithHint",
-    "value": "**WAI** needs storage access so you can send and save photos, videos, music and other media. Tap Settings -> Permissions, and turn **Files and media** on."
+    "value": "**Wai** needs storage access so you can send and save photos, videos, music and other media. Tap Settings -> Permissions, and turn **Files and media** on."
   },
   "PermissionNoAudioWithHint": {
     "key": "PermissionNoAudioWithHint",
-    "value": "**WAI** needs microphone access so that you can send voice messages. Tap Settings -> Permissions, and turn **Microphone** on."
+    "value": "**Wai** needs microphone access so that you can send voice messages. Tap Settings -> Permissions, and turn **Microphone** on."
   },
   "PermissionNoAudioVideoWithHint": {
     "key": "PermissionNoAudioVideoWithHint",
-    "value": "**WAI** needs microphone access so that you can send voice messages. Tap Settings -> Permissions, and turn **Microphone** on. "
+    "value": "**Wai** needs microphone access so that you can send voice messages. Tap Settings -> Permissions, and turn **Microphone** on. "
   },
   "PermissionNoCameraWithHint": {
     "key": "PermissionNoCameraWithHint",
-    "value": "**WAI** needs camera access so that you can take photos and videos. Tap Settings -> Permissions, and turn **Camera** on."
+    "value": "**Wai** needs camera access so that you can take photos and videos. Tap Settings -> Permissions, and turn **Camera** on."
   },
   "PermissionNoCameraMicVideo": {
     "key": "PermissionNoCameraMicVideo",
-    "value": "**WAI** needs camera and microphone access so that you can send video messages. Tap Settings -> Permissions, and turn **Microphone** and **Camera** on."
+    "value": "**Wai** needs camera and microphone access so that you can send video messages. Tap Settings -> Permissions, and turn **Microphone** and **Camera** on."
   },
   "PermissionNoLocation": {
     "key": "PermissionNoLocation",
-    "value": "WAI needs access to your location so that you can share it with your friends."
+    "value": "Wai needs access to your location so that you can share it with your friends."
   },
   "PermissionNoLocationPosition": {
     "key": "PermissionNoLocationPosition",
-    "value": "WAI needs access to your location."
+    "value": "Wai needs access to your location."
   },
   "PermissionNoLocationFriends": {
     "key": "PermissionNoLocationFriends",
-    "value": "**WAI** needs access to location so that you can share it with your friends. Tap Settings -> Permissions, and turn **Location** on."
+    "value": "**Wai** needs access to location so that you can share it with your friends. Tap Settings -> Permissions, and turn **Location** on."
   },
   "PermissionNoLocationPeopleNearby": {
     "key": "PermissionNoLocationPeopleNearby",
-    "value": "**WAI** needs access to location so that you can find people nearby. Tap Settings -> Permissions, and turn **Location** on."
+    "value": "**Wai** needs access to location so that you can find people nearby. Tap Settings -> Permissions, and turn **Location** on."
   },
   "PermissionNoLocationNavigation": {
     "key": "PermissionNoLocationNavigation",
-    "value": "**WAI** needs access to location so that you can get directions. Tap Settings -> Permissions, and turn **Location** on."
+    "value": "**Wai** needs access to location so that you can get directions. Tap Settings -> Permissions, and turn **Location** on."
   },
   "PermissionNoContactsSharing": {
     "key": "PermissionNoContactsSharing",
-    "value": "**WAI** needs access to contacts so that you can share them with your friends. Tap Settings -> Permissions, and turn **Contacts** on."
+    "value": "**Wai** needs access to contacts so that you can share them with your friends. Tap Settings -> Permissions, and turn **Contacts** on."
   },
   "PermissionNoStorageAvatar": {
     "key": "PermissionNoStorageAvatar",
-    "value": "**WAI** needs storage access so you can upload profile picture. Tap Settings -> Permissions, and turn **Files and media** on."
+    "value": "**Wai** needs storage access so you can upload profile picture. Tap Settings -> Permissions, and turn **Files and media** on."
   },
   "PermissionDrawAboveOtherApps": {
     "key": "PermissionDrawAboveOtherApps",
-    "value": "WAI needs access to draw above other apps to play videos in Picture-in-Picture mode."
+    "value": "Wai needs access to draw above other apps to play videos in Picture-in-Picture mode."
   },
   "PermissionDrawAboveOtherAppsGroupCall": {
     "key": "PermissionDrawAboveOtherAppsGroupCall",
-    "value": "Overlay mode lets you use push-to-talk and see who is talking even when you are outside of WAI."
+    "value": "Overlay mode lets you use push-to-talk and see who is talking even when you are outside of Wai."
   },
   "PermissionOpenSettings": {
     "key": "PermissionOpenSettings",
@@ -13905,11 +13905,11 @@ export default {
   },
   "PermissionXiaomiLockscreen": {
     "key": "PermissionXiaomiLockscreen",
-    "value": "Please allow WAI to be shown on the lock screen so that calls can work properly."
+    "value": "Please allow Wai to be shown on the lock screen so that calls can work properly."
   },
   "PermissionBackgroundLocation": {
     "key": "PermissionBackgroundLocation",
-    "value": "To share your live location in this chat, WAI needs access to your location all the time, including while the app is in the background.\\n\\nWe will access your location only for the duration you choose, and you can stop sharing it any time. We won\\'t use your location for any purpose other than sharing it in this chat."
+    "value": "To share your live location in this chat, Wai needs access to your location all the time, including while the app is in the background.\\n\\nWe will access your location only for the duration you choose, and you can stop sharing it any time. We won\\'t use your location for any purpose other than sharing it in this chat."
   },
   "PermissionDrawAboveOtherAppsTitle": {
     "key": "PermissionDrawAboveOtherAppsTitle",
@@ -13985,7 +13985,7 @@ export default {
   },
   "ClearTelegramCache": {
     "key": "ClearTelegramCache",
-    "value": "Clear WAI Cache"
+    "value": "Clear Wai Cache"
   },
   "StatisticOverview": {
     "key": "StatisticOverview",
@@ -14009,11 +14009,11 @@ export default {
   },
   "TelegramCacheSize": {
     "key": "TelegramCacheSize",
-    "value": "%s WAI Cache"
+    "value": "%s Wai Cache"
   },
   "LocalDatabaseSize": {
     "key": "LocalDatabaseSize",
-    "value": "%s WAI Local Database"
+    "value": "%s Wai Local Database"
   },
   "CacheWasCleared": {
     "key": "CacheWasCleared",
@@ -14245,7 +14245,7 @@ export default {
   },
   "Page1Title": {
     "key": "Page1Title",
-    "value": "WAI"
+    "value": "Wai"
   },
   "Page2Title": {
     "key": "Page2Title",
@@ -14273,23 +14273,23 @@ export default {
   },
   "Page2Message": {
     "key": "Page2Message",
-    "value": "**WAI** delivers messages faster than\\nany other application."
+    "value": "**Wai** delivers messages faster than\\nany other application."
   },
   "Page3Message": {
     "key": "Page3Message",
-    "value": "**WAI** provides free unlimited cloud storage for chats and media."
+    "value": "**Wai** provides free unlimited cloud storage for chats and media."
   },
   "Page4Message": {
     "key": "Page4Message",
-    "value": "**WAI** keeps your messages safe\\nfrom hacker attacks."
+    "value": "**Wai** keeps your messages safe\\nfrom hacker attacks."
   },
   "Page5Message": {
     "key": "Page5Message",
-    "value": "**WAI** has no limits on\\nthe size of your media and chats."
+    "value": "**Wai** has no limits on\\nthe size of your media and chats."
   },
   "Page6Message": {
     "key": "Page6Message",
-    "value": "**WAI** lets you access your messages\\nfrom multiple devices."
+    "value": "**Wai** lets you access your messages\\nfrom multiple devices."
   },
   "StartMessaging": {
     "key": "StartMessaging",
@@ -14345,15 +14345,15 @@ export default {
   },
   "VoipInCallBranding": {
     "key": "VoipInCallBranding",
-    "value": "WAI Call"
+    "value": "Wai Call"
   },
   "VoipInVideoCallBranding": {
     "key": "VoipInVideoCallBranding",
-    "value": "WAI Video Call"
+    "value": "Wai Video Call"
   },
   "VoipOutgoingCall": {
     "key": "VoipOutgoingCall",
-    "value": "Ongoing WAI call"
+    "value": "Ongoing Wai call"
   },
   "VoipVoiceChat": {
     "key": "VoipVoiceChat",
@@ -14401,7 +14401,7 @@ export default {
   },
   "VoipRingtoneInfo": {
     "key": "VoipRingtoneInfo",
-    "value": "You can customize the ringtone used when this contact calls you on WAI."
+    "value": "You can customize the ringtone used when this contact calls you on Wai."
   },
   "Calls": {
     "key": "Calls",
@@ -14561,7 +14561,7 @@ export default {
   },
   "VoipPeerVideoOutdated": {
     "key": "VoipPeerVideoOutdated",
-    "value": "Sorry, **%1$s** is using an old version of WAI that doesn\\'t support video calls."
+    "value": "Sorry, **%1$s** is using an old version of Wai that doesn\\'t support video calls."
   },
   "VoipPeerVideoOutdatedMakeVoice": {
     "key": "VoipPeerVideoOutdatedMakeVoice",
@@ -14569,19 +14569,19 @@ export default {
   },
   "VoipRateCallAlert": {
     "key": "VoipRateCallAlert",
-    "value": "Please rate the quality of your WAI call"
+    "value": "Please rate the quality of your Wai call"
   },
   "VoipNeedMicPermissionWithHint": {
     "key": "VoipNeedMicPermissionWithHint",
-    "value": "**WAI** needs microphone access so that you can make calls. Tap Settings -> Permissions, and turn **Microphone** on."
+    "value": "**Wai** needs microphone access so that you can make calls. Tap Settings -> Permissions, and turn **Microphone** on."
   },
   "VoipNeedMicCameraPermissionWithHint": {
     "key": "VoipNeedMicCameraPermissionWithHint",
-    "value": "**WAI** needs camera and microphone access so that you can make video calls. Tap Settings -> Permissions, and turn **Microphone** and **Camera** on."
+    "value": "**Wai** needs camera and microphone access so that you can make video calls. Tap Settings -> Permissions, and turn **Microphone** and **Camera** on."
   },
   "VoipNeedCameraPermission": {
     "key": "VoipNeedCameraPermission",
-    "value": "WAI needs access to your camera so that you can make video calls."
+    "value": "Wai needs access to your camera so that you can make video calls."
   },
   "VoipFeedbackCommentHint": {
     "key": "VoipFeedbackCommentHint",
@@ -14605,11 +14605,11 @@ export default {
   },
   "CallViaTelegram": {
     "key": "CallViaTelegram",
-    "value": "WAI Call"
+    "value": "Wai Call"
   },
   "VideoCallViaTelegram": {
     "key": "VideoCallViaTelegram",
-    "value": "WAI Video Call"
+    "value": "Wai Video Call"
   },
   "VoipAudioRoutingEarpiece": {
     "key": "VoipAudioRoutingEarpiece",
@@ -14665,7 +14665,7 @@ export default {
   },
   "CallReportSent": {
     "key": "CallReportSent",
-    "value": "Thank you for helping make WAI calls better."
+    "value": "Thank you for helping make Wai calls better."
   },
   "TranscriptionReportSent": {
     "key": "TranscriptionReportSent",
@@ -14681,7 +14681,7 @@ export default {
   },
   "VoipQuickRepliesExplain": {
     "key": "VoipQuickRepliesExplain",
-    "value": "These quick responses will be available when you respond to an incoming call with a WAI message. Change them to say anything you like."
+    "value": "These quick responses will be available when you respond to an incoming call with a Wai message. Change them to say anything you like."
   },
   "QuickReplyDefault1": {
     "key": "QuickReplyDefault1",
@@ -14709,15 +14709,15 @@ export default {
   },
   "VoipInCallBrandingWithName": {
     "key": "VoipInCallBrandingWithName",
-    "value": "WAI Call to %s"
+    "value": "Wai Call to %s"
   },
   "VoipInVideoCallBrandingWithName": {
     "key": "VoipInVideoCallBrandingWithName",
-    "value": "WAI Video Call to %s"
+    "value": "Wai Video Call to %s"
   },
   "VoipErrorUnknown": {
     "key": "VoipErrorUnknown",
-    "value": "Can\\'t place a WAI call at the moment."
+    "value": "Can\\'t place a Wai call at the moment."
   },
   "RateCallEcho": {
     "key": "RateCallEcho",
@@ -15677,11 +15677,11 @@ export default {
   },
   "VoipVideoNotAvailableAdmin": {
     "key": "VoipVideoNotAvailableAdmin",
-    "value": "The video chat has over %1$s.\\nNew participants must use the latest version of WAI to view video."
+    "value": "The video chat has over %1$s.\\nNew participants must use the latest version of Wai to view video."
   },
   "VoipChannelVideoNotAvailableAdmin": {
     "key": "VoipChannelVideoNotAvailableAdmin",
-    "value": "The live stream is over %1$s.\\nNew participants must use the latest version of WAI to view video."
+    "value": "The live stream is over %1$s.\\nNew participants must use the latest version of Wai to view video."
   },
   "VoipRecordAudio": {
     "key": "VoipRecordAudio",
@@ -15713,11 +15713,11 @@ export default {
   },
   "NoRtmpStreamFromAppOwner": {
     "key": "NoRtmpStreamFromAppOwner",
-    "value": "**Oops!** WAI doesn\\'t see any stream coming from your streaming app.\\n\\nPlease make sure you entered the right Server URL and Stream Key in your app."
+    "value": "**Oops!** Wai doesn\\'t see any stream coming from your streaming app.\\n\\nPlease make sure you entered the right Server URL and Stream Key in your app."
   },
   "NoRtmpStreamFromAppViewer": {
     "key": "NoRtmpStreamFromAppViewer",
-    "value": "%1$s is currently not broadcasting live stream data to WAI."
+    "value": "%1$s is currently not broadcasting live stream data to Wai."
   },
   "ManageInviteLinks": {
     "key": "ManageInviteLinks",
@@ -15729,11 +15729,11 @@ export default {
   },
   "PrimaryLinkHelp": {
     "key": "PrimaryLinkHelp",
-    "value": "Anyone on WAI will be able to join your group by following this link."
+    "value": "Anyone on Wai will be able to join your group by following this link."
   },
   "PrimaryLinkHelpChannel": {
     "key": "PrimaryLinkHelpChannel",
-    "value": "Anyone on WAI will be able to join your channel by following this link."
+    "value": "Anyone on Wai will be able to join your channel by following this link."
   },
   "EditLink": {
     "key": "EditLink",
@@ -15857,7 +15857,7 @@ export default {
   },
   "QRCodeLinkHelpGroup": {
     "key": "QRCodeLinkHelpGroup",
-    "value": "Everyone on WAI can scan this code to join your group."
+    "value": "Everyone on Wai can scan this code to join your group."
   },
   "DeleteLinkHelp": {
     "key": "DeleteLinkHelp",
@@ -15885,11 +15885,11 @@ export default {
   },
   "QRCodeLinkHelpChannel": {
     "key": "QRCodeLinkHelpChannel",
-    "value": "Everyone on WAI can scan this code to join your channel."
+    "value": "Everyone on Wai can scan this code to join your channel."
   },
   "LinkInfoChannel": {
     "key": "LinkInfoChannel",
-    "value": "Anyone who has WAI installed will be able to join your channel by following this link."
+    "value": "Anyone who has Wai installed will be able to join your channel by following this link."
   },
   "LinkExpiresInTime": {
     "key": "LinkExpiresInTime",
@@ -16197,51 +16197,51 @@ export default {
   },
   "TelegramContacts_zero": {
     "key": "TelegramContacts_zero",
-    "value": "%1$d contacts on WAI"
+    "value": "%1$d contacts on Wai"
   },
   "TelegramContacts_one": {
     "key": "TelegramContacts_one",
-    "value": "%1$d contact on WAI"
+    "value": "%1$d contact on Wai"
   },
   "TelegramContacts_two": {
     "key": "TelegramContacts_two",
-    "value": "%1$d contacts on WAI"
+    "value": "%1$d contacts on Wai"
   },
   "TelegramContacts_few": {
     "key": "TelegramContacts_few",
-    "value": "%1$d contacts on WAI"
+    "value": "%1$d contacts on Wai"
   },
   "TelegramContacts_many": {
     "key": "TelegramContacts_many",
-    "value": "%1$d contacts on WAI"
+    "value": "%1$d contacts on Wai"
   },
   "TelegramContacts_other": {
     "key": "TelegramContacts_other",
-    "value": "%1$d contacts on WAI"
+    "value": "%1$d contacts on Wai"
   },
   "InviteTextNum_zero": {
     "key": "InviteTextNum_zero",
-    "value": "Hey, I\\'m using WAI to chat – and so are %1$d of our other contacts. Join us! Download it here: %2$s"
+    "value": "Hey, I\\'m using Wai to chat – and so are %1$d of our other contacts. Join us! Download it here: %2$s"
   },
   "InviteTextNum_one": {
     "key": "InviteTextNum_one",
-    "value": "Hey, I\\'m using WAI to chat – and so are %1$d of our other contact. Join us! Download it here: %2$s"
+    "value": "Hey, I\\'m using Wai to chat – and so are %1$d of our other contact. Join us! Download it here: %2$s"
   },
   "InviteTextNum_two": {
     "key": "InviteTextNum_two",
-    "value": "Hey, I\\'m using WAI to chat – and so are %1$d of our other contacts. Join us! Download it here: %2$s"
+    "value": "Hey, I\\'m using Wai to chat – and so are %1$d of our other contacts. Join us! Download it here: %2$s"
   },
   "InviteTextNum_few": {
     "key": "InviteTextNum_few",
-    "value": "Hey, I\\'m using WAI to chat – and so are %1$d of our other contacts. Join us! Download it here: %2$s"
+    "value": "Hey, I\\'m using Wai to chat – and so are %1$d of our other contacts. Join us! Download it here: %2$s"
   },
   "InviteTextNum_many": {
     "key": "InviteTextNum_many",
-    "value": "Hey, I\\'m using WAI to chat – and so are %1$d of our other contacts. Join us! Download it here: %2$s"
+    "value": "Hey, I\\'m using Wai to chat – and so are %1$d of our other contacts. Join us! Download it here: %2$s"
   },
   "InviteTextNum_other": {
     "key": "InviteTextNum_other",
-    "value": "Hey, I\\'m using WAI to chat – and so are %1$d of our other contacts. Join us! Download it here: %2$s"
+    "value": "Hey, I\\'m using Wai to chat – and so are %1$d of our other contacts. Join us! Download it here: %2$s"
   },
   "PeopleJoined_zero": {
     "key": "PeopleJoined_zero",
@@ -19769,7 +19769,7 @@ export default {
   },
   "OptimizingTelegram": {
     "key": "OptimizingTelegram",
-    "value": "Optimizing WAI..."
+    "value": "Optimizing Wai..."
   },
   "OptimizingTelegramDescription1": {
     "key": "OptimizingTelegramDescription1",
@@ -20149,11 +20149,11 @@ export default {
   },
   "ManageAllFilesRational": {
     "key": "ManageAllFilesRational",
-    "value": "Please allow **WAI** to manage all files to open in-app file browser"
+    "value": "Please allow **Wai** to manage all files to open in-app file browser"
   },
   "ManageAllFilesRational2": {
     "key": "ManageAllFilesRational2",
-    "value": "WAI needs permission to manage all files to migrate old cache files to Scoped Storage"
+    "value": "Wai needs permission to manage all files to migrate old cache files to Scoped Storage"
   },
   "Allow": {
     "key": "Allow",
@@ -20189,7 +20189,7 @@ export default {
   },
   "AuthAnotherClientInfo4": {
     "key": "AuthAnotherClientInfo4",
-    "value": "Link *WAI Desktop* or *WAI Web* by scanning the QR."
+    "value": "Link *Wai Desktop* or *Wai Web* by scanning the QR."
   },
   "LinkDesktopDevice": {
     "key": "LinkDesktopDevice",
@@ -20209,7 +20209,7 @@ export default {
   },
   "SessionsListInfo": {
     "key": "SessionsListInfo",
-    "value": "The official WAI app is available for Android, iPhone, iPad, Windows, macOS and Linux."
+    "value": "The official Wai app is available for Android, iPhone, iPad, Windows, macOS and Linux."
   },
   "MigrateOldFolder": {
     "key": "MigrateOldFolder",
@@ -20353,7 +20353,7 @@ export default {
   },
   "MigrateOldFolderDescription": {
     "key": "MigrateOldFolderDescription",
-    "value": "Due to a change made by **Google**, we need to move the files you downloaded using **WAI** to a new folder.\\n\\nThis may take a few moments. You can continue using the app while the files are moved."
+    "value": "Due to a change made by **Google**, we need to move the files you downloaded using **Wai** to a new folder.\\n\\nThis may take a few moments. You can continue using the app while the files are moved."
   },
   "MigratingFiles": {
     "key": "MigratingFiles",
@@ -20601,15 +20601,15 @@ export default {
   },
   "AllowBackgroundActivityInfo": {
     "key": "AllowBackgroundActivityInfo",
-    "value": "This will improve reliability for incoming notifications and WAI calls."
+    "value": "This will improve reliability for incoming notifications and Wai calls."
   },
   "AllowBackgroundActivityInfoOneUIBelowS": {
     "key": "AllowBackgroundActivityInfoOneUIBelowS",
-    "value": "This will improve reliability for incoming notifications and WAI calls. Tap Settings -> Battery and turn **Allow background activity** on."
+    "value": "This will improve reliability for incoming notifications and Wai calls. Tap Settings -> Battery and turn **Allow background activity** on."
   },
   "AllowBackgroundActivityInfoOneUIAboveS": {
     "key": "AllowBackgroundActivityInfoOneUIAboveS",
-    "value": "This will improve reliability for incoming notifications and WAI calls. Please select **Optimised** or **Unrestricted** in Settings > Battery."
+    "value": "This will improve reliability for incoming notifications and Wai calls. Please select **Optimised** or **Unrestricted** in Settings > Battery."
   },
   "SetNewPassword": {
     "key": "SetNewPassword",
@@ -20669,7 +20669,7 @@ export default {
   },
   "DownloadedFilesMessage": {
     "key": "DownloadedFilesMessage",
-    "value": "WAI lets you store all documents you send and receive in the cloud and save storage space on your device."
+    "value": "Wai lets you store all documents you send and receive in the cloud and save storage space on your device."
   },
   "ClearDownloadsList": {
     "key": "ClearDownloadsList",
@@ -20717,11 +20717,11 @@ export default {
   },
   "CreatePasscodeInfoPIN": {
     "key": "CreatePasscodeInfoPIN",
-    "value": "Please enter any 4 digits that you will use to unlock WAI."
+    "value": "Please enter any 4 digits that you will use to unlock Wai."
   },
   "CreatePasscodeInfoPassword": {
     "key": "CreatePasscodeInfoPassword",
-    "value": "Please enter the password you will use to unlock WAI."
+    "value": "Please enter the password you will use to unlock Wai."
   },
   "PasscodeReinstallNotice": {
     "key": "PasscodeReinstallNotice",
@@ -20813,7 +20813,7 @@ export default {
   },
   "TelegramTones": {
     "key": "TelegramTones",
-    "value": "WAI tones"
+    "value": "Wai tones"
   },
   "SystemTones": {
     "key": "SystemTones",
@@ -21033,7 +21033,7 @@ export default {
   },
   "UnlockPremiumReactionsDescription": {
     "key": "UnlockPremiumReactionsDescription",
-    "value": "Unlock additional reactions by subscribing to WAI Premium."
+    "value": "Unlock additional reactions by subscribing to Wai Premium."
   },
   "SecretChatTimerYears": {
     "key": "SecretChatTimerYears",
@@ -21045,7 +21045,7 @@ export default {
   },
   "LimitReachedPublicLinks": {
     "key": "LimitReachedPublicLinks",
-    "value": "You have reserved too many public links. Try revoking the link from an older group or channel, or upgrade to **WAI Premium** to double the limit to **%2$d** public links."
+    "value": "You have reserved too many public links. Try revoking the link from an older group or channel, or upgrade to **Wai Premium** to double the limit to **%2$d** public links."
   },
   "LimitReachedPublicLinksPremium": {
     "key": "LimitReachedPublicLinksPremium",
@@ -21061,7 +21061,7 @@ export default {
   },
   "LimitReachedFolders": {
     "key": "LimitReachedFolders",
-    "value": "You have reached the limit of **%1$d** folders. You can double the limit to **%2$d** folders by subscribing to **WAI Premium**."
+    "value": "You have reached the limit of **%1$d** folders. You can double the limit to **%2$d** folders by subscribing to **Wai Premium**."
   },
   "LimitReachedFoldersPremium": {
     "key": "LimitReachedFoldersPremium",
@@ -21073,7 +21073,7 @@ export default {
   },
   "LimitReachedChatInFolders": {
     "key": "LimitReachedChatInFolders",
-    "value": "Sorry, you can\\'t add more than **%1$d** chats to a folder. You can increase this limit to **%2$d** by upgrading to **WAI Premium**."
+    "value": "Sorry, you can\\'t add more than **%1$d** chats to a folder. You can increase this limit to **%2$d** by upgrading to **Wai Premium**."
   },
   "LimitReachedChatInFoldersPremium": {
     "key": "LimitReachedChatInFoldersPremium",
@@ -21085,7 +21085,7 @@ export default {
   },
   "LimitReachedCommunities": {
     "key": "LimitReachedCommunities",
-    "value": "You are a member of **%1$d**  groups and channels. Please leave some before joining a new one — or upgrade to **WAI Premium** to double the limit to **%2$d** groups and channels."
+    "value": "You are a member of **%1$d**  groups and channels. Please leave some before joining a new one — or upgrade to **Wai Premium** to double the limit to **%2$d** groups and channels."
   },
   "LimitReachedCommunitiesPremium": {
     "key": "LimitReachedCommunitiesPremium",
@@ -21137,7 +21137,7 @@ export default {
   },
   "PremiumPreviewNoAdsDescription": {
     "key": "PremiumPreviewNoAdsDescription",
-    "value": "No more ads in public channels where WAI sometimes shows ads."
+    "value": "No more ads in public channels where Wai sometimes shows ads."
   },
   "PremiumPreviewReactions": {
     "key": "PremiumPreviewReactions",
@@ -21157,7 +21157,7 @@ export default {
   },
   "PremiumPreviewProfileBadgeDescription": {
     "key": "PremiumPreviewProfileBadgeDescription",
-    "value": "A badge next to your name showing that you are helping support WAI."
+    "value": "A badge next to your name showing that you are helping support Wai."
   },
   "PremiumPreviewAnimatedProfiles": {
     "key": "PremiumPreviewAnimatedProfiles",
@@ -21185,7 +21185,7 @@ export default {
   },
   "SubscribeToPremiumOfficialAppNeededDescription": {
     "key": "SubscribeToPremiumOfficialAppNeededDescription",
-    "value": "You need an official WAI app to subscribe to **WAI Premium**.\\n\\nOnce subscribed, you will be able to use the benefits of WAI Premium in any apps that support it, including unofficial ones."
+    "value": "You need an official Wai app to subscribe to **Wai Premium**.\\n\\nOnce subscribed, you will be able to use the benefits of Wai Premium in any apps that support it, including unofficial ones."
   },
   "InstallOfficialApp": {
     "key": "InstallOfficialApp",
@@ -21193,11 +21193,11 @@ export default {
   },
   "TelegramPremium": {
     "key": "TelegramPremium",
-    "value": "WAI Premium"
+    "value": "Wai Premium"
   },
   "TelegramPremiumSubtitle": {
     "key": "TelegramPremiumSubtitle",
-    "value": "Go **beyond the limits**, get exclusive features and support us by subscribing to **WAI Premium**."
+    "value": "Go **beyond the limits**, get exclusive features and support us by subscribing to **Wai Premium**."
   },
   "TelegramPremiumSubscribedTitle": {
     "key": "TelegramPremiumSubscribedTitle",
@@ -21205,7 +21205,7 @@ export default {
   },
   "TelegramPremiumSubscribedSubtitle": {
     "key": "TelegramPremiumSubscribedSubtitle",
-    "value": "Thank you for subscribing to **WAI Premium**.\\nHere’s what is now unlocked."
+    "value": "Thank you for subscribing to **Wai Premium**.\\nHere’s what is now unlocked."
   },
   "LimitReachedFavoriteStickers": {
     "key": "LimitReachedFavoriteStickers",
@@ -21225,7 +21225,7 @@ export default {
   },
   "LimitReachedFileSize": {
     "key": "LimitReachedFileSize",
-    "value": "The document cant’t be sent, because it is larger than **%1$s**. You can double this limit to **%2$s** per document by subscribing to **WAI Premium**."
+    "value": "The document cant’t be sent, because it is larger than **%1$s**. You can double this limit to **%2$s** per document by subscribing to **Wai Premium**."
   },
   "LimitReachedFileSizePremium": {
     "key": "LimitReachedFileSizePremium",
@@ -21237,15 +21237,15 @@ export default {
   },
   "AboutPremiumTitle": {
     "key": "AboutPremiumTitle",
-    "value": "About WAI Premium"
+    "value": "About Wai Premium"
   },
   "AboutPremiumDescription": {
     "key": "AboutPremiumDescription",
-    "value": "While the free version of WAI already gives its users more than any other messaging application, **WAI Premium** pushes its capabilities even further."
+    "value": "While the free version of Wai already gives its users more than any other messaging application, **Wai Premium** pushes its capabilities even further."
   },
   "AboutPremiumDescription2": {
     "key": "AboutPremiumDescription2",
-    "value": "**WAI Premium** is a paid option, because most Premium Features require additional expenses from WAI to third parties such as data center providers and server manufacturers. Contributions from **WAI Premium** users allow us to cover such costs and also help WAI stay free for everyone."
+    "value": "**Wai Premium** is a paid option, because most Premium Features require additional expenses from Wai to third parties such as data center providers and server manufacturers. Contributions from **Wai Premium** users allow us to cover such costs and also help Wai stay free for everyone."
   },
   "GroupsAndChannelsLimitTitle": {
     "key": "GroupsAndChannelsLimitTitle",
@@ -21317,7 +21317,7 @@ export default {
   },
   "LimitReachedAccounts": {
     "key": "LimitReachedAccounts",
-    "value": "Sorry, you can\\'t add more than **%1$d** accounts. You can increase this limit to **%2$d** by upgrading to **WAI Premium**."
+    "value": "Sorry, you can\\'t add more than **%1$d** accounts. You can increase this limit to **%2$d** by upgrading to **Wai Premium**."
   },
   "LimitReachedAccountsPremium": {
     "key": "LimitReachedAccountsPremium",
@@ -21369,7 +21369,7 @@ export default {
   },
   "TelegramPremiumUserDialogTitle": {
     "key": "TelegramPremiumUserDialogTitle",
-    "value": "**%s** is a subscriber of WAI Premium."
+    "value": "**%s** is a subscriber of Wai Premium."
   },
   "HideAd": {
     "key": "HideAd",
@@ -21425,7 +21425,7 @@ export default {
   },
   "PremiumPreviewAppIconDescription": {
     "key": "PremiumPreviewAppIconDescription",
-    "value": "Choose from a selection of WAI app icons for your homescreen."
+    "value": "Choose from a selection of Wai app icons for your homescreen."
   },
   "UnlockPremiumIcons": {
     "key": "UnlockPremiumIcons",
@@ -21433,7 +21433,7 @@ export default {
   },
   "AboutTelegramPremium": {
     "key": "AboutTelegramPremium",
-    "value": "About WAI Premium"
+    "value": "About Wai Premium"
   },
   "AdditionalReactions": {
     "key": "AdditionalReactions",
@@ -21441,7 +21441,7 @@ export default {
   },
   "AdditionalReactionsDescription": {
     "key": "AdditionalReactionsDescription",
-    "value": "Unlock a wider range of reactions on messages by subscribing to WAI Premium."
+    "value": "Unlock a wider range of reactions on messages by subscribing to Wai Premium."
   },
   "PremiumPreviewAppIcon2": {
     "key": "PremiumPreviewAppIcon2",
@@ -21449,7 +21449,7 @@ export default {
   },
   "PremiumPreviewAppIconDescription2": {
     "key": "PremiumPreviewAppIconDescription2",
-    "value": "Unlock a wider range of app icons by subscribing to WAI Premium."
+    "value": "Unlock a wider range of app icons by subscribing to Wai Premium."
   },
   "PaymentCheckoutAcceptRecurrent": {
     "key": "PaymentCheckoutAcceptRecurrent",
@@ -21489,11 +21489,11 @@ export default {
   },
   "UnlockPremiumStickersDescription": {
     "key": "UnlockPremiumStickersDescription",
-    "value": "Unlock this sticker and many more by subscribing to WAI Premium."
+    "value": "Unlock this sticker and many more by subscribing to Wai Premium."
   },
   "LimitReachedPinDialogs": {
     "key": "LimitReachedPinDialogs",
-    "value": "Sorry, you can\\'t pin more than %1$d chats to the top. Unpin some that are currently pinned or subscribe to **WAI Premium** to double the limit to **%2$d** chats."
+    "value": "Sorry, you can\\'t pin more than %1$d chats to the top. Unpin some that are currently pinned or subscribe to **Wai Premium** to double the limit to **%2$d** chats."
   },
   "LimitReachedPinDialogsPremium": {
     "key": "LimitReachedPinDialogsPremium",
@@ -21520,11 +21520,11 @@ export default {
   },
   "TelegramPremiumUserDialogSubtitle": {
     "key": "TelegramPremiumUserDialogSubtitle",
-    "value": "Owners of **WAI Premium** accounts have exclusive acces to multiple additional features."
+    "value": "Owners of **Wai Premium** accounts have exclusive acces to multiple additional features."
   },
   "PremiumPreviewNoAdsDescription2": {
     "key": "PremiumPreviewNoAdsDescription2",
-    "value": "Remove ads such as this one by subscribing to WAI Premium."
+    "value": "Remove ads such as this one by subscribing to Wai Premium."
   },
   "FeaturedStickersPremium": {
     "key": "FeaturedStickersPremium",

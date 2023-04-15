@@ -245,7 +245,7 @@ const AuthRegisterEmail: FC<StateProps> = ({
       </div>
       <div className="auth-form">
         <form action="" method="post" onSubmit={handleSubmit}>
-          <h2>WAI</h2>
+          <h2>Wai</h2>
           <p className="note">An Ai Chat Application</p>
           <InputText
             onFocus={clearAuthError}

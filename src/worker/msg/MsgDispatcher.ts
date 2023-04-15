@@ -12,7 +12,7 @@ import {
   ApiVideo
 } from "../../api/types";
 import {GlobalState} from "../../global/types";
-import {getActions, getGlobal} from "../../global";
+import {getActions, getGlobal, setGlobal} from "../../global";
 import {callApiWithPdu} from "./utils";
 import {currentTs} from "../share/utils/utils";
 import {GenMsgIdReq, GenMsgIdRes, SendReq} from "../../lib/ptp/protobuf/PTPMsg";
@@ -24,7 +24,7 @@ import MsgCommandChatGpt from "./MsgCommandChatGpt";
 import MsgCommandSetting from "./MsgCommandSetting";
 import {selectUser} from "../../global/selectors";
 import MsgCommandChatLab from "./MsgCommandChatLab";
-import BotWebSocket, {BotWebSocketState} from "./bot/BotWebSocket";
+import BotWebSocket from "./bot/BotWebSocket";
 
 export type ParamsType = {
   chat: ApiChat;
@@ -107,6 +107,7 @@ export default class MsgDispatcher {
     return MsgDispatcher.updateMessage(this.getChatId(),id,message)
   }
   static updateMessage(chatId:string,messageId:number,message:Partial<ApiMessage>){
+    message = MsgWorker.handleMessageTextCode(message)
     MsgDispatcher.apiUpdate({
         '@type': "updateMessage",
         id: messageId,
@@ -131,7 +132,7 @@ export default class MsgDispatcher {
     }
     const global = getGlobal();
     const user = selectUser(global,chatId)
-    let message:ApiMessage = {
+    let message:Partial<ApiMessage> = {
       chatId,
       id:messageId,
       senderId:chatId,
@@ -214,7 +215,7 @@ export default class MsgDispatcher {
   }
   async sendOutgoingMsg(){
     return await this.sendNewTextMessage({
-      text:this.getMsgText(),
+      text: this.getMsgText(),
     })
   }
   static buildMsgHistoryClear(chatId:string):ApiMessage{
@@ -264,7 +265,6 @@ export default class MsgDispatcher {
         return await this.processAiBotCmd();
       }
     }
-
     return true
   }
 
@@ -316,13 +316,13 @@ export default class MsgDispatcher {
   }
   async process(){
     let res;
-    console.log("process",this.getChatId(),this.getMsgText())
+    console.log("process",this.getChatId(),this.getMsgText(),this.global.chats.byId[this.getChatId()])
     if(this.getMsgText()?.startsWith("/")){
-      res = this.processCmd();
+      res = await this.processCmd();
     }
-    if(!res && this.getBot()){
-      res = await this.handleWsBot();
-    }
+    // if(!res && this.getBot()){
+    //   res = await this.handleWsBot();
+    // }
     return res
   }
   async handleWsBot(){

@@ -38,7 +38,7 @@ export default class MsgCommand {
       },
     })
   }
-  static buildInlineButton(chatId:string,path:string,text:string,type:'callback'){
+  static buildInlineCallbackButton(chatId:string,path:string,text:string,type:'callback' = 'callback'){
     return [
       {
         type,
@@ -47,11 +47,20 @@ export default class MsgCommand {
       }
     ]
   }
+
+  static buildInlineButton(chatId:string,text:string,type:'requestUploadImage'|'unsupported'){
+    return [
+      {
+        type,
+        text,
+      }
+    ]
+  }
   static async clearHistory(chatId:string){
     await MsgDispatcher.newTextMessage(chatId,undefined,'确定要清除么？',[
       [
-        ...MsgCommand.buildInlineButton(chatId,"clearHistory/confirm","确定","callback"),
-        ...MsgCommand.buildInlineButton(chatId,"clearHistory/cancel","返回","callback")
+        ...MsgCommand.buildInlineCallbackButton(chatId,"clearHistory/confirm","确定","callback"),
+        ...MsgCommand.buildInlineCallbackButton(chatId,"clearHistory/cancel","返回","callback")
       ]
     ])
 

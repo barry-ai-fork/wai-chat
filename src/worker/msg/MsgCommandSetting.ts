@@ -27,21 +27,14 @@ import {PbQrCode} from "../../lib/ptp/protobuf/PTPCommon";
 import {Pdu} from "../../lib/ptp/protobuf/BaseMsg";
 import {aesDecrypt} from "../../util/passcode";
 import {DEBUG} from "../../config";
+import {DEFAULT_BOT_COMMANDS, DEFAULT_START_TIPS} from "../setting";
 
 let currentSyncBotContext:string|undefined;
 
 export default class MsgCommandSetting{
   static async start(chatId:string){
     const messageId = await MsgDispatcher.genMsgId();
-    const text = `你可以通过发送以下命令来控制我：
-
-/setting - 设置面板
-/clearHistory - 清除历史记录
-/reloadCommands - 重载命令
-/lab - 实验室
-  * 创建中文Prompt大全
-  * 创建英文Prompt大全
-`
+    const text = DEFAULT_START_TIPS
     return MsgDispatcher.newMessage(chatId,messageId,{
       chatId,
       id:messageId,
@@ -88,31 +81,24 @@ export default class MsgCommandSetting{
         },
       ],
       [
+
         {
-          data:`${chatId}/setting/accountAddress`,
-          text:"账户地址",
+          text:"切换账户",
+          data:`${chatId}/setting/switchAccount`,
+          type:"callback"
+        },
+        {
+          text:"重载命令",
+          data:`${chatId}/setting/reloadCommand`,
+          type:"callback"
+        },
+        {
+          text:"清除历史记录",
+          data:`${chatId}/setting/clearHistory`,
           type:"callback"
         },
       ],
       [
-        {
-          data:`${chatId}/setting/showMnemonic`,
-          text:"二维码导出账户",
-          type:"callback"
-        },
-      ],
-      [
-        {
-          text:"二维码导入账户",
-          type:"requestUploadImage"
-        },
-      ],
-      [
-        {
-          data:`${chatId}/setting/disableSync`,
-          text:"单机模式",
-          type:"callback"
-        },
         {
           data:`${chatId}/setting/cancel`,
           text:"取消",
@@ -122,16 +108,22 @@ export default class MsgCommandSetting{
     ]:[
       [
         {
-          text:"二维码导入账户",
-          type:'requestUploadImage',
+          text:"切换账户",
+          data:`${chatId}/setting/switchAccount`,
+          type:"callback"
+        },
+        {
+          text:"重载命令",
+          data:`${chatId}/setting/reloadCommand`,
+          type:"callback"
+        },
+        {
+          text:"清除历史记录",
+          data:`${chatId}/setting/clearHistory`,
+          type:"callback"
         },
       ],
       [
-        {
-          data:`${chatId}/setting/enableSync`,
-          text:"云端模式",
-          type:"callback"
-        },
         {
           data:`${chatId}/setting/cancel`,
           text:"取消",
@@ -140,7 +132,7 @@ export default class MsgCommandSetting{
       ],
     ]
     if(DEBUG){
-      res.push(MsgCommand.buildInlineButton(chatId,"setting/debug","Debug",'callback'))
+      res.push(MsgCommand.buildInlineCallbackButton(chatId,"setting/debug","Debug",'callback'))
     }
     return res;
   }
@@ -162,7 +154,7 @@ export default class MsgCommandSetting{
             if(type !== QrCodeType.QrCodeType_MNEMONIC){
               throw new Error("解析二维码失败")
             }
-            const {password} = await getPasswordFromEvent();
+            const {password} = await getPasswordFromEvent(undefined,true);
             const res = await aesDecrypt(data,Buffer.from(hashSha256(password),"hex"))
             if(res){
               await MsgCommandSetting.setMnemonic(chatId,res,password);
@@ -171,18 +163,18 @@ export default class MsgCommandSetting{
           }
         }
       }catch (e){
-
       }finally {
         getActions().showNotification({message:"解析二维码失败"})
       }
     }
   }
+
   static async setMnemonic(chatId:string,data:string,password?:string){
     const mnemonic = new Mnemonic(data)
     if(mnemonic.checkMnemonic()){
       await MsgCommand.sendText(chatId,mnemonic.toEntropy())
       if(!password){
-        const res = await getPasswordFromEvent()
+        const res = await getPasswordFromEvent(undefined,true)
         if(res.password){
           password = res.password
         }else{
@@ -201,7 +193,7 @@ export default class MsgCommandSetting{
         const pwd = hashSha256(password)
         const ts = +(new Date());
         const {address, sign} = await account!.signMessage(ts.toString(), pwd);
-        const session = Account.formatSession({address,sign,ts});
+        const session = Account.formatSession({address,sign,ts,accountId});
         account!.saveSession(session)
         await callApiWithPdu(new AuthNativeReq({
           accountId,entropy:mnemonic.toEntropy(),session
@@ -212,8 +204,59 @@ export default class MsgCommandSetting{
       await MsgCommand.sendText(chatId,"mnemonic 不合法")
     }
   }
+  static async switchAccount(chatId:string,messageId:number,data:string){
+    const accountAddress = data.replace(`${chatId}/setting/switchAccount/account/`,'')
+    const keys = Account.getKeys();
+    const sessions = Account.getSessions();
+    const global = getGlobal();
+    for (let i = 0; i < Object.keys(sessions).length; i++) {
+      const session = sessions[Object.keys(sessions)[i]]
+      const res = Account.parseSession(session)
+      if(res?.address === accountAddress){
+        const accountId = res.accountId;
+        const account = Account.getInstance(accountId);
+        if(keys[accountId]){
+          const entropy = keys[accountId]
+          account?.setEntropy(entropy,true)
+          const {password} = await getPasswordFromEvent(undefined,true)
+          if(password){
+            const resVerify = await account?.verifySession(session,password);
+            if(resVerify){
+              Account.setCurrentAccountId(accountId)
+              return await MsgCommandSetting.enableSync(global,chatId,messageId,password)
+            }else{
+              return MsgDispatcher.showNotification("密码不正确!")
+            }
+          }
+          break
+        }
+      }
+    }
+  }
   static async answerCallbackButton(global:GlobalState,chatId:string,messageId:number,data:string){
+    if(data.startsWith(`${chatId}/setting/switchAccount/account/`)){
+      return await MsgCommandSetting.switchAccount(chatId,messageId,data)
+    }
+    if(data.startsWith(`${chatId}/setting/switchAccount/back/`)){
+      const inlineButtons = JSON.parse(data.replace(`${chatId}/setting/switchAccount/back/`,""))
+      return MsgDispatcher.updateMessage(chatId,messageId,{
+        ...selectChatMessage(global,chatId,messageId),
+        content:{
+          text:{
+            text:"设置面板"
+          }
+        },
+        inlineButtons
+      })
+    }
+
     switch (data){
+      case `${chatId}/setting/clearHistory`:
+        await MsgCommand.clearHistory(chatId)
+        break
+      case `${chatId}/setting/reloadCommand`:
+        await MsgCommand.reloadCommands(chatId,DEFAULT_BOT_COMMANDS)
+        break
       case `${chatId}/setting/debug`:
         if(DEBUG){
           console.log("=========>>>【start】",{
@@ -231,23 +274,10 @@ export default class MsgCommandSetting{
       case `${chatId}/setting/getSession`:
         const account = Account.getCurrentAccount();
         const entropy = await account?.getEntropy();
-        const mnemonic = Mnemonic.fromEntropy(entropy!)
-        const accountId = account?.getAccountId()
-
-        await MsgCommand.sendText(chatId,accountId!.toString())
-        await MsgCommand.sendText(chatId,entropy!)
-        await MsgCommand.sendText(chatId,mnemonic.getWords())
         const session = account?.getSession()
         if(session){
           const {address} = Account.parseSession(session)!
           await MsgCommand.sendText(chatId,address)
-        }
-        break
-      case `${chatId}/setting/setMnemonic`:
-      case `${chatId}/setting/import`:
-        const res = prompt("setMnemonic")
-        if(res){
-          await MsgCommandSetting.setMnemonic(chatId,res)
         }
         break
       case `${chatId}/setting/uploadFolder`:
@@ -268,9 +298,50 @@ export default class MsgCommandSetting{
           showPickBotModal:true
         })
         break
-      case `${chatId}/setting/accountAddress`:
+      case `${chatId}/setting/switchAccount`:
         const address = Account.getCurrentAccount()?.getSessionAddress()
-        await MsgDispatcher.newCodeMessage(chatId,undefined,address||"-")
+        const sessions = Account.getSessions()
+        const accountAddresses = Object.keys(sessions)
+          .filter(adr=>{
+            return sessions[adr].split("_").length === 4 && sessions[adr].split("_")[3] !== "undefined"
+          })
+          .filter(adr=>adr !== address)
+
+        if(address){
+          await MsgDispatcher.updateMessage(chatId,messageId,{
+            ...selectChatMessage(global,chatId,messageId),
+            content:{
+              text:{
+                text:"当前账户:\n```\n"+address+"```"
+              }
+            },
+            inlineButtons:[
+              MsgCommand.buildInlineCallbackButton(chatId,"setting/showMnemonic","导出此账户",'callback'),
+              accountAddresses.length>0 ?MsgCommand.buildInlineButton(chatId,"其他账户:",'unsupported'):[],
+              ...accountAddresses.map(address=>MsgCommand.buildInlineCallbackButton(chatId,"setting/switchAccount/account/"+address,` ${address}`,'callback')),
+              MsgCommand.buildInlineButton(chatId,"",'unsupported'),
+              MsgCommand.buildInlineCallbackButton(chatId,"setting/enableSync","创建账户",'callback'),
+              MsgCommand.buildInlineButton(chatId,"二维码导入",'requestUploadImage'),
+              MsgCommand.buildInlineCallbackButton(chatId,"setting/disableSync","单机模式",'callback'),
+              MsgCommand.buildInlineCallbackButton(chatId,"setting/switchAccount/back/"+JSON.stringify(selectChatMessage(global,chatId,messageId)?.inlineButtons),"< 返回",'callback')
+            ]
+          })
+        }else {
+          await MsgDispatcher.updateMessage(chatId,messageId,{
+            ...selectChatMessage(global,chatId,messageId),
+            content:{
+              text:{
+                text:"当前模式：单机"
+              }
+            },
+            inlineButtons:[
+              MsgCommand.buildInlineButton(chatId," 二维码导入 ",'requestUploadImage'),
+              MsgCommand.buildInlineCallbackButton(chatId,"setting/enableSync"," 云端模式 ",'callback'),
+              MsgCommand.buildInlineCallbackButton(chatId,"setting/switchAccount/back/"+JSON.stringify(selectChatMessage(global,chatId,messageId)?.inlineButtons),"< 返回",'callback')
+            ]
+          })
+        }
+
         break
       case `${chatId}/setting/showMnemonic`:
         getActions().updateGlobal({
@@ -286,12 +357,8 @@ export default class MsgCommandSetting{
         await MsgCommandSetting.disableSync(global,chatId,messageId)
         break
       case `${chatId}/setting/enableSync`:
-        const {password} = await getPasswordFromEvent()
-        if(!password){
-          MsgDispatcher.updateMessage(chatId,messageId,{
-            inlineButtons:[],
-          })
-        }else{
+        const {password} = await getPasswordFromEvent(undefined,true)
+        if(password){
           await MsgCommandSetting.enableSync(global,chatId,messageId,password)
         }
         break
@@ -433,17 +500,16 @@ export default class MsgCommandSetting{
     const pwd = hashSha256(password)
     const ts = +(new Date());
     const {address, sign} = await account!.signMessage(ts.toString(), pwd);
-    const session = Account.formatSession({address,sign,ts});
+    const session = Account.formatSession({address,sign,ts,accountId:account?.getAccountId()!});
     account!.saveSession(session)
     const entropy = await account!.getEntropy()
     const accountId = account!.getAccountId();
-    await callApiWithPdu(new AuthNativeReq({
-      accountId,entropy,session
-    }).pack())
     MsgDispatcher.updateMessage(chatId,messageId,{
       inlineButtons:[]
     })
-    getActions().showNotification({message:"开启成功"})
+    await callApiWithPdu(new AuthNativeReq({
+      accountId,entropy,session
+    }).pack())
     setTimeout(()=>window.location.reload(),500)
   }
   static async disableSync(global:GlobalState,chatId:string,messageId:number){
@@ -457,7 +523,6 @@ export default class MsgCommandSetting{
       entropy:await account!.getEntropy(),
       session:undefined
     }).pack())
-    getActions().showNotification({message:"关闭成功"})
     setTimeout(()=>window.location.reload(),500)
   }
   static async onSelectSyncBot(chatId:string){

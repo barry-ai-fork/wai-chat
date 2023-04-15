@@ -257,6 +257,7 @@ message PbAiBot {
   optional PbChatGpBotConfig chatGptConfig = 1;
   optional bool enableAi = 3;
   optional string botApi = 4;
+  optional bool disableClearHistory = 5;
 }
 
 message PbQrCode {

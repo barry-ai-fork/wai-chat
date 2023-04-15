@@ -47,6 +47,7 @@ export interface PbAiBot_Type {
   chatGptConfig?: PbChatGpBotConfig_Type;
   enableAi?: boolean;
   botApi?: string;
+  disableClearHistory?: boolean;
 }
 
 export interface PbAudio_Type {

@@ -58,14 +58,18 @@ export default class Account {
     clientKvStore = kv;
   }
 
-  static formatSession({sign,ts,address}:{sign:Buffer,ts:number,address:string}){
-    return `${sign.toString("hex")}_${ts}_${address}`
+  static formatSession({sign,ts,address,accountId}:{sign:Buffer,ts:number,address:string,accountId:number}){
+    return `${sign.toString("hex")}_${ts}_${address}_${accountId}`
   }
 
   static parseSession(session:string){
     if(session){
-      const [sign,time,address] = session.split("_")
-      return {sign,time,address};
+      const res = session.split("_")
+      const sign = res[0];
+      const time = parseInt(res[1]);
+      const address = res[2];
+      const accountId = res.length > 3 ? parseInt(res[3]) : 0
+      return {sign,time,address,accountId};
     }else{
       return undefined
     }
