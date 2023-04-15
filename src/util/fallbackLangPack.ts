@@ -1707,7 +1707,7 @@ export default {
   },
   lng_update_telegram: {
     key: 'lng_update_telegram',
-    value: 'Update Telegram',
+    value: 'Update Wai',
   },
   'Login.QR.Title': {
     key: 'Login.QR.Title',

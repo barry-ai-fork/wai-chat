@@ -19,7 +19,7 @@ import {GenMsgIdReq, GenMsgIdRes, SendReq} from "../../lib/ptp/protobuf/PTPMsg";
 import MsgCommand from "./MsgCommand";
 import {parseCodeBlock} from "../share/utils/stringParse";
 import MsgWorker from "./MsgWorker";
-import {DEFAULT_BOT_COMMANDS, UserIdFirstBot} from "../setting";
+import {DEFAULT_AI_CONFIG_COMMANDS, DEFAULT_BOT_COMMANDS, UserIdFirstBot} from "../setting";
 import MsgCommandChatGpt from "./MsgCommandChatGpt";
 import MsgCommandSetting from "./MsgCommandSetting";
 import {selectUser} from "../../global/selectors";
@@ -277,7 +277,7 @@ export default class MsgDispatcher {
 
     switch(sendMsgText){
       case "/start":
-        // await MsgCommand.reloadCommands(this.getChatId(),DEFAULT_AI_CONFIG_COMMANDS)
+        await MsgCommand.reloadCommands(this.getChatId(),DEFAULT_AI_CONFIG_COMMANDS)
         return await msgCommandChatGpt.start();
       case "/setting":
         return msgCommandChatGpt.setting()

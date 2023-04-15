@@ -61,7 +61,9 @@ export default class ProtoController extends WaiOpenAPIRoute{
 			if (token.indexOf('_') === -1) {
         return WaiOpenAPIRoute.responseError("not auth",401)
 			}
-			const [sign, ts] = token.split('_');
+			const res = token.split('_');
+      const sign = res[0]
+      const ts = res[1]
 			const account = new Account(1);
 			const { address } = account.recoverAddressAndPubKey(
 				Buffer.from(sign, 'hex'),
@@ -76,6 +78,7 @@ export default class ProtoController extends WaiOpenAPIRoute{
 				authUserId = await genUserId();
 				await account.saveUidFromCacheByAddress(address, authUserId);
 			}
+      console.log("auth",authUserId,address)
 			console.debug('[Proto Req]', authUserId,address, pdu.getCommandId(),getActionCommandsName(pdu.getCommandId()));
 
 			switch (pdu.getCommandId()) {
